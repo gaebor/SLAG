@@ -1,0 +1,32 @@
+<?xml version="1.0"?>
+<opencv_storage>
+	<Modules>
+	  <_>
+		<Name>MyModules/VideoSource</Name>
+		<Settings>
+			<_>"-d"</_><_>"0"</_>
+		</Settings> <!-- d:\VisualStudio\SLAG\Testing\sample.mkv -->
+	  </_>
+	  <_>
+		<Name>ReadInt.1</Name>
+		<Settings>
+			<_>"numbers.txt"</_>
+		</Settings>
+		<Outputs>
+			<_>AddModule:0</_>
+		</Outputs>
+	  </_>
+	  <_>
+		<Name>ReadInt.2</Name>
+		<Settings>
+			<_>"numbers.txt"</_>
+		</Settings>
+		<Outputs>
+			<_>AddModule:1</_>
+		</Outputs>
+	  </_>
+  	  <_>
+		<Name>AddModule</Name>
+	  </_>
+	</Modules>
+ </opencv_storage>
