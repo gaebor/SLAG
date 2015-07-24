@@ -31,7 +31,7 @@ public:
 struct Picture{
 	Picture();
 	//! pointer to the RBG image! 3 channel =  24bit depth
-	void* imageInfo;
+	unsigned char* imageInfo;
 	int width;
 	int height;
 };

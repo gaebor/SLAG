@@ -18,7 +18,9 @@ int main(int argc, char* argv[])
 
 	Factory factory;
 	ModuleWrapper* module_array;
-	MessageQueue* messageQueues;
+	size_t moduleNumber = 0;
+	MessageQueue* messageQueue_array;
+	size_t messageQueueNumber = 0;
 
 	if (argc < 2)
 	{
@@ -34,7 +36,8 @@ int main(int argc, char* argv[])
 	}
 
 	std::map<ModuleIdentifier, ModuleWrapper*> modules;
-	module_array = new ModuleWrapper[fs["Modules"].size()]();
+	moduleNumber = fs["Modules"].size();
+	module_array = new ModuleWrapper[moduleNumber]();
 	auto module_ptr = module_array;
 
 	for (auto node : fs["Modules"])
@@ -48,12 +51,16 @@ int main(int argc, char* argv[])
 		}
 
 		auto moduleWrapper = it.first->second;
-		moduleWrapper->Initialize(node, factory);
+		if (!moduleWrapper->Initialize(node, factory))
+		{
+			std::cerr << "Couldn't initialize module \"" << moduleName << "\"!" << std::endl;
+			return -1;
+		}	
 	}
 
 	//read port connections topology
 	std::map<ModuleIdentifier, std::set<PortNumber>> inputPorts;
-	size_t inputPortNumber = 0;
+	
 	for (auto node : fs["Modules"])
 	{
 		std::string moduleName = node["Name"];
@@ -65,54 +72,71 @@ int main(int argc, char* argv[])
 			auto moduleIt = modules.find(portId.module);
 			if (moduleIt != modules.end())
 			{
-				inputPorts[portId.module].insert(portId.port);
-				modules[portId.module]->inputQueues.resize(portId.port+1, nullptr);
-				++inputPortNumber;
+				//inputPorts[portId.module].insert(portId.port);
+				//modules[portId.module]->inputQueues.resize(portId.port+1, nullptr);
+				++messageQueueNumber;
 			}else
 			{
-				std::cerr << "no such module to write to! \"" << (std::string)portId.module << std::endl;
-				return -1;
+				//skip output port (data goes down the toilet)
 			}
 		}
 	}
 
-	// check that the input ports are aligned correctly
-	for (const auto& ports : inputPorts)
-	{
-		const std::string moduleId = ports.first;
-		int output_port = 0;
-		for (auto port : ports.second)
-		{
-			if (port != output_port)
-			{
-				std::cerr << "The " << output_port << "th input port of module \"" << moduleId << "\" is empty!" << std::endl;
-				return -1;
-			}
-			++output_port;
-		}
-	}
+	//// check that the input ports are aligned correctly
+	//for (const auto& ports : inputPorts)
+	//{
+	//	const std::string moduleId = ports.first;
+	//	int output_port = 0;
+	//	for (auto port : ports.second)
+	//	{
+	//		if (port != output_port)
+	//		{
+	//			std::cerr << "The " << output_port << "th input port of module \"" << moduleId << "\" is empty!" << std::endl;
+	//			return -1;
+	//		}
+	//		++output_port;
+	//	}
+	//}
 
 	//allocate input ports
-	messageQueues = new MessageQueue[inputPortNumber]();
-	auto queuePtr = messageQueues;
+	messageQueue_array = new MessageQueue[messageQueueNumber]();
+	auto queuePtr = messageQueue_array;
 
 	//actually connect the output and input ports
 	for (auto node : fs["Modules"])
 	{
 		std::string moduleName = node["Name"];
 		ModuleIdentifier moduleId(moduleName.c_str());
+		PortNumber portNumber = 0;
 		for (auto& synced : node["Outputs"])
 		{
 			std::string idStr(synced);
 			PortIdentifier portId(idStr.c_str());
-			modules[moduleId]->outputQueues.push_back(queuePtr);
-			modules[portId.module]->inputQueues[portId.port] = queuePtr;
-			++queuePtr;
+			if (modules.find(portId.module) != modules.end())
+			{
+				modules[moduleId]->outputQueues[portNumber] = queuePtr;
+				modules[portId.module]->inputQueues[portId.port] = queuePtr;
+				++queuePtr;
+			}else
+			{
+
+			}
+			++portNumber;
 		}
+		modules[moduleId]->outputPortLength = portNumber;
+	}
+
+	for (auto m : modules)
+	{
+		PortNumber i = 0;
+		for (auto q : m.second->inputQueues)
+			i = std::max(i,q.first+1);
+		m.second->inputPortLength = i;
 	}
 
 	}catch(std::exception& e)
 	{
+		std::cerr << e.what() << std::endl;
 		return -1;
 	}
 
@@ -147,7 +171,12 @@ int main(int argc, char* argv[])
 
 	//}
 
-	delete [] messageQueues;
+	for (int i = 0; i < moduleNumber; ++i)
+	{
+		module_array[i].ThreadProcedure();
+	}
+
+	delete [] messageQueue_array;
 	delete [] module_array;
 
 	return 0;

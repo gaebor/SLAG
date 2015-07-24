@@ -1,16 +1,17 @@
 <?xml version="1.0"?>
 <opencv_storage>
 	<Modules>
-	  <_>
+	  <!-- <_>
 		<Name>MyModules/VideoSource</Name>
 		<Settings>
 			<_>"-d"</_><_>"0"</_>
-		</Settings> <!-- d:\VisualStudio\SLAG\Testing\sample.mkv -->
-	  </_>
+			<_>"-f"</_><_>"d:\VisualStudio\SLAG\Testing\sample.mkv"</_>
+		</Settings>
+	  </_> -->
 	  <_>
 		<Name>ReadInt.1</Name>
 		<Settings>
-			<_>"numbers.txt"</_>
+			<_>"d:\VisualStudio\SLAG\Testing\numbers.txt"</_>
 		</Settings>
 		<Outputs>
 			<_>AddModule:0</_>
@@ -19,7 +20,7 @@
 	  <_>
 		<Name>ReadInt.2</Name>
 		<Settings>
-			<_>"numbers.txt"</_>
+			<_>"d:\VisualStudio\SLAG\Testing\numbers.txt"</_>
 		</Settings>
 		<Outputs>
 			<_>AddModule:1</_>

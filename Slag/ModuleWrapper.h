@@ -1,8 +1,8 @@
 #pragma once
 
-#include <memory>
 #include <vector>
 #include <string>
+#include <memory>
 
 #include "slag/slag_interface.h"
 #include "AsyncQueue.h"
@@ -10,25 +10,30 @@
 #include "ModuleIdentifier.h"
 #include "Factory.h"
 
-typedef std::shared_ptr<slag::Message> ManagedMessage;
-typedef AsyncQueue<ManagedMessage> MessageQueue;
-typedef std::vector<MessageQueue*> MessageQueues;
+typedef AsyncQueue<slag::Message*> MessageQueue;
 
-class ModuleWrapper : private std::unique_ptr<slag::Module>
+class ModuleWrapper
 {
 public:
 	ModuleWrapper(slag::Module* module = nullptr);
 	~ModuleWrapper();
 
 	bool Initialize(cv::FileNode node, const Factory& factory);
+	void ThreadProcedure();
 
 public:
 	std::vector<std::string> settings;
 	ModuleIdentifier identifier;
 	//non-responsible for MessageQueues
-	MessageQueues inputQueues;
-	MessageQueues outputQueues;
+	std::map<PortNumber, MessageQueue*> inputQueues, outputQueues;
+	size_t inputPortLength, outputPortLength;
 
 	std::string output_text;
 	std::vector<unsigned char> output_image;
+
+	double diffTime, computeTime;
+	std::vector<size_t> bufferSize;
+
+private:
+	std::unique_ptr<slag::Module> _module; // non-copyable
 };

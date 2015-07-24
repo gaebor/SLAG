@@ -12,14 +12,14 @@ class AsyncQueue
 private:
 	typedef Poco::ScopedLock<Poco::Mutex> AutoLock;
 public:
-	AsyncQueue(void): _content(true), _empty(false), highWater(0){}
+	AsyncQueue(void): _content(true), _empty(false){}
 	~AsyncQueue(void){}
 
 	void EnQueue(const _Ty& element)
 	{
 		AutoLock lock(_mutex);
 		_queue.push(element);
-		highWater = (_queue.size() > highWater ? _queue.size() : highWater);
+		//highWater = (_queue.size() > highWater ? _queue.size() : highWater);
 		_content.set();
 		_empty.reset();
 	}
@@ -50,7 +50,7 @@ public:
 	}
 	//!this drops all the elements in the waiting queue and then wakes up the DeQueue. This cause the DeQueue to return false.
 	/*!
-		@return the number of stuck elements
+		@return the number of dropped elements
 	*/
 	size_t WakeUp()
 	{
@@ -65,7 +65,7 @@ public:
 		//printf("0\n");
 		return result;
 	}
-	size_t GetHighWater() const{return highWater;}
+	size_t GetSize() const{return _queue.size();}
 private:
 	bool DeQueue_internal(_Ty& element)
 	{
@@ -92,6 +92,5 @@ private:
 	Poco::Event _empty;
 	Poco::Mutex _mutex;
 	Container _queue;
-	size_t highWater;
 };
 

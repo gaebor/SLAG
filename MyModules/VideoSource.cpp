@@ -28,7 +28,7 @@ bool VideoSource::Initialize( int settingsc, const char* settingsv[] )
 		{
 			if (settingsc > i+1)
 			{
-				capture = new cv::VideoCapture(settingsv[i+1]);
+				capture = new cv::VideoCapture(atoi(settingsv[i+1]));
 				if (capture->isOpened())
 					return true;
 			}else
@@ -38,7 +38,7 @@ bool VideoSource::Initialize( int settingsc, const char* settingsv[] )
 		{
 			if (settingsc > i+1)
 			{
-				capture = new cv::VideoCapture(atoi(settingsv[i+1]));
+				capture = new cv::VideoCapture(settingsv[i+1]);
 				if (capture->isOpened())
 					return true;
 			}else
@@ -51,6 +51,11 @@ bool VideoSource::Initialize( int settingsc, const char* settingsv[] )
 slag::Message** VideoSource::Compute( slag::Message* const * input, int inputPortNumber, int* outputPortNumber )
 {
 	*capture >> output.image;
+
+	outputPicture.width = output.image.cols;
+	outputPicture.height = output.image.rows;
+	outputPicture.imageInfo = output.image.data;
+
 	output_array = &output;
 	*outputPortNumber = 1;
 	return &output_array;

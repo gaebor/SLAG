@@ -11,7 +11,7 @@ public:
 	int val;
 };
 
-class __declspec(dllexport) AddModule : public slag::Module
+class AddModule : public slag::Module
 {
 public:
 	AddModule();
@@ -20,7 +20,6 @@ public:
 	slag::Message** Compute(slag::Message* const * input, int inputPortNumber, int* outputPortNumber);
 
 private:
-	IntMessage output;
 	slag::Message* output_msg;
 	std::string text;
 };

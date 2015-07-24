@@ -115,7 +115,8 @@ int main(int argc, char* argv[])
 
 		consumer.join();
 
-		std::cout << i << " elements has been queued and " << j << " has been dequeued\nhighwater was " << (double)queue->GetHighWater()*100 / i << "%" << std::endl;
+		std::cout << i << " elements has been queued and " << j << " has been dequeued" << std::endl;
+		//\nhighwater was " << (double)queue->GetHighWater()*100 / i << "%" << std::endl;
 		std::cout << "dropped " << dropped << " elements" << std::endl;
 
 		delete queue;

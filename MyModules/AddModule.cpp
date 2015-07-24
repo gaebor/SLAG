@@ -1,6 +1,7 @@
 #include "AddModule.h"
 
 #include <sstream>
+#include "ReadModule.h"
 
 AddModule::AddModule()
 {
@@ -20,16 +21,16 @@ slag::Message** AddModule::Compute( slag::Message* const * input, int inputPortN
 		return &output_msg;
 	}else
 	{
-		output.val = 0;
+		auto output = new IntMessage();
 		for (int i = 0; i < inputPortNumber; ++i)
 		{
-			if (auto ptr = dynamic_cast<IntMessage*>(input[i]))
-				output.val += ptr->val;
+			if (auto ptr = dynamic_cast<ReadModule<int>::Message*>(input[i]))
+				output->val += ptr->value;
 		}
 		*outputPortNumber = 1;
-		output_msg = &output;
+		output_msg = output;
 		std::ostringstream oss;
-		oss << output.val;
+		oss << output->val;
 		text = oss.str();
 		outputText = text.c_str();
 		return &output_msg;

@@ -165,9 +165,11 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Factory.cpp" />
+    <ClCompile Include="HumanReadable.cpp" />
     <ClCompile Include="ModuleIdentifier.cpp" />
     <ClCompile Include="ModuleWrapper.cpp" />
     <ClCompile Include="Slag.cpp" />
+    <ClCompile Include="Timer.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Core\Core.vcxproj">
@@ -177,8 +179,10 @@
   <ItemGroup>
     <ClInclude Include="AsyncQueue.h" />
     <ClInclude Include="Factory.h" />
+    <ClInclude Include="HumanReadable.h" />
     <ClInclude Include="ModuleIdentifier.h" />
     <ClInclude Include="ModuleWrapper.h" />
+    <ClInclude Include="Timer.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

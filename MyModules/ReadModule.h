@@ -25,10 +25,15 @@ public:
 	}
 	slag::Message** Compute(slag::Message* const * input, int inputPortNumber, int* outputPortNumber)
 	{
-		if (ifs.good())
+		if (getline(ifs, line).good())
 		{
-			ifs >> output.value;
-			output_msg = &output;
+			auto output = new Message();
+			std::istringstream iss(line);
+			iss >> output->value;
+
+			outputText = line.c_str();
+
+			output_msg = output;
 			*outputPortNumber = 1;
 			return &output_msg;
 		}else
@@ -40,7 +45,7 @@ public:
 	}
 
 private:
+	std::string line;
 	std::ifstream ifs;
 	slag::Message* output_msg;
-	Message output;
 };
