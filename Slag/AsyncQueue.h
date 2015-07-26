@@ -5,24 +5,77 @@
 #include <Poco/ScopedLock.h>
 
 #include <queue>
+#include <limits>
 
+#ifdef max
+#undef max
+#endif // max
+
+
+//!simple producer/consumer tool
+/*!
+	the queue can be fed and consumed by many threads
+	@param _Ty stored type, it have to be copyable
+	@param SeeHighWater determine whether you want to see the high water 
+*/
 template<class _Ty, bool SeeHighWater = false, typename Container = std::queue<_Ty>>
 class AsyncQueue
 {
 private:
 	typedef Poco::ScopedLock<Poco::Mutex> AutoLock;
 public:
-	AsyncQueue(void): _content(false), _empty(false), highWater(0){}
-	~AsyncQueue(void){}
+	//! you can control the behavior of the overloaded queue
+	enum LimitBehavior
+	{
+		None, //!< the queue can grow as much as it can
+		Drop, //!< drop elements if queue size if above the given limit
+		Wait //!< waits the enqueue-s until the queue size drops below the given limit
+	} limitBehavior; //!< limit behavior can be adjusted at any time
+	size_t queueLimit;
+
+	AsyncQueue(LimitBehavior l = None)
+	:	limitBehavior(l),
+		_content(false),
+		_empty(false),
+		_belowLimit(false),
+		_highWater(0),
+		queueLimit(std::numeric_limits<decltype(queueLimit)>::max())
+	{
+		_belowLimit.set();
+		_empty.set();
+		_content.reset();
+	}
+	~AsyncQueue(void)
+	{
+	}
+
+	//!clears and resets the queue
+	void Reset()
+	{
+		WakeUp();
+		_content.reset();
+	}
 
 	void EnQueue(const _Ty& element)
 	{
+		if (limitBehavior == Wait)
+			_belowLimit.wait();
+
 		AutoLock lock(_mutex);
+		if (limitBehavior == Drop && _queue.size() >= queueLimit)
+		{
+			while (!_queue.empty())
+				_queue.pop();
+			_belowLimit.set();
+		}
+
 		_queue.push(element);
 		if (SeeHighWater)
-			highWater = (_queue.size() > highWater ? _queue.size() : highWater);
+			_highWater = (_queue.size() > _highWater ? _queue.size() : _highWater);
 		_content.set();
 		_empty.reset();
+		if (_queue.size() >= queueLimit)
+			_belowLimit.reset();
 	}
 
 	bool DeQueue(_Ty& element)
@@ -34,8 +87,6 @@ public:
 	void WaitForEmpty()
 	{
 		_empty.wait();
-		//if (_queue.size() > 0)
-		//	throw std::exception("AsyncQueue::WaitForEmpty returned with non-empty queue");
 	}
 
 	bool DeQueue(_Ty& element, long miliseconds)
@@ -58,16 +109,14 @@ public:
 		AutoLock lock(_mutex);
 		const auto result = _queue.size();
 		while (!_queue.empty())
-		{
 			_queue.pop();
-		}
+		_belowLimit.set();
 		_content.set();
 		_empty.set();
-		//printf("0\n");
 		return result;
 	}
 	size_t GetSize() const{return _queue.size();}
-	size_t GetHighWater() const{return highWater;}
+	size_t GetHighWater() const{return _highWater;}
 private:
 	bool DeQueue_internal(_Ty& element)
 	{
@@ -76,7 +125,7 @@ private:
 		{
 			_empty.set();
 			_content.reset();
-			//printf("1\n");
+			_belowLimit.set();
 			return false;
 		}
 		element = _queue.front();
@@ -85,14 +134,14 @@ private:
 		{
 			_empty.set();
 			_content.reset();
-			//printf("2\n");
-		}
+			_belowLimit.set();
+		}else if (_queue.size() < queueLimit)
+			_belowLimit.set();
 		
 		return true;
 	}
-	size_t highWater;
-	Poco::Event _content;
-	Poco::Event _empty;
+	size_t _highWater;
+	Poco::Event _content, _empty, _belowLimit;
 	Poco::Mutex _mutex;
 	Container _queue;
 };
