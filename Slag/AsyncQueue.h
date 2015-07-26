@@ -6,20 +6,21 @@
 
 #include <queue>
 
-template<class _Ty, typename Container = std::queue<_Ty>>
+template<class _Ty, bool SeeHighWater = false, typename Container = std::queue<_Ty>>
 class AsyncQueue
 {
 private:
 	typedef Poco::ScopedLock<Poco::Mutex> AutoLock;
 public:
-	AsyncQueue(void): _content(true), _empty(false){}
+	AsyncQueue(void): _content(true), _empty(false), highWater(0){}
 	~AsyncQueue(void){}
 
 	void EnQueue(const _Ty& element)
 	{
 		AutoLock lock(_mutex);
 		_queue.push(element);
-		//highWater = (_queue.size() > highWater ? _queue.size() : highWater);
+		if (SeeHighWater)
+			highWater = (_queue.size() > highWater ? _queue.size() : highWater);
 		_content.set();
 		_empty.reset();
 	}
@@ -66,6 +67,7 @@ public:
 		return result;
 	}
 	size_t GetSize() const{return _queue.size();}
+	size_t GetHighWater() const{return highWater;}
 private:
 	bool DeQueue_internal(_Ty& element)
 	{
@@ -87,7 +89,7 @@ private:
 			_content.set();
 		return true;
 	}
-
+	size_t highWater;
 	Poco::Event _content;
 	Poco::Event _empty;
 	Poco::Mutex _mutex;

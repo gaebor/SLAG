@@ -10,6 +10,8 @@ bool force_halt = false; //force halt
 
 int run = 7;
 
+typedef AsyncQueue<size_t, true> HighWaterQueue;
+
 int main(int argc, char* argv[])
 {
 	for (;*argv != NULL;++argv)
@@ -24,7 +26,7 @@ int main(int argc, char* argv[])
 			run = atoi(*++argv);
 	}
 
-	AsyncQueue<size_t>* queue;
+	HighWaterQueue* queue;
 	size_t i, j;
 
 	LARGE_INTEGER freq, time1, time2;
@@ -32,7 +34,7 @@ int main(int argc, char* argv[])
 
 	if (run & 1)
 	{
-		queue = new AsyncQueue<size_t>();
+		queue = new HighWaterQueue();
 		size_t absTime1, absTime2;
 		QueryPerformanceCounter(&time1);
 
@@ -58,7 +60,7 @@ int main(int argc, char* argv[])
 	}
 	if (run & 2)
 	{
-		queue = new AsyncQueue<size_t>();
+		queue = new HighWaterQueue();
 		QueryPerformanceCounter(&time1);
 
 		for (i = 0; i < n; ++i)
@@ -75,7 +77,7 @@ int main(int argc, char* argv[])
 	}
 	if (run & 4)
 	{
-		queue = new AsyncQueue<size_t>();
+		queue = new HighWaterQueue();
 		QueryPerformanceCounter(&time1);
 		std::thread pusher([&]()
 		{
@@ -115,8 +117,7 @@ int main(int argc, char* argv[])
 
 		consumer.join();
 
-		std::cout << i << " elements has been queued and " << j << " has been dequeued" << std::endl;
-		//\nhighwater was " << (double)queue->GetHighWater()*100 / i << "%" << std::endl;
+		std::cout << i << " elements has been queued and " << j << " has been dequeued\nhighwater was " << (double)queue->GetHighWater()*100 / i << "%" << std::endl;
 		std::cout << "dropped " << dropped << " elements" << std::endl;
 
 		delete queue;
