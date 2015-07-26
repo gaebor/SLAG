@@ -11,31 +11,31 @@ extern "C"
 int print_humanreadable_time( char* result, int bufferSize, double num, const char* suffix /*= ""*/ )
 {
 	if (num < 1e-6)
-		return sprintf_s(result, bufferSize, "%.3g%s%s",num/1e9, "ns", suffix);
+		return sprintf_s(result, bufferSize, "%5.3g%s%s",num*1e9, " ns", suffix);
 	else if (num < 1e-3)
-		return sprintf_s(result, bufferSize, "%.3g%s%s",num/1e6, "us", suffix);
+		return sprintf_s(result, bufferSize, "%5.3g%s%s",num*1e6, " us", suffix);
 	else if (num < 1)
-		return sprintf_s(result, bufferSize, "%.3g%s%s",num/1e3, "ms", suffix);
+		return sprintf_s(result, bufferSize, "%5.3g%s%s",num*1e3, " ms", suffix);
 	else if (num < 60)
-		return sprintf_s(result, bufferSize, "%.3g%s%s",num, "sec", suffix);
+		return sprintf_s(result, bufferSize, "%5.3g%s%s",num, "sec", suffix);
 	else if (num < 3600)
-		return sprintf_s(result, bufferSize, "%.2g%s%s",num/60, "min", suffix);
+		return sprintf_s(result, bufferSize, "%5.2g%s%s",num/60, "min", suffix);
 	else if (num < 3600*24)
-		return sprintf_s(result, bufferSize, "%.2g%s%s",num/3600, "h", suffix);
+		return sprintf_s(result, bufferSize, "%5.2g%s%s",num/3600, "  h", suffix);
 	else
-		return sprintf_s(result, bufferSize, "%.2g%s%s",num/(3600*24), "day", suffix);
+		return sprintf_s(result, bufferSize, "%5.2g%s%s",num/(3600*24), "day", suffix);
 }
 
 int print_humanreadable_giga( char* result, int bufferSize, double num, const char* suffix /*= ""*/ )
 {
-	static const char* units[] = {"","k","M","G","T","P","E","Z", NULL};
+	static const char* units[] = {" ","k","M","G","T","P","E","Z", NULL};
 	const char** unit;
 
 	for	(unit = units; *unit != NULL; ++unit)
 	{
 		if (fabs(num) < 1000.0)
 		{
-			return sprintf_s(result, bufferSize, "%.3g%s%s",num, *unit, suffix);
+			return sprintf_s(result, bufferSize, "%5.3g%s%s",num, *unit, suffix);
 		}
 		else
 			num /= 1000;
@@ -45,14 +45,14 @@ int print_humanreadable_giga( char* result, int bufferSize, double num, const ch
 
 int print_humanreadable_gibi( char* result, int bufferSize, double num, const char* suffix /*= ""*/ )
 {
-	static const char* units[] = {"","ki","Mi","Gi","Ti","Pi","Ei","Zi", NULL};
+	static const char* units[] = {"  ","ki","Mi","Gi","Ti","Pi","Ei","Zi", NULL};
 	const char** unit;
 
 	for	(unit = units; *unit != NULL; ++unit)
 	{
 		if (fabs(num) < 1024.0)
 		{
-			return sprintf_s(result, bufferSize, "%.4g%s%s",num, *unit, suffix);
+			return sprintf_s(result, bufferSize, "%6.4g%s%s",num, *unit, suffix);
 		}
 		else
 			num /= 1024;

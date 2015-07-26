@@ -4,6 +4,7 @@
 #include <thread>
 #include <windows.h>
 #include <string>
+#include <memory>
 
 size_t n = 1 << 19;
 size_t sleep_constant = 10000;
@@ -11,7 +12,9 @@ bool force_halt = false; //force halt
 
 int run = 7;
 
-typedef AsyncQueue<size_t, true> HighWaterQueue;
+typedef std::shared_ptr<size_t> ManagedMessage;
+typedef AsyncQueue<ManagedMessage, true> HighWaterQueue;
+//typedef AsyncQueue<std::shared_ptr<size_t>, true> ManagedQueue;
 
 int main(int argc, char* argv[])
 {
@@ -32,6 +35,7 @@ int main(int argc, char* argv[])
 
 	LARGE_INTEGER freq, timeStart, timePush, timeConsume;
 	QueryPerformanceFrequency(&freq);
+	ManagedMessage output1, output2;
 
 	if (run & 1)
 	{
@@ -41,7 +45,7 @@ int main(int argc, char* argv[])
 
 		for ( size_t i = 0; i < n; ++i)
 		{
-			queue->EnQueue(i);
+			queue->EnQueue(ManagedMessage(new size_t(i)));
 		}
 
 		QueryPerformanceCounter(&timePush);
@@ -51,7 +55,7 @@ int main(int argc, char* argv[])
 
 		for (size_t i = 0; i < n; ++i)
 		{
-			queue->DeQueue(i);
+			queue->DeQueue(output1);
 		}
 	
 		QueryPerformanceCounter(&timeConsume);
@@ -66,9 +70,9 @@ int main(int argc, char* argv[])
 
 		for (size_t i = 0; i < n; ++i)
 		{
-			queue->EnQueue(i);
+			queue->EnQueue(ManagedMessage(new size_t(i)));
 
-			queue->DeQueue(j);
+			queue->DeQueue(output1);
 
 		}
 		QueryPerformanceCounter(&timePush);
@@ -85,7 +89,7 @@ int main(int argc, char* argv[])
 		{
 			for (size_t i=0; i < n; ++i)
 			{
-				queue->EnQueue(i);
+				queue->EnQueue(ManagedMessage(new size_t(i)));
 				if ((sleep_constant) != 0 && (i % sleep_constant == 0))
 					Sleep(1);
 			}
@@ -94,7 +98,7 @@ int main(int argc, char* argv[])
 		{
 			for (; true;)
 			{
-				if (!queue->DeQueue(j))
+				if (!queue->DeQueue(output1))
 					break;
 				++consumed;
 				//Sleep(1);//std::cout << "ok"<<std::endl;
@@ -135,7 +139,7 @@ int main(int argc, char* argv[])
 		{
 			for (size_t i=0; i < n/2; ++i)
 			{
-				queue->EnQueue(i);
+				queue->EnQueue(ManagedMessage(new size_t(i)));
 				if ((sleep_constant) != 0 && (i % sleep_constant == 0))
 					Sleep(1);
 			}
@@ -144,7 +148,7 @@ int main(int argc, char* argv[])
 		{
 			for (size_t i=n/2; i < n; ++i)
 			{
-				queue->EnQueue(i);
+				queue->EnQueue(ManagedMessage(new size_t(i)));
 				if ((sleep_constant) != 0 && (i % sleep_constant == 0))
 					Sleep(1);
 			}
@@ -154,7 +158,7 @@ int main(int argc, char* argv[])
 		{
 			for (; true;)
 			{
-				if (!queue->DeQueue(j))
+				if (!queue->DeQueue(output1))
 					break;
 				++consumed1;
 					//Sleep(1);//std::cout << "ok"<<std::endl;
@@ -165,7 +169,7 @@ int main(int argc, char* argv[])
 		{
 			for (; true;)
 			{
-				if (!queue->DeQueue(j2))
+				if (!queue->DeQueue(output2))
 					break;
 				++consumed2;
 				//Sleep(1);//std::cout << "ok"<<std::endl;

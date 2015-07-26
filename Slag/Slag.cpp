@@ -8,10 +8,13 @@
 #include <mutex>
 #include <set>
 
+#include <windows.h>
+
 #include "Factory.h"
 #include "ModuleIdentifier.h"
 #include "AsyncQueue.h"
 #include "ModuleWrapper.h"
+#include "HumanReadable.h"
 
 int main(int argc, char* argv[])
 {
@@ -205,11 +208,63 @@ int main(int argc, char* argv[])
 		++threadIt;
 	}
 
+	bool run = true;
+	std::thread visualizer([&]()
+	{
+		HANDLE hStdOut = GetStdHandle(STD_OUTPUT_HANDLE);
+		COORD coord;
+		coord.X = coord.Y = 0;
+
+		size_t nameOffset = 0;
+		for (auto& m : modules)
+		{
+			nameOffset = std::max(nameOffset, std::string(m.first).size());
+		}
+		
+		std::vector<std::string> names;
+		for (auto& m : modules)
+		{
+			auto name = (std::string)m.first;
+			name += std::string(name.size()+1-nameOffset, ' ');
+			names.push_back( name );
+		}
+
+		while (run)
+		{	
+			system("cls");
+			SetConsoleCursorPosition(hStdOut, coord);
+			auto nameIt = names.begin();
+			for (auto& m : modules)
+			{
+				char line[1024];
+				print_humanreadable_time(line, 1024, m.second->diffTime);
+				printf("%s|%s|%5.3g%%|", (nameIt++)->c_str(), line, 100*(m.second->computeTime)/(m.second->diffTime));
+				m.second->output_text.NonEditable();
+				std::cout << m.second->output_text.Get() << "\n";
+				m.second->output_text.Set() = "";
+				m.second->output_text.MakeEditable();
+
+				m.second->bufferSize.NonEditable();
+				for (auto& q : m.second->bufferSize.Get())
+				{
+					print_humanreadable_giga(line, 1024, q.second);
+					printf("\t%s|%d\n", line, q.first);
+				}
+				m.second->bufferSize.MakeEditable();
+			}
+			Sleep(100);
+		}
+	});
+
 	threadIt = moduleThreads.begin();
 	for (threadIt = moduleThreads.begin(); threadIt != moduleThreads.end(); ++threadIt)
 	{
 		(*threadIt)->join();
 	}
+
+	run = false;
+
+	visualizer.join();
 
 	return 0;
 }
