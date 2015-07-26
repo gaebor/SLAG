@@ -178,6 +178,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AsyncQueue.h" />
+    <ClInclude Include="ExclusiveAccess.h" />
     <ClInclude Include="Factory.h" />
     <ClInclude Include="HumanReadable.h" />
     <ClInclude Include="ModuleIdentifier.h" />

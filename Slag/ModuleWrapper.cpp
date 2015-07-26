@@ -8,6 +8,8 @@
 #include "Timer.h"
 #include "HumanReadable.h"
 
+typedef std::lock_guard<std::mutex> AutoLock;
+
 ModuleWrapper::~ModuleWrapper(void)
 {
 }
@@ -65,7 +67,7 @@ void ModuleWrapper::ThreadProcedure()
 			ManagedMessage input;
 
 			if (!q.second->DeQueue(input))
-				return;
+				goto halt;
 
 			inputMessages[q.first] = input.get();
 			receivedMessages.push_back(input);
@@ -79,7 +81,9 @@ void ModuleWrapper::ThreadProcedure()
 
 		//manage output data
 		if (outputMessages_raw == nullptr)
-			break; //TODO handle halt signals
+		{
+			goto halt;
+		}
 
 		auto outputIt = outputQueues.begin();
 		for (PortNumber i = 0; i < outputNumber; ++i)
@@ -107,22 +111,34 @@ void ModuleWrapper::ThreadProcedure()
 		receivedMessages.clear();
 
 		//visualization
-		for (const auto& q : inputQueues)
+		bufferSize.Modify([&](std::map<PortNumber, size_t>& self)
 		{
-			bufferSize[q.first] = q.second->GetSize();
-		}
+			for (const auto& q : inputQueues)
+			{
+				self[q.first] = q.second->GetSize();
+			}
+		});
 
 		if (_module->outputText != nullptr)
 		{
-			output_text = _module->outputText;
-			//std::cerr << (std::string)identifier << ": " << output_text << " (call interval: " << diffTime << ", compute time: " << computeTime << ")\n";
+			output_text.Modify([&](std::string& self){self = _module->outputText;});
 		}
 
 		size_t picure_size = 0;
 		if (_module->outputPicture.imageInfo != nullptr && (picure_size = _module->outputPicture.width * _module->outputPicture.height) > 0)
-			output_image.assign(_module->outputPicture.imageInfo, _module->outputPicture.imageInfo+picure_size);
+			output_image.Modify([&](std::vector<unsigned char>& self){self.assign(_module->outputPicture.imageInfo, _module->outputPicture.imageInfo+picure_size);});
 
 	}
-	std::cerr << (std::string)identifier << ": " << output_text << " (call interval: " << diffTime << ", compute time: " << computeTime << ")" <<std::endl;
+halt:
+	for (auto& qs : outputQueues)
+		for (auto& q : qs.second)
+			q->WaitForEmpty();
+	
+	for (auto& qs : outputQueues)
+		for (auto& q : qs.second)
+			q->WakeUp();
 
+	//output_text.NonEditable();
+	//std::cerr << (std::string)identifier << ": " << output_text.Get() << " (call interval: " << diffTime << ", compute time: " << computeTime << ")" <<std::endl;
+	//output_text.MakeEditable();
 }
