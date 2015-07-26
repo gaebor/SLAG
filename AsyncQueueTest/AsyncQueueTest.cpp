@@ -3,6 +3,7 @@
 #include "..\Slag\AsyncQueue.h"
 #include <thread>
 #include <windows.h>
+#include <string>
 
 size_t n = 1 << 19;
 size_t sleep_constant = 10000;
@@ -27,82 +28,81 @@ int main(int argc, char* argv[])
 	}
 
 	HighWaterQueue* queue;
-	size_t i, j;
+	size_t j;
 
-	LARGE_INTEGER freq, time1, time2;
+	LARGE_INTEGER freq, timeStart, timePush, timeConsume;
 	QueryPerformanceFrequency(&freq);
 
 	if (run & 1)
 	{
 		queue = new HighWaterQueue();
 		size_t absTime1, absTime2;
-		QueryPerformanceCounter(&time1);
+		QueryPerformanceCounter(&timeStart);
 
-		for ( i = 0; i < n; ++i)
+		for ( size_t i = 0; i < n; ++i)
 		{
 			queue->EnQueue(i);
 		}
 
-		QueryPerformanceCounter(&time2);
-		std::cout << i<< " element enqueued in " << (absTime1 = ((time2.QuadPart-time1.QuadPart)*1000) / freq.QuadPart) << " ms" << std::endl;
+		QueryPerformanceCounter(&timePush);
+		std::cout << n << " element enqueued in " << (absTime1 = ((timePush.QuadPart-timeStart.QuadPart)*1000) / freq.QuadPart) << " ms" << std::endl;
 
-		QueryPerformanceCounter(&time1);
+		QueryPerformanceCounter(&timeStart);
 
-		for (i = 0; i < n; ++i)
+		for (size_t i = 0; i < n; ++i)
 		{
 			queue->DeQueue(i);
 		}
 	
-		QueryPerformanceCounter(&time2);
-		std::cout << i<< " element dequeued in " << (absTime2 = ((time2.QuadPart-time1.QuadPart)*1000) / freq.QuadPart) << " ms" << std::endl;
+		QueryPerformanceCounter(&timeConsume);
+		std::cout << n << " element dequeued in " << (absTime2 = ((timeConsume.QuadPart-timeStart.QuadPart)*1000) / freq.QuadPart) << " ms" << std::endl;
 		std::cout << "total time: " << absTime1 + absTime2 << " ms\n" << std::endl;
 		delete queue;
 	}
 	if (run & 2)
 	{
 		queue = new HighWaterQueue();
-		QueryPerformanceCounter(&time1);
+		QueryPerformanceCounter(&timeStart);
 
-		for (i = 0; i < n; ++i)
+		for (size_t i = 0; i < n; ++i)
 		{
 			queue->EnQueue(i);
 
 			queue->DeQueue(j);
 
 		}
-		QueryPerformanceCounter(&time2);
-		std::cout << i<< " element processed in " << ((time2.QuadPart-time1.QuadPart)*1000) / freq.QuadPart << " ms\n" << std::endl;
+		QueryPerformanceCounter(&timePush);
+		std::cout << n << " element processed in " << ((timePush.QuadPart-timeStart.QuadPart)*1000) / freq.QuadPart << " ms\n" << std::endl;
 
 		delete queue;
 	}
 	if (run & 4)
 	{
 		queue = new HighWaterQueue();
-		QueryPerformanceCounter(&time1);
+		size_t consumed = 0;
+		QueryPerformanceCounter(&timeStart);
 		std::thread pusher([&]()
 		{
-			for (i=0; i < n; ++i)
+			for (size_t i=0; i < n; ++i)
 			{
 				queue->EnQueue(i);
 				if ((sleep_constant) != 0 && (i % sleep_constant == 0))
 					Sleep(1);
 			}
 		});
-
 		std::thread consumer([&]()
 		{
 			for (; true;)
 			{
 				if (!queue->DeQueue(j))
 					break;
+				++consumed;
 				//Sleep(1);//std::cout << "ok"<<std::endl;
 			}
 		});
 
 		pusher.join();
-		QueryPerformanceCounter(&time2);
-
-		std::cout << "pushing ended in " << ((time2.QuadPart-time1.QuadPart)*1000) / freq.QuadPart << " ms" << std::endl;
+		QueryPerformanceCounter(&timePush);
 
 		size_t dropped = 0;
 		if (force_halt)
@@ -110,15 +110,92 @@ int main(int argc, char* argv[])
 		else
 			queue->WaitForEmpty();
 
-		QueryPerformanceCounter(&time2);
-		std::cout << "receiving ended in " << ((time2.QuadPart-time1.QuadPart)*1000) / freq.QuadPart << " ms" << std::endl;
+		QueryPerformanceCounter(&timeConsume);
+
+		std::cout << "pushing ended in " << ((timePush.QuadPart-timeStart.QuadPart)*1000) / freq.QuadPart << " ms" << std::endl;
+		std::cout << "receiving ended in " << ((timeConsume.QuadPart-timeStart.QuadPart)*1000) / freq.QuadPart << " ms" << std::endl;
 
 		queue->WakeUpIfEmpty();
 
 		consumer.join();
 
-		std::cout << i << " elements has been queued and " << j << " has been dequeued\nhighwater was " << (double)queue->GetHighWater()*100 / i << "%" << std::endl;
-		std::cout << "dropped " << dropped << " elements" << std::endl;
+		std::cout << n << " elements has been queued and " << consumed << " has been dequeued" << std::endl;
+		std::cout << "highwater was " << (double)queue->GetHighWater()*100 / n << "%" << std::endl;
+		std::cout << "dropped " << dropped << " elements\n" << std::endl;
+
+		delete queue;
+	}
+	if (run & 8)
+	{
+		queue = new HighWaterQueue();
+		size_t consumed1 = 0, consumed2 = 0, j2;
+
+		QueryPerformanceCounter(&timeStart);
+		std::thread pusher1([&]()
+		{
+			for (size_t i=0; i < n/2; ++i)
+			{
+				queue->EnQueue(i);
+				if ((sleep_constant) != 0 && (i % sleep_constant == 0))
+					Sleep(1);
+			}
+		});
+		std::thread pusher2([&]()
+		{
+			for (size_t i=n/2; i < n; ++i)
+			{
+				queue->EnQueue(i);
+				if ((sleep_constant) != 0 && (i % sleep_constant == 0))
+					Sleep(1);
+			}
+		});
+
+		std::thread consumer1([&]()
+		{
+			for (; true;)
+			{
+				if (!queue->DeQueue(j))
+					break;
+				++consumed1;
+					//Sleep(1);//std::cout << "ok"<<std::endl;
+			}
+		});
+
+		std::thread consumer2([&]()
+		{
+			for (; true;)
+			{
+				if (!queue->DeQueue(j2))
+					break;
+				++consumed2;
+				//Sleep(1);//std::cout << "ok"<<std::endl;
+			}
+		});
+
+		pusher1.join();
+		pusher2.join();
+
+		QueryPerformanceCounter(&timePush);
+
+		size_t dropped = 0;
+		if (force_halt)
+			dropped = queue->WakeUp();
+		else
+			queue->WaitForEmpty();
+
+		QueryPerformanceCounter(&timeConsume);
+		
+		std::cout << "pushing ended in " << ((timePush.QuadPart-timeStart.QuadPart)*1000) / freq.QuadPart << " ms" << std::endl;
+		std::cout << "receiving ended in " << ((timeConsume.QuadPart-timeStart.QuadPart)*1000) / freq.QuadPart << " ms" << std::endl;
+
+		queue->WakeUpIfEmpty();
+
+		consumer1.join();
+		consumer2.join();
+
+		std::cout << n << " elements has been queued and " << consumed1 << "+" << consumed2 << "=" << consumed1+consumed2 << " elmenents has been dequeued" << std::endl;
+		std::cout << "highwater was " << (double)queue->GetHighWater()*100 / n << "%" << std::endl;
+		std::cout << "dropped " << dropped << " elements\n" << std::endl;
 
 		delete queue;
 	}

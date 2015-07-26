@@ -12,7 +12,7 @@ class AsyncQueue
 private:
 	typedef Poco::ScopedLock<Poco::Mutex> AutoLock;
 public:
-	AsyncQueue(void): _content(true), _empty(false), highWater(0){}
+	AsyncQueue(void): _content(false), _empty(false), highWater(0){}
 	~AsyncQueue(void){}
 
 	void EnQueue(const _Ty& element)
@@ -75,6 +75,7 @@ private:
 		if (_queue.empty())
 		{
 			_empty.set();
+			_content.reset();
 			//printf("1\n");
 			return false;
 		}
@@ -83,10 +84,10 @@ private:
 		if (_queue.empty())
 		{
 			_empty.set();
+			_content.reset();
 			//printf("2\n");
 		}
-		else
-			_content.set();
+		
 		return true;
 	}
 	size_t highWater;
