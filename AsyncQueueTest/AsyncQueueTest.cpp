@@ -52,6 +52,7 @@ int main(int argc, char* argv[])
 	if (run & 1)
 	{
 		size_t absTime1, absTime2;
+		size_t outputCount = 0;
 		QueryPerformanceCounter(&timeStart);
 
 		for ( size_t i = 0; i < n; ++i)
@@ -64,13 +65,14 @@ int main(int argc, char* argv[])
 
 		QueryPerformanceCounter(&timeStart);
 
-		for (size_t i = 0; i < n; ++i)
+		while (queue.GetSize() > 0)
 		{
-			queue.DeQueue(output1);
+			if (queue.DeQueue(output1))
+				++outputCount;
 		}
 	
 		QueryPerformanceCounter(&timeConsume);
-		std::cout << n << " element dequeued in " << (absTime2 = ((timeConsume.QuadPart-timeStart.QuadPart)*1000) / freq.QuadPart) << " ms" << std::endl;
+		std::cout << outputCount << " element dequeued in " << (absTime2 = ((timeConsume.QuadPart-timeStart.QuadPart)*1000) / freq.QuadPart) << " ms" << std::endl;
 		std::cout << "total time: " << absTime1 + absTime2 << " ms\n" << std::endl;
 		queue.Reset();
 	}
@@ -123,15 +125,13 @@ int main(int argc, char* argv[])
 		else
 			queue.WaitForEmpty();
 
+		queue.WakeUpIfEmpty();
+		consumer.join();
+
 		QueryPerformanceCounter(&timeConsume);
 
 		std::cout << "pushing ended in " << ((timePush.QuadPart-timeStart.QuadPart)*1000) / freq.QuadPart << " ms" << std::endl;
 		std::cout << "receiving ended in " << ((timeConsume.QuadPart-timeStart.QuadPart)*1000) / freq.QuadPart << " ms" << std::endl;
-
-		queue.WakeUpIfEmpty();
-
-		consumer.join();
-
 		std::cout << n << " elements has been queued and " << consumed << " has been dequeued" << std::endl;
 		std::cout << "highwater was " << (double)queue.GetHighWater()*100 / n << "%" << std::endl;
 		std::cout << "dropped " << dropped << " elements\n" << std::endl;

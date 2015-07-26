@@ -16,12 +16,73 @@
 #include "ModuleWrapper.h"
 #include "HumanReadable.h"
 
+bool run = true; //signaling the visualizer
+
+void visualizer(std::map<ModuleIdentifier, std::shared_ptr<ModuleWrapper>>& modules, int speed = 0)
+{
+	HANDLE hStdOut = GetStdHandle(STD_OUTPUT_HANDLE);
+	COORD coord;
+	coord.X = coord.Y = 0;
+
+	size_t nameOffset = 0;
+	for (auto& m : modules)
+	{
+		nameOffset = std::max(nameOffset, std::string(m.first).size());
+	}
+
+	std::vector<std::string> names;
+	for (auto& m : modules)
+	{
+		auto name = (std::string)m.first;
+		name += std::string(name.size()+1-nameOffset, ' ');
+		names.push_back( name );
+	}
+
+	auto internal_func = [&]()
+	{
+		system("cls");
+		SetConsoleCursorPosition(hStdOut, coord);
+		auto nameIt = names.begin();
+		for (auto& m : modules)
+		{
+			char line[1024];
+			m.second->diffTime.NonEditable();
+			print_humanreadable_time(line, 1024, m.second->diffTime.Get().first);
+			printf("%s|%s|%7.3f%%|", (nameIt++)->c_str(), line, 100*(m.second->diffTime.Get().second)/(m.second->diffTime.Get().first));
+			m.second->diffTime.MakeEditable();
+
+			m.second->output_text.NonEditable();
+			std::cout << m.second->output_text.Get() << "\n";
+			m.second->output_text.Set() = "";
+			m.second->output_text.MakeEditable();
+
+			m.second->bufferSize.NonEditable();
+			for (auto& q : m.second->bufferSize.Get())
+			{
+				print_humanreadable_giga(line, 1024, q.second);
+				printf("\t%s|%d\n", line, q.first);
+			}
+			m.second->bufferSize.MakeEditable();
+		}
+	};
+
+	while (run)
+	{	
+		internal_func();
+		Sleep(speed);
+	}
+	internal_func();
+}
+
 int main(int argc, char* argv[])
 {
 
 	Factory factory;
 	std::list<std::unique_ptr<MessageQueue>> messageQueues;
 	std::map<ModuleIdentifier, std::shared_ptr<ModuleWrapper>> modules;
+	MessageQueue::LimitBehavior queueBehavior = MessageQueue::None;
+	size_t queueLimit = std::numeric_limits<size_t>::max();
+	int vizualizationSpeed;
 
 	if (argc < 2)
 	{
@@ -39,6 +100,23 @@ int main(int argc, char* argv[])
 	{
 		std::cerr << "graph definition xml should contain a \"Modules\" node with a list of modules" << std::endl;
 		return -1;
+	}
+
+	//global settings
+	for (auto setting : fs["Graph"])
+	{
+		if (setting.name() == "QueueBehavior")
+		{
+			if (setting.operator std::string() == "Wait")
+				queueBehavior = MessageQueue::Wait;
+			else if (setting.operator std::string() == "Drop")
+				queueBehavior = MessageQueue::Drop;
+			else
+				queueBehavior = MessageQueue::None;
+		}else if (setting.name() == "QueueLimit")
+			queueLimit = setting.operator int();
+		else if (setting.name() == "VisualizationDelay")
+			vizualizationSpeed = setting.operator int();
 	}
 
 	std::map<std::string, ModuleIdentifier> moduleIdentifiers;
@@ -157,6 +235,8 @@ int main(int argc, char* argv[])
 
 		messageQueues.emplace_back(new MessageQueue());
 		auto newMessageQueue = messageQueues.back().get();
+		newMessageQueue->limitBehavior = queueBehavior;
+		newMessageQueue->queueLimit = queueLimit;
 
 		modules[fromModule.module]->outputQueues[fromModule.port].push_back(newMessageQueue);
 		modules[toModule.module]->inputQueues[toModule.port] = newMessageQueue;
@@ -170,36 +250,6 @@ int main(int argc, char* argv[])
 		return -1;
 	}
 
-	////
-	//while (cv::waitKey(1) != 27)
-	//{
-	//	for (auto& buffer: buffers)
-	//		if (buffer.second.ready())
-	//		{
-	//			ManegedMessage message;
-	//			buffer.second.pop(message);
-	//			std::vector<slag::Message* const> assembledMessage(1);
-	//			assembledMessage[0] = message.get();
-
-	//			slag::Module* sender = modules[buffer.first.module].get();
-
-	//			auto result = sender->Compute(&assembledMessage[0]);
-
-	//			//TODO result leak
-
-	//			VisualizeResult(sender);
-	//		}
-	//	//do process
-
-	//	cv::imshow("SLAG", gui);
-	//}
-
-	//// stop graph
-	//for (auto& source : sources)
-	//{
-	//	source.second->Stop();
-
-	//}
 	std::vector<std::shared_ptr<std::thread>> moduleThreads(modules.size());
 	auto threadIt = moduleThreads.begin();
 	for (auto m : modules)
@@ -208,56 +258,7 @@ int main(int argc, char* argv[])
 		++threadIt;
 	}
 
-	bool run = true;
-	std::thread visualizer([&]()
-	{
-		HANDLE hStdOut = GetStdHandle(STD_OUTPUT_HANDLE);
-		COORD coord;
-		coord.X = coord.Y = 0;
-
-		size_t nameOffset = 0;
-		for (auto& m : modules)
-		{
-			nameOffset = std::max(nameOffset, std::string(m.first).size());
-		}
-		
-		std::vector<std::string> names;
-		for (auto& m : modules)
-		{
-			auto name = (std::string)m.first;
-			name += std::string(name.size()+1-nameOffset, ' ');
-			names.push_back( name );
-		}
-
-		while (run)
-		{	
-			system("cls");
-			SetConsoleCursorPosition(hStdOut, coord);
-			auto nameIt = names.begin();
-			for (auto& m : modules)
-			{
-				char line[1024];
-				m.second->diffTime.NonEditable();
-				print_humanreadable_time(line, 1024, m.second->diffTime.Get().first);
-				printf("%s|%s|%7.3f%%|", (nameIt++)->c_str(), line, 100*(m.second->diffTime.Get().second)/(m.second->diffTime.Get().first));
-				m.second->diffTime.MakeEditable();
-
-				m.second->output_text.NonEditable();
-				std::cout << m.second->output_text.Get() << "\n";
-				m.second->output_text.Set() = "";
-				m.second->output_text.MakeEditable();
-
-				m.second->bufferSize.NonEditable();
-				for (auto& q : m.second->bufferSize.Get())
-				{
-					print_humanreadable_giga(line, 1024, q.second);
-					printf("\t%s|%d\n", line, q.first);
-				}
-				m.second->bufferSize.MakeEditable();
-			}
-			//Sleep(100);
-		}
-	});
+	std::thread visualizer_thread(visualizer, modules, vizualizationSpeed);
 
 	threadIt = moduleThreads.begin();
 	for (threadIt = moduleThreads.begin(); threadIt != moduleThreads.end(); ++threadIt)
@@ -267,7 +268,7 @@ int main(int argc, char* argv[])
 
 	run = false;
 
-	visualizer.join();
+	visualizer_thread.join();
 
 	return 0;
 }

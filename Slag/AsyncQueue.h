@@ -145,4 +145,3 @@ private:
 	Poco::Mutex _mutex;
 	Container _queue;
 };
-

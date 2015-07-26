@@ -27,8 +27,8 @@ public:
 public:
 	std::vector<std::string> settings;
 	ModuleIdentifier identifier;
-	//non-responsible for MessageQueues
-	std::map<PortNumber, MessageQueue*> inputQueues;
+	// TODO async and sync inputs
+	std::map<PortNumber, MessageQueue*> inputQueues; //!< non-responsible for MessageQueues
 	std::map<PortNumber, std::vector<MessageQueue*>> outputQueues; //!< output can be duplicated and distributed to many modules
 	size_t inputPortLength;
 
