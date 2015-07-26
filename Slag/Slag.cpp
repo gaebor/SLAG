@@ -17,10 +17,8 @@ int main(int argc, char* argv[])
 {
 
 	Factory factory;
-	ModuleWrapper* module_array;
-	size_t moduleNumber = 0;
-	MessageQueue* messageQueue_array;
-	size_t messageQueueNumber = 0;
+	std::list<std::unique_ptr<MessageQueue>> messageQueues;
+	std::map<ModuleIdentifier, std::shared_ptr<ModuleWrapper>> modules;
 
 	if (argc < 2)
 	{
@@ -34,106 +32,135 @@ int main(int argc, char* argv[])
 		std::cerr << "Cannot read \"" << argv[1] << '\"' << std::endl;
 		return 0;
 	}
+	if (!fs["Modules"].isSeq())
+	{
+		std::cerr << "graph definition xml should contain a \"Modules\" node with a list of modules" << std::endl;
+		return -1;
+	}
 
-	std::map<ModuleIdentifier, ModuleWrapper*> modules;
-	moduleNumber = fs["Modules"].size();
-	module_array = new ModuleWrapper[moduleNumber]();
-	auto module_ptr = module_array;
+	std::map<std::string, ModuleIdentifier> moduleIdentifiers;
 
+	//instantiate modules
 	for (auto node : fs["Modules"])
 	{
 		std::string moduleName = node["Name"];
-		auto it = modules.insert(std::make_pair(ModuleIdentifier(moduleName.c_str()), module_ptr++));
-		if (!it.second)
+		if (moduleName.empty())
 		{
-			std::cerr << "Module \"" << moduleName << "\" appears more than once in module list!" << std::endl;
-			return 0;
-		}
-
-		auto moduleWrapper = it.first->second;
-		if (!moduleWrapper->Initialize(node, factory))
-		{
-			std::cerr << "Couldn't initialize module \"" << moduleName << "\"!" << std::endl;
+			std::cerr << "module should have a non-empty \"Name\"!" << std::endl;
 			return -1;
-		}	
+		}
+		ModuleIdentifier moduleId(moduleName.c_str());
+		auto result = factory.InstantiateModule(moduleId);
+		switch (result.second)
+		{
+		case Factory::Duplicate:
+			std::cerr << "More than one library can instantiate module \"" << (std::string)moduleId << "\", the one in \"" << moduleId.actual_dll << "\" will be used!" << std::endl;
+		case Factory::Success:
+			{
+			auto it = modules.find(moduleId);
+			if (it != modules.end())
+			{
+				std::cerr << "Module \"" << (std::string)moduleId << "\" from library \"" << moduleId.actual_dll << "\" has been loaded more than once!" << std::endl;
+				return 0;
+			}
+			modules[moduleId].reset(new ModuleWrapper(result.first));
+			if (!(modules[moduleId]->Initialize(node)))
+			{
+				std::cerr << "Module \"" << (std::string)moduleId << "\" cannot be initialized!" << std::endl;
+				return 0;
+			}
+			moduleIdentifiers[moduleName] = moduleId;
+			modules[moduleId]->identifier = moduleId;
+			}break;
+		case Factory::NoSuchLibrary:
+			{
+				std::cerr << "No library \"" << moduleId.dll << "\" to instantiate Module \"" << (std::string)moduleId << "\"!" << std::endl;
+				return -1;
+			}break;
+		case Factory::CannotInstantiateByLibrary:
+			{
+				std::cerr << "The library \"" << moduleId.dll << "\" cannot instantiate Module \"" << (std::string)moduleId << "\"!" << std::endl;
+				return -1;
+			}break;
+		case Factory::CannotInstantiate:
+			{
+				std::cerr << "Module \"" << (std::string)moduleId << "\" cannot be instantiated!" << std::endl;
+				return -1;
+			}break;
+		}
 	}
 
 	//read port connections topology
-	std::map<ModuleIdentifier, std::set<PortNumber>> inputPorts;
+
+	//the key is the input port (destination), because a destination can receive only from one source!
+	//the mapped value is the output port (source), one source can send to many destinations
+	std::map<std::string,PortIdentifier> connections;
 	
 	for (auto node : fs["Modules"])
 	{
-		std::string moduleName = node["Name"];
-		ModuleIdentifier moduleId(moduleName.c_str());
-		for (auto& synced : node["Outputs"])
+		const auto& fromModuleId = moduleIdentifiers[node["Name"]];
+		auto outputNode = node["Outputs"];
+
+		if (outputNode.isString())
 		{
-			std::string idStr(synced);
-			PortIdentifier portId(idStr.c_str());
-			auto moduleIt = modules.find(portId.module);
-			if (moduleIt != modules.end())
+			connections.insert(std::pair<std::string, PortIdentifier>(outputNode, PortIdentifier(fromModuleId,0)));
+		}
+		else if (outputNode.isSeq())
+		{
+			PortNumber fromPort = 0;
+			for (auto& output : outputNode)
 			{
-				//inputPorts[portId.module].insert(portId.port);
-				//modules[portId.module]->inputQueues.resize(portId.port+1, nullptr);
-				++messageQueueNumber;
-			}else
-			{
-				//skip output port (data goes down the toilet)
+				connections.insert(std::make_pair(output, PortIdentifier(fromModuleId,fromPort)));
+				++fromPort;
 			}
+		}else for (auto& output : outputNode)
+		{
+			std::string outputNodeName = output.name();
+			if (outputNodeName[0] != '_')
+			{
+				std::cerr << "output port number should be preceded by underscore in \"" << (std::string)fromModuleId <<  std::endl;
+				return -1;
+ 			}
+			PortNumber fromPort = atoi(outputNodeName.substr(1).c_str());
+			PortIdentifier portId(std::string(output).c_str());
+			if (output.isSeq())
+			{
+				for (auto& port : output)
+				{
+					connections.insert(std::make_pair(port, PortIdentifier(fromModuleId,fromPort)));
+				}
+			}else
+				connections.insert(std::make_pair(output, PortIdentifier(fromModuleId,fromPort)));
 		}
 	}
 
-	//// check that the input ports are aligned correctly
-	//for (const auto& ports : inputPorts)
-	//{
-	//	const std::string moduleId = ports.first;
-	//	int output_port = 0;
-	//	for (auto port : ports.second)
-	//	{
-	//		if (port != output_port)
-	//		{
-	//			std::cerr << "The " << output_port << "th input port of module \"" << moduleId << "\" is empty!" << std::endl;
-	//			return -1;
-	//		}
-	//		++output_port;
-	//	}
-	//}
-
-	//allocate input ports
-	messageQueue_array = new MessageQueue[messageQueueNumber]();
-	auto queuePtr = messageQueue_array;
+	//purge bad connections
+	std::map<PortIdentifier, PortIdentifier> checked_connections;
+	for (const auto& connection : connections)
+	{
+		const auto colon_pos = connection.first.find(':');
+		const auto toModuleStr = connection.first.substr(0,colon_pos);
+		const auto toPort = colon_pos == std::string::npos ? 0 : atoi(connection.first.substr(colon_pos+1).c_str());
+		if (moduleIdentifiers.find(toModuleStr) != moduleIdentifiers.end())
+			checked_connections.emplace(PortIdentifier(moduleIdentifiers[toModuleStr], toPort),connection.second);
+			//automatically overrides duplicate inputs
+	}
 
 	//actually connect the output and input ports
-	for (auto node : fs["Modules"])
+	for (auto connection : checked_connections)
 	{
-		std::string moduleName = node["Name"];
-		ModuleIdentifier moduleId(moduleName.c_str());
-		PortNumber portNumber = 0;
-		for (auto& synced : node["Outputs"])
-		{
-			std::string idStr(synced);
-			PortIdentifier portId(idStr.c_str());
-			if (modules.find(portId.module) != modules.end())
-			{
-				modules[moduleId]->outputQueues[portNumber] = queuePtr;
-				modules[portId.module]->inputQueues[portId.port] = queuePtr;
-				++queuePtr;
-			}else
-			{
+		const auto& toModule = connection.first;
+		const auto& fromModule = connection.second;
 
-			}
-			++portNumber;
-		}
-		modules[moduleId]->outputPortLength = portNumber;
+		messageQueues.emplace_back(new MessageQueue());
+		auto newMessageQueue = messageQueues.back().get();
+
+		modules[fromModule.module]->outputQueues[fromModule.port].push_back(newMessageQueue);
+		modules[toModule.module]->inputQueues[toModule.port] = newMessageQueue;
+
+		auto& inputLength = modules[toModule.module]->inputPortLength;
+		inputLength = std::max(inputLength, toModule.port+(size_t)1);
 	}
-
-	for (auto m : modules)
-	{
-		PortNumber i = 0;
-		for (auto q : m.second->inputQueues)
-			i = std::max(i,q.first+1);
-		m.second->inputPortLength = i;
-	}
-
 	}catch(std::exception& e)
 	{
 		std::cerr << e.what() << std::endl;
@@ -170,14 +197,19 @@ int main(int argc, char* argv[])
 	//	source.second->Stop();
 
 	//}
-
-	for (int i = 0; i < moduleNumber; ++i)
+	std::vector<std::shared_ptr<std::thread>> moduleThreads(modules.size());
+	auto threadIt = moduleThreads.begin();
+	for (auto m : modules)
 	{
-		module_array[i].ThreadProcedure();
+		threadIt->reset(new std::thread([](ModuleWrapper* _m){_m->ThreadProcedure();}, m.second.get()));
+		++threadIt;
 	}
 
-	delete [] messageQueue_array;
-	delete [] module_array;
+	threadIt = moduleThreads.begin();
+	for (threadIt = moduleThreads.begin(); threadIt != moduleThreads.end(); ++threadIt)
+	{
+		(*threadIt)->join();
+	}
 
 	return 0;
 }

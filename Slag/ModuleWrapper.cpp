@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <set>
+#include <algorithm>
 
 #include "Factory.h"
 #include "Timer.h"
@@ -12,24 +13,13 @@ ModuleWrapper::~ModuleWrapper(void)
 }
 
 ModuleWrapper::ModuleWrapper(slag::Module* m)
-	: inputPortLength(0), outputPortLength(0)
+	: inputPortLength(0)
 {
 	_module.reset(m);
 }
 
-bool ModuleWrapper::Initialize( cv::FileNode node, const Factory& factory)
+bool ModuleWrapper::Initialize( cv::FileNode node)
 {
-	if (!node["Name"].isString())
-	{
-		return false;
-	}
-
-	std::string name = node["Name"];
-	
-	identifier.assign(name.c_str());
-	//Instantiate
-	_module.reset(factory.InstantiateModule(identifier));
-
 	if (_module.get() != nullptr)
 	{
 		settings.push_back(identifier);
@@ -53,51 +43,34 @@ bool ModuleWrapper::Initialize( cv::FileNode node, const Factory& factory)
 		for (const auto& setting : settings)
 			settings_array.push_back(setting.c_str());
 		//Initialize
-		if (!(_module.get()->Initialize(settings_array.size(), settings_array.data())))
-		{
-			_module.release();
-		}else
-		{
-			return true;
-		}
+		return _module->Initialize(settings_array.size(), settings_array.data());
 	}
 	return false;
 }
 
 void ModuleWrapper::ThreadProcedure()
 {
-	std::vector<slag::Message*> inputMessages(inputPortLength);
+	std::vector<slag::Message*> inputMessages(inputPortLength, nullptr);
 	slag::Message** outputMessages_raw;
-	std::set<slag::Message*> depricatedMessages;
-	bufferSize.resize(inputPortLength, 0);
 
+	std::vector<ManagedMessage> receivedMessages;
+	
 	//TODO more reference counting
 	Timer timer;
 	while (true)
 	{
-		depricatedMessages.clear();
-		PortNumber holePortNumber = 0;
-
 		//manage input data
 		for (auto& q : inputQueues)
 		{
-			for (int i = holePortNumber; i < q.first; ++i)
-			{//fill the holes with nullptr
-				inputMessages[i]= nullptr;
-			}
-			holePortNumber = q.first+1;
+			ManagedMessage input;
 
-			if (!q.second->DeQueue(inputMessages[q.first]))
+			if (!q.second->DeQueue(input))
 				return;
 
-			depricatedMessages.insert(inputMessages[q.first]);
-			bufferSize[q.first] = q.second->GetSize();
+			inputMessages[q.first] = input.get();
+			receivedMessages.push_back(input);
 		}
-		for (int i = holePortNumber; i < inputPortLength; ++i)
-		{//fill with nullptr
-			inputMessages[i]= nullptr;
-		}
-
+		
 		PortNumber outputNumber;
 		diffTime = timer.Tock();
 		timer.Tick();
@@ -106,26 +79,43 @@ void ModuleWrapper::ThreadProcedure()
 
 		//manage output data
 		if (outputMessages_raw == nullptr)
-			return;
+			break; //TODO handle halt signals
+
+		auto outputIt = outputQueues.begin();
 		for (PortNumber i = 0; i < outputNumber; ++i)
 		{
-			auto it = outputQueues.find(i);
-			if (it != outputQueues.end())
+			auto messagePtr = outputMessages_raw[i];
+			ManagedMessage managedOutput;
+			auto inputIt = std::find_if(receivedMessages.begin(), receivedMessages.end(), [&](const ManagedMessage& m){return m.get()==messagePtr;});
+			if (inputIt != receivedMessages.end())
 			{
-				it->second->EnQueue(outputMessages_raw[i]);
-				depricatedMessages.erase(outputMessages_raw[i]);
+				managedOutput = *inputIt;
+			}else
+			{
+				managedOutput.reset(messagePtr);
 			}
-			else
-				depricatedMessages.insert(outputMessages_raw[i]);
+
+			outputIt = outputQueues.find(i);
+			if (outputIt != outputQueues.end())
+			{
+				for (auto out : outputIt->second)
+				{
+					out->EnQueue(managedOutput);
+				}
+			}
 		}
-		for (auto m : depricatedMessages)
-			delete m;
+		receivedMessages.clear();
 
 		//visualization
+		for (const auto& q : inputQueues)
+		{
+			bufferSize[q.first] = q.second->GetSize();
+		}
+
 		if (_module->outputText != nullptr)
 		{
 			output_text = _module->outputText;
-			std::cerr << (std::string)identifier << ": " << output_text << " (call interval: " << diffTime << ", compute time: " << computeTime << ")" <<std::endl;
+			//std::cerr << (std::string)identifier << ": " << output_text << " (call interval: " << diffTime << ", compute time: " << computeTime << ")\n";
 		}
 
 		size_t picure_size = 0;
@@ -133,5 +123,6 @@ void ModuleWrapper::ThreadProcedure()
 			output_image.assign(_module->outputPicture.imageInfo, _module->outputPicture.imageInfo+picure_size);
 
 	}
+	std::cerr << (std::string)identifier << ": " << output_text << " (call interval: " << diffTime << ", compute time: " << computeTime << ")" <<std::endl;
 
 }

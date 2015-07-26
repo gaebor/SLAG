@@ -15,6 +15,7 @@ struct ModuleIdentifier
 	std::string dll;
 	operator std::string ()const;
 	bool operator< (const ModuleIdentifier& other)const;
+	std::string actual_dll;
 };
 
 typedef int PortNumber;

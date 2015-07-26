@@ -16,8 +16,16 @@ public:
 	Factory();
 	~Factory();
 
+	enum ErrorCode
+	{
+		Success, //!< module is ready to go
+		Duplicate, //!< more than one library was able to instantiate the requested module, the first one was used
+		CannotInstantiate, //!< no library could instantiate your module
+		NoSuchLibrary, //!<< the requested library cannot be found
+		CannotInstantiateByLibrary //!<< the requested library couldn't instantiate your module
+	};
 public:
-	slag::Module* InstantiateModule(const ModuleIdentifier& moduleId)const;
+	std::pair<slag::Module*, ErrorCode> InstantiateModule(ModuleIdentifier& moduleId)const;
 
 private:
 	static const std::string extension;

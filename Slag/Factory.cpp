@@ -53,9 +53,9 @@ Factory::Factory()
 	}
 }
 
-slag::Module* Factory::InstantiateModule(const ModuleIdentifier& moduleId)const
+std::pair<slag::Module*, Factory::ErrorCode> Factory::InstantiateModule(ModuleIdentifier& moduleId)const
 {
-	slag::Module* result = nullptr;
+	std::pair<slag::Module*, ErrorCode> result(nullptr, CannotInstantiate);
 
 	if (moduleId.dll.empty())
 	{// find out which dll can instantiate it
@@ -63,16 +63,18 @@ slag::Module* Factory::InstantiateModule(const ModuleIdentifier& moduleId)const
 		{
 			//instantiate module
 			auto module = (f.second)(moduleId.name.c_str(), moduleId.instance.c_str());
-			if (result && module)
+			if (result.first && module)
 			{
 				std::cerr << "Module \"" << (std::string)moduleId << "\" appears more than once! Found again in \"" << f.first << "\"" << std::endl;
 				std::cerr << "Using first match instead" << std::endl;
 				//throw out duplicated module
 				std::shared_ptr<slag::Module> garbageCollector(module);
+				result.second = Duplicate;
 			}else if (module)
 			{
-				result = module;
-				//moduleId.dll = f.first;
+				result.first = module;
+				result.second = Success;
+				moduleId.actual_dll = f.first;
 			}
 		}
 	}else
@@ -83,11 +85,14 @@ slag::Module* Factory::InstantiateModule(const ModuleIdentifier& moduleId)const
 			auto module = (moduleFactory->second)(moduleId.name.c_str(), moduleId.instance.c_str());
 			if (module)
 			{
-				result = module;
-			}
-		}
+				result.first = module;
+				moduleId.actual_dll = moduleFactory->first;
+				result.second = Success;
+			}else
+				result.second = CannotInstantiateByLibrary;
+		}else
+			result.second = NoSuchLibrary;
 	}
-	//may be null
 	return result;
 }
 

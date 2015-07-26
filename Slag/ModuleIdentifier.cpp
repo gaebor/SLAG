@@ -27,7 +27,12 @@ ModuleIdentifier::operator std::string() const
 
 bool ModuleIdentifier::operator<( const ModuleIdentifier& other ) const
 {
-	return (operator std::string()) < (std::string)other;
+	if (actual_dll != other.actual_dll)
+		return actual_dll < other.actual_dll;
+	else if (name != other.name)
+		return name < other.name;
+	else
+		return instance < other.instance;
 }
 
 ModuleIdentifier& ModuleIdentifier::assign( const std::string& n, const std::string& i /*= ""*/, const std::string& d /*= ""*/ )
@@ -35,6 +40,7 @@ ModuleIdentifier& ModuleIdentifier::assign( const std::string& n, const std::str
 	name = n;
 	instance = i;
 	dll = d;
+	actual_dll = "";
 	return *this;
 }
 

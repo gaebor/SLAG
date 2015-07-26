@@ -10,7 +10,8 @@
 #include "ModuleIdentifier.h"
 #include "Factory.h"
 
-typedef AsyncQueue<slag::Message*> MessageQueue;
+typedef std::shared_ptr<slag::Message> ManagedMessage;
+typedef AsyncQueue<ManagedMessage> MessageQueue;
 
 class ModuleWrapper
 {
@@ -18,21 +19,22 @@ public:
 	ModuleWrapper(slag::Module* module = nullptr);
 	~ModuleWrapper();
 
-	bool Initialize(cv::FileNode node, const Factory& factory);
+	bool Initialize(cv::FileNode node);
 	void ThreadProcedure();
 
 public:
 	std::vector<std::string> settings;
 	ModuleIdentifier identifier;
 	//non-responsible for MessageQueues
-	std::map<PortNumber, MessageQueue*> inputQueues, outputQueues;
-	size_t inputPortLength, outputPortLength;
+	std::map<PortNumber, MessageQueue*> inputQueues;
+	std::map<PortNumber, std::vector<MessageQueue*>> outputQueues; //!< output can be duplicated and distributed to many modules
+	size_t inputPortLength;
 
 	std::string output_text;
 	std::vector<unsigned char> output_image;
 
 	double diffTime, computeTime;
-	std::vector<size_t> bufferSize;
+	std::map<PortNumber, size_t> bufferSize;
 
 private:
 	std::unique_ptr<slag::Module> _module; // non-copyable
