@@ -35,7 +35,7 @@ public:
 	ExclusiveAccess<std::string> output_text;
 	ExclusiveAccess<std::vector<unsigned char>> output_image;
 
-	double diffTime, computeTime;
+	ExclusiveAccess<std::pair<double, double>> diffTime;
 	ExclusiveAccess<std::map<PortNumber, size_t>> bufferSize;
 
 private:

@@ -237,8 +237,11 @@ int main(int argc, char* argv[])
 			for (auto& m : modules)
 			{
 				char line[1024];
-				print_humanreadable_time(line, 1024, m.second->diffTime);
-				printf("%s|%s|%5.3g%%|", (nameIt++)->c_str(), line, 100*(m.second->computeTime)/(m.second->diffTime));
+				m.second->diffTime.NonEditable();
+				print_humanreadable_time(line, 1024, m.second->diffTime.Get().first);
+				printf("%s|%s|%7.3f%%|", (nameIt++)->c_str(), line, 100*(m.second->diffTime.Get().second)/(m.second->diffTime.Get().first));
+				m.second->diffTime.MakeEditable();
+
 				m.second->output_text.NonEditable();
 				std::cout << m.second->output_text.Get() << "\n";
 				m.second->output_text.Set() = "";
@@ -252,7 +255,7 @@ int main(int argc, char* argv[])
 				}
 				m.second->bufferSize.MakeEditable();
 			}
-			Sleep(100);
+			//Sleep(100);
 		}
 	});
 

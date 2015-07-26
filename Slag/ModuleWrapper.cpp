@@ -15,7 +15,7 @@ ModuleWrapper::~ModuleWrapper(void)
 }
 
 ModuleWrapper::ModuleWrapper(slag::Module* m)
-	: inputPortLength(0)
+	: inputPortLength(0), diffTime(std::make_pair(0.0, 0.0))
 {
 	_module.reset(m);
 }
@@ -74,10 +74,13 @@ void ModuleWrapper::ThreadProcedure()
 		}
 		
 		PortNumber outputNumber;
-		diffTime = timer.Tock();
-		timer.Tick();
-		outputMessages_raw = _module->Compute(inputMessages.data(), inputMessages.size(), &outputNumber);
-		computeTime = timer.Tock();
+		diffTime.Modify([&](std::pair<double, double>& self)
+		{
+			self.first = timer.Tock();
+			timer.Tick();
+			outputMessages_raw = _module->Compute(inputMessages.data(), inputMessages.size(), &outputNumber);
+			self.second = timer.Tock();
+		});
 
 		//manage output data
 		if (outputMessages_raw == nullptr)
@@ -130,6 +133,8 @@ void ModuleWrapper::ThreadProcedure()
 
 	}
 halt:
+	diffTime.Modify([&](std::pair<double, double>& self){self.first = timer.Tock();});
+		
 	for (auto& qs : outputQueues)
 		for (auto& q : qs.second)
 			q->WaitForEmpty();
