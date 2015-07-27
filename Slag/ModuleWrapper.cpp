@@ -59,6 +59,8 @@ void ModuleWrapper::ThreadProcedure()
 	
 	//TODO more reference counting
 	Timer timer;
+	double prevTime = 0.0;
+	
 	while (true)
 	{
 		//manage input data
@@ -79,8 +81,9 @@ void ModuleWrapper::ThreadProcedure()
 			self.first = timer.Tock();
 			timer.Tick();
 			outputMessages_raw = _module->Compute(inputMessages.data(), inputMessages.size(), &outputNumber);
-			self.second = timer.Tock();
+			self.second = prevTime;
 		});
+		prevTime = timer.Tock();
 
 		//manage output data
 		if (outputMessages_raw == nullptr)
@@ -133,7 +136,10 @@ void ModuleWrapper::ThreadProcedure()
 
 	}
 halt:
-	diffTime.Modify([&](std::pair<double, double>& self){self.first = timer.Tock();});
+	diffTime.Modify([&](std::pair<double, double>& self)
+	{
+		self.first = timer.Tock();
+	});
 		
 	for (auto& qs : outputQueues)
 		for (auto& q : qs.second)
