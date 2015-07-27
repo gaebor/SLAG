@@ -62,7 +62,7 @@ Factory::ErrorCode Factory::InstantiateModule(ModuleWrapper& moduleWrapper)const
 		for (const auto& f : pModuleFactories)
 		{
 			//instantiate module
-			auto module = (f.second)(moduleId.name.c_str(), moduleId.instance.c_str(), &moduleWrapper.output_text_raw, &moduleWrapper.output_image_raw);
+			auto module = (f.second)(moduleId.name.c_str(), moduleId.instance.c_str(), &moduleWrapper.output_text_raw, &moduleWrapper.output_image_raw, &moduleWrapper.output_image_width, &moduleWrapper.output_image_height);
 			if (module)
 			{
 				result = Success;
@@ -81,7 +81,7 @@ Factory::ErrorCode Factory::InstantiateModule(ModuleWrapper& moduleWrapper)const
 		auto moduleFactory = pModuleFactories.find(moduleId.dll);
 		if (moduleFactory != pModuleFactories.end())
 		{
-			auto module = (moduleFactory->second)(moduleId.name.c_str(), moduleId.instance.c_str(), &moduleWrapper.output_text_raw, &moduleWrapper.output_image_raw);
+			auto module = (moduleFactory->second)(moduleId.name.c_str(), moduleId.instance.c_str(), &moduleWrapper.output_text_raw, &moduleWrapper.output_image_raw, &moduleWrapper.output_image_width, &moduleWrapper.output_image_height);
 			if (module)
 			{
 				moduleWrapper.SetModule(module);

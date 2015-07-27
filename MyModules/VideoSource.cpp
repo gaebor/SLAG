@@ -9,14 +9,13 @@ Frame::~Frame(void)
 {
 }
 
-VideoSource::VideoSource(void): capture(nullptr)
+VideoSource::VideoSource(void)
 {
 }
 
 
 VideoSource::~VideoSource(void)
 {
-	delete capture;
 }
 
 bool VideoSource::Initialize( int settingsc, const char* settingsv[] )
@@ -28,9 +27,8 @@ bool VideoSource::Initialize( int settingsc, const char* settingsv[] )
 		{
 			if (settingsc > i+1)
 			{
-				capture = new cv::VideoCapture(atoi(settingsv[i+1]));
-				if (capture->isOpened())
-					return true;
+				capture.open(atoi(settingsv[++i]));
+				return capture.isOpened();
 			}else
 				return false;
 		}
@@ -38,9 +36,8 @@ bool VideoSource::Initialize( int settingsc, const char* settingsv[] )
 		{
 			if (settingsc > i+1)
 			{
-				capture = new cv::VideoCapture(settingsv[i+1]);
-				if (capture->isOpened())
-					return true;
+				capture.open(std::string(settingsv[++i]));
+				return capture.isOpened();
 			}else
 				return false;
 		}
@@ -51,7 +48,7 @@ bool VideoSource::Initialize( int settingsc, const char* settingsv[] )
 slag::Message** VideoSource::Compute( slag::Message** input, int inputPortNumber, int* outputPortNumber )
 {
 	auto output = new Frame();
-	*capture >> output->image;
+	capture >> output->image;
 
 	if (output->image.empty())
 	{
@@ -60,9 +57,9 @@ slag::Message** VideoSource::Compute( slag::Message** input, int inputPortNumber
 		*outputPortNumber =	0;
 		return nullptr;
 	}
-	outputPicture->width = output->image.cols;
-	outputPicture->height = output->image.rows;
-	outputPicture->imageInfo = output->image.data;
+	*outputPictureWidth = output->image.cols;
+	*outputPictureHeight = output->image.rows;
+	*outputPicture = output->image.data;
 
 	output_array.assign(1,output);
 	*outputPortNumber = output_array.size();

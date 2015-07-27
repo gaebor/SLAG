@@ -24,6 +24,6 @@ public:
 private:
 	std::string text;
 	cv::Mat picture;
-	cv::VideoCapture* capture;
+	cv::VideoCapture capture;
 	std::vector<slag::Message*> output_array;
 };

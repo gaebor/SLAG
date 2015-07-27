@@ -13,6 +13,8 @@
 typedef std::shared_ptr<slag::Message> ManagedMessage;
 typedef AsyncQueue<ManagedMessage> MessageQueue;
 
+class Factory;
+
 class ModuleWrapper
 {
 public:
@@ -31,14 +33,17 @@ public:
 	std::map<PortNumber, std::vector<MessageQueue*>> outputQueues; //!< output can be duplicated and distributed to many modules
 	size_t inputPortLength;
 
-	const char* output_text_raw;
-	slag::Picture output_image_raw;
 	ExclusiveAccess<std::string> output_text;
 	ExclusiveAccess<std::vector<unsigned char>> output_image;
 
 	ExclusiveAccess<std::pair<double, double>> diffTime;
 	ExclusiveAccess<std::map<PortNumber, size_t>> bufferSize;
 
+protected:
+	friend class Factory;
+	const char* output_text_raw;
+	unsigned char* output_image_raw;
+	int output_image_width, output_image_height;
 private:
 	slag::Module* _module; // responsible for it!
 };

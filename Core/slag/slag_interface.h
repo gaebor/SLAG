@@ -27,14 +27,6 @@ public:
 	virtual int DeSerialize(const void* buffer);
 };
 
-//! A simple picture, non responsible for its content
-struct Picture{
-	//! pointer to the RBG image! 3 channel =  24bit depth
-	unsigned char* imageInfo;
-	int width;
-	int height;
-};
-
 //! node of the graph
 class Module
 {
@@ -69,10 +61,12 @@ public:
 	/*!
 		You should allocate and free the memory
 	*/
-	Picture* outputPicture;
+	unsigned char** outputPicture;
+	int* outputPictureWidth;
+	int* outputPictureHeight;
 };
 
-typedef Module* (__cdecl *ModuleFactoryFunction)(const char* moduleName, const char* InstanceName, const char** out_text, slag::Picture* out_img);
+typedef Module* (__cdecl *ModuleFactoryFunction)(const char* moduleName, const char* InstanceName, const char** out_text, unsigned char** out_img, int* w, int* h);
 
 }
 

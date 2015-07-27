@@ -26,7 +26,7 @@
 extern "C" {
 #endif
 
-__declspec(dllexport) slag::Module* InstantiateModule(const char* name, const char* instance, const char** out_text, slag::Picture* out_img)
+__declspec(dllexport) slag::Module* InstantiateModule(const char* name, const char* instance, const char** out_text, unsigned char** out_img, int* w, int* h)
 {
 	std::string nameStr = name;
 	slag::Module* result = nullptr;
@@ -42,6 +42,8 @@ __declspec(dllexport) slag::Module* InstantiateModule(const char* name, const ch
 	{
 		result->outputText = out_text;
 		result->outputPicture = out_img;
+		result->outputPictureWidth = w;
+		result->outputPictureHeight = h;
 	}
 	return result;
 }
