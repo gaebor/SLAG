@@ -17,7 +17,7 @@ public:
 	AddModule();
 	virtual ~AddModule(void);
 
-	slag::Message** Compute(slag::Message* const * input, int inputPortNumber, int* outputPortNumber);
+	slag::Message** Compute(slag::Message** input, int inputPortNumber, int* outputPortNumber);
 
 private:
 	slag::Message* output_msg;

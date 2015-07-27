@@ -2,13 +2,7 @@
 
 namespace slag{
 
-Picture::Picture() : imageInfo(nullptr), width(0), height(0)
-{
-
-}
-
 Module::Module()
-	: outputText(nullptr), outputPicture()
 {
 
 }

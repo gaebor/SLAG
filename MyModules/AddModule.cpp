@@ -12,7 +12,7 @@ AddModule::~AddModule(void)
 {
 }
 
-slag::Message** AddModule::Compute( slag::Message* const * input, int inputPortNumber, int* outputPortNumber )
+slag::Message** AddModule::Compute( slag::Message** input, int inputPortNumber, int* outputPortNumber )
 {
 	if (inputPortNumber == 0)
 	{
@@ -32,7 +32,7 @@ slag::Message** AddModule::Compute( slag::Message* const * input, int inputPortN
 		std::ostringstream oss;
 		oss << output->val;
 		text = oss.str();
-		outputText = text.c_str();
+		*outputText = text.c_str();
 		return &output_msg;
 	}
 }

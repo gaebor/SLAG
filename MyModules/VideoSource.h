@@ -19,12 +19,11 @@ public:
 	virtual ~VideoSource(void);
 
 	bool Initialize(int settingsc, const char* settingsv[]);
-	slag::Message** Compute(slag::Message* const * input, int inputPortNumber, int* outputPortNumber);
+	slag::Message** Compute(slag::Message** input, int inputPortNumber, int* outputPortNumber);
 
 private:
 	std::string text;
 	cv::Mat picture;
 	cv::VideoCapture* capture;
-	Frame output;
-	slag::Message* output_array;
+	std::vector<slag::Message*> output_array;
 };

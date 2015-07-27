@@ -23,7 +23,7 @@ public:
 			ifs.open(settingsv[1]);
 		return true;
 	}
-	slag::Message** Compute(slag::Message* const * input, int inputPortNumber, int* outputPortNumber)
+	slag::Message** Compute(slag::Message** input, int inputPortNumber, int* outputPortNumber)
 	{
 		if (getline(ifs, line).good())
 		{
@@ -31,7 +31,7 @@ public:
 			std::istringstream iss(line);
 			iss >> output->value;
 
-			outputText = line.c_str();
+			*outputText = line.c_str();
 
 			output_msg = output;
 			*outputPortNumber = 1;

@@ -48,15 +48,23 @@ bool VideoSource::Initialize( int settingsc, const char* settingsv[] )
 	return false;
 }
 
-slag::Message** VideoSource::Compute( slag::Message* const * input, int inputPortNumber, int* outputPortNumber )
+slag::Message** VideoSource::Compute( slag::Message** input, int inputPortNumber, int* outputPortNumber )
 {
-	*capture >> output.image;
+	auto output = new Frame();
+	*capture >> output->image;
 
-	outputPicture.width = output.image.cols;
-	outputPicture.height = output.image.rows;
-	outputPicture.imageInfo = output.image.data;
+	if (output->image.empty())
+	{
+		delete output;
+		output_array.clear();
+		*outputPortNumber =	0;
+		return nullptr;
+	}
+	outputPicture->width = output->image.cols;
+	outputPicture->height = output->image.rows;
+	outputPicture->imageInfo = output->image.data;
 
-	output_array = &output;
-	*outputPortNumber = 1;
-	return &output_array;
+	output_array.assign(1,output);
+	*outputPortNumber = output_array.size();
+	return output_array.data();
 }

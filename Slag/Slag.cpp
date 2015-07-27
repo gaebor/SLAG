@@ -156,12 +156,16 @@ int main(int argc, char* argv[])
 			std::cerr << "module should have a non-empty \"Name\"!" << std::endl;
 			return -1;
 		}
-		ModuleIdentifier moduleId(moduleName.c_str());
-		auto result = factory.InstantiateModule(moduleId);
-		switch (result.second)
+		std::shared_ptr<ModuleWrapper> moduleWrapper(new ModuleWrapper());
+		moduleWrapper->identifier = ModuleIdentifier(moduleName.c_str());
+		auto& moduleId = moduleWrapper->identifier;
+
+		auto result = factory.InstantiateModule(*moduleWrapper);
+
+		switch (result)
 		{
 		case Factory::Duplicate:
-			std::cerr << "More than one library can instantiate module \"" << (std::string)moduleId << "\", the one in \"" << moduleId.actual_dll << "\" will be used!" << std::endl;
+			std::cerr << "More than one library can instantiate module \"" << (std::string)(moduleId) << "\", the one in \"" << moduleId.actual_dll << "\" will be used!" << std::endl;
 		case Factory::Success:
 			{
 			auto it = modules.find(moduleId);
@@ -170,14 +174,13 @@ int main(int argc, char* argv[])
 				std::cerr << "Module \"" << (std::string)moduleId << "\" from library \"" << moduleId.actual_dll << "\" has been loaded more than once!" << std::endl;
 				return 0;
 			}
-			modules[moduleId].reset(new ModuleWrapper(result.first));
+			modules[moduleId] = moduleWrapper;
 			if (!(modules[moduleId]->Initialize(node)))
 			{
 				std::cerr << "Module \"" << (std::string)moduleId << "\" cannot be initialized!" << std::endl;
 				return 0;
 			}
 			moduleIdentifiers[moduleName] = moduleId;
-			modules[moduleId]->identifier = moduleId;
 			}break;
 		case Factory::NoSuchLibrary:
 			{

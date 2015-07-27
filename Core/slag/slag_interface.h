@@ -29,7 +29,6 @@ public:
 
 //! A simple picture, non responsible for its content
 struct Picture{
-	Picture();
 	//! pointer to the RBG image! 3 channel =  24bit depth
 	unsigned char* imageInfo;
 	int width;
@@ -50,7 +49,7 @@ public:
 		@param outputPortNumber length of the returned array
 		@return pointer to output array of messages
 	*/
-	virtual Message** Compute( Message* const * input, int inputPortNumber, int* outputPortNumber) = 0;
+	virtual Message** Compute( Message** input, int inputPortNumber, int* outputPortNumber) = 0;
 	//! receives the settings from the settings file
 	/*!
 		@return weather the initialization was successful.
@@ -65,15 +64,15 @@ public:
 		pointer to a null-terminated string
 		You should allocate and free the memory
 	*/
-	const char* outputText;
+	const char** outputText;
 	//! pointer to image output
 	/*!
 		You should allocate and free the memory
 	*/
-	Picture outputPicture;
+	Picture* outputPicture;
 };
 
-typedef Module* (__cdecl *ModuleFactoryFunction)(const char* moduleName, const char* InstanceName );
+typedef Module* (__cdecl *ModuleFactoryFunction)(const char* moduleName, const char* InstanceName, const char** out_text, slag::Picture* out_img);
 
 }
 

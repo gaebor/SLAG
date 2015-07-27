@@ -4,25 +4,23 @@
 #include <set>
 #include <algorithm>
 
-#include "Factory.h"
 #include "Timer.h"
 #include "HumanReadable.h"
 
-typedef std::lock_guard<std::mutex> AutoLock;
-
 ModuleWrapper::~ModuleWrapper(void)
 {
+	delete _module;
 }
 
-ModuleWrapper::ModuleWrapper(slag::Module* m)
-	: inputPortLength(0), diffTime(std::make_pair(0.0, 0.0))
+ModuleWrapper::ModuleWrapper()
+	: inputPortLength(0), diffTime(std::make_pair(0.0, 0.0)), _module(nullptr)
 {
-	_module.reset(m);
+	output_image_raw.imageInfo = nullptr;
 }
 
 bool ModuleWrapper::Initialize( cv::FileNode node)
 {
-	if (_module.get() != nullptr)
+	if (_module != nullptr)
 	{
 		settings.push_back(identifier);
 		auto settingsNode = node["Settings"];
@@ -125,14 +123,14 @@ void ModuleWrapper::ThreadProcedure()
 			}
 		});
 
-		if (_module->outputText != nullptr)
+		if (output_text_raw != nullptr)
 		{
-			output_text.Modify([&](std::string& self){self = _module->outputText;});
+			output_text.Modify([&](std::string& self){self = output_text_raw;});
 		}
 
 		size_t picure_size = 0;
-		if (_module->outputPicture.imageInfo != nullptr && (picure_size = _module->outputPicture.width * _module->outputPicture.height) > 0)
-			output_image.Modify([&](std::vector<unsigned char>& self){self.assign(_module->outputPicture.imageInfo, _module->outputPicture.imageInfo+picure_size);});
+		if (output_image_raw.imageInfo != nullptr && (picure_size = output_image_raw.width * output_image_raw.height) > 0)
+			output_image.Modify([&](std::vector<unsigned char>& self){self.assign(output_image_raw.imageInfo, output_image_raw.imageInfo + picure_size);});
 
 	}
 halt:
@@ -152,4 +150,14 @@ halt:
 	//output_text.NonEditable();
 	//std::cerr << (std::string)identifier << ": " << output_text.Get() << " (call interval: " << diffTime << ", compute time: " << computeTime << ")" <<std::endl;
 	//output_text.MakeEditable();
+}
+
+bool ModuleWrapper::SetModule( slag::Module* m )
+{
+	if (_module == nullptr)
+	{
+		_module = m;
+		return true;
+	}
+	return false;
 }

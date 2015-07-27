@@ -1,12 +1,14 @@
 #pragma once
+
 #include <vector>
 #include <string>
 #include <map>
 
-#include <windows.h>
-
 #include "slag/slag_interface.h"
 #include "ModuleIdentifier.h"
+#include "ModuleWrapper.h"
+
+#include <windows.h>
 
 class Factory
 {
@@ -25,7 +27,7 @@ public:
 		CannotInstantiateByLibrary //!<< the requested library couldn't instantiate your module
 	};
 public:
-	std::pair<slag::Module*, ErrorCode> InstantiateModule(ModuleIdentifier& moduleId)const;
+	ErrorCode InstantiateModule(ModuleWrapper& moduleWrapper)const;
 
 private:
 	static const std::string extension;

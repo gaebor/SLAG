@@ -1,5 +1,7 @@
 #include <string>
 
+#include "slag/slag_interface.h"
+
 #include "AddModule.h"
 #include "VideoSource.h"
 #include "ReadModule.h"
@@ -20,15 +22,45 @@
 //	return TRUE;
 //}
 
-extern "C" __declspec(dllexport) slag::Module* __cdecl InstantiateModule(const char* name, const char* instance)
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+__declspec(dllexport) slag::Module* InstantiateModule(const char* name, const char* instance, const char** out_text, slag::Picture* out_img)
 {
 	std::string nameStr = name;
+	slag::Module* result = nullptr;
 	if (nameStr == "AddModule")
 	{
-		return new AddModule();
+		result = new AddModule();
 	}else if (nameStr == "VideoSource")
-		return new VideoSource();
+		result = new VideoSource();
 	else if (nameStr == "ReadInt")
-		return new ReadModule<int>();
-	return nullptr;
+		result = new ReadModule<int>();
+
+	if (result)
+	{
+		result->outputText = out_text;
+		result->outputPicture = out_img;
+	}
+	return result;
 }
+
+__declspec(dllexport) void DestroyMessage( void* message)
+{
+	delete (slag::Message*)message;
+}
+
+__declspec(dllexport) void DestroyModule( void* module)
+{
+	delete (slag::Module*)module;
+}
+
+__declspec(dllexport) void** Compute( void* module, void** input, int inputPortNumber, int* outputPortNumber)
+{
+	return (void**)((slag::Module*)module)->Compute((slag::Message**)input, inputPortNumber, outputPortNumber);
+}
+
+#ifdef __cplusplus
+}
+#endif

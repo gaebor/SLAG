@@ -1,6 +1,5 @@
 #include "Factory.h"
 
-#include <windows.h>
 #include <iostream>
 #include <mutex>
 #include <memory>
@@ -35,7 +34,7 @@ Factory::Factory()
 
 	for (const auto& dll : files)
 	{
-		hndl = LoadLibrary(dll.c_str());
+		hndl = LoadLibraryA(dll.c_str());
 		if (hndl)
 		{
 			auto pModuleFactory = (slag::ModuleFactoryFunction) GetProcAddress(hndl, "InstantiateModule");
@@ -53,28 +52,28 @@ Factory::Factory()
 	}
 }
 
-std::pair<slag::Module*, Factory::ErrorCode> Factory::InstantiateModule(ModuleIdentifier& moduleId)const
+Factory::ErrorCode Factory::InstantiateModule(ModuleWrapper& moduleWrapper)const
 {
-	std::pair<slag::Module*, ErrorCode> result(nullptr, CannotInstantiate);
+	ErrorCode result = CannotInstantiate;
+	auto& moduleId = moduleWrapper.identifier;
 
 	if (moduleId.dll.empty())
 	{// find out which dll can instantiate it
 		for (const auto& f : pModuleFactories)
 		{
 			//instantiate module
-			auto module = (f.second)(moduleId.name.c_str(), moduleId.instance.c_str());
-			if (result.first && module)
+			auto module = (f.second)(moduleId.name.c_str(), moduleId.instance.c_str(), &moduleWrapper.output_text_raw, &moduleWrapper.output_image_raw);
+			if (module)
 			{
-				std::cerr << "Module \"" << (std::string)moduleId << "\" appears more than once! Found again in \"" << f.first << "\"" << std::endl;
-				std::cerr << "Using first match instead" << std::endl;
-				//throw out duplicated module
-				std::shared_ptr<slag::Module> garbageCollector(module);
-				result.second = Duplicate;
-			}else if (module)
-			{
-				result.first = module;
-				result.second = Success;
-				moduleId.actual_dll = f.first;
+				result = Success;
+				if (!moduleWrapper.SetModule(module))
+				{
+					result = Duplicate;
+					std::shared_ptr<slag::Module> garbageCollector(module);
+				}else
+				{
+					moduleId.actual_dll = f.first;
+				}
 			}
 		}
 	}else
@@ -82,16 +81,16 @@ std::pair<slag::Module*, Factory::ErrorCode> Factory::InstantiateModule(ModuleId
 		auto moduleFactory = pModuleFactories.find(moduleId.dll);
 		if (moduleFactory != pModuleFactories.end())
 		{
-			auto module = (moduleFactory->second)(moduleId.name.c_str(), moduleId.instance.c_str());
+			auto module = (moduleFactory->second)(moduleId.name.c_str(), moduleId.instance.c_str(), &moduleWrapper.output_text_raw, &moduleWrapper.output_image_raw);
 			if (module)
 			{
-				result.first = module;
+				moduleWrapper.SetModule(module);
 				moduleId.actual_dll = moduleFactory->first;
-				result.second = Success;
+				result = Success;
 			}else
-				result.second = CannotInstantiateByLibrary;
+				result = CannotInstantiateByLibrary;
 		}else
-			result.second = NoSuchLibrary;
+			result = NoSuchLibrary;
 	}
 	return result;
 }
