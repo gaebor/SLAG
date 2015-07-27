@@ -18,13 +18,19 @@
 
 bool run = true; //signaling the visualizer
 
+static inline int round_int( double x )
+{
+	return x+0.5;
+}
+
 void visualizer(std::map<ModuleIdentifier, std::shared_ptr<ModuleWrapper>>& modules, int speed = 0)
 {
 	HANDLE hStdOut = GetStdHandle(STD_OUTPUT_HANDLE);
 	COORD coord;
 	coord.X = coord.Y = 0;
+	std::string nameTag = "  module  ";
 
-	size_t nameOffset = 0;
+	size_t nameOffset = nameTag.size();
 	for (auto& m : modules)
 	{
 		nameOffset = std::max(nameOffset, std::string(m.first).size());
@@ -34,7 +40,7 @@ void visualizer(std::map<ModuleIdentifier, std::shared_ptr<ModuleWrapper>>& modu
 	for (auto& m : modules)
 	{
 		auto name = (std::string)m.first;
-		name += std::string(name.size()+1-nameOffset, ' ');
+		name += std::string(nameOffset - name.size(), ' ');
 		names.push_back( name );
 	}
 
@@ -42,14 +48,29 @@ void visualizer(std::map<ModuleIdentifier, std::shared_ptr<ModuleWrapper>>& modu
 	{
 		system("cls");
 		SetConsoleCursorPosition(hStdOut, coord);
+
+		printf("%s", nameTag.c_str());
+		for (auto i = nameTag.size(); i < nameOffset; ++i)
+			putchar(' ');
+		printf("|  speed   |   load   | text output\n");
+		for (int i = 0; i < nameOffset; ++i)
+			putchar('-');
+		printf("+----------+----------+-\n");
+
 		auto nameIt = names.begin();
 		for (auto& m : modules)
 		{
 			char line[1024];
 			m.second->diffTime.NonEditable();
 			print_humanreadable_time(line, 1024, m.second->diffTime.Get().first);
-			printf("%s|%s|%7.3f%%|", (nameIt++)->c_str(), line, 100*(m.second->diffTime.Get().second)/(m.second->diffTime.Get().first));
+			const int load = round_int(10*(m.second->diffTime.Get().second)/(m.second->diffTime.Get().first));
 			m.second->diffTime.MakeEditable();
+			printf("%s|%s|", (nameIt++)->c_str(), line);
+			for (int i = 0; i < load; ++i)
+				putchar('=');
+			for (int i = load; i < 10; ++i)
+				putchar(' ');
+			putchar('|');
 
 			m.second->output_text.NonEditable();
 			std::cout << m.second->output_text.Get() << "\n";
@@ -59,10 +80,15 @@ void visualizer(std::map<ModuleIdentifier, std::shared_ptr<ModuleWrapper>>& modu
 			m.second->bufferSize.NonEditable();
 			for (auto& q : m.second->bufferSize.Get())
 			{
-				print_humanreadable_giga(line, 1024, q.second);
-				printf("\t%s|%d\n", line, q.first);
+				int offset = print_humanreadable_giga(line, 1024, q.second, " ");
+				for (; offset < nameOffset;++offset)
+					putchar(' ');
+				printf("%s|> %d\n", line, q.first);
 			}
 			m.second->bufferSize.MakeEditable();
+			for (int i = 0; i < nameOffset; ++i)
+				putchar('-');
+			printf("+----------+----------+-\n");
 		}
 	};
 

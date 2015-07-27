@@ -35,12 +35,12 @@ int print_humanreadable_giga( char* result, int bufferSize, double num, const ch
 	{
 		if (fabs(num) < 1000.0)
 		{
-			return sprintf_s(result, bufferSize, "%7.3f%s%s",num, *unit, suffix);
+			return sprintf_s(result, bufferSize, "%7.3g%s%s",num, *unit, suffix);
 		}
 		else
 			num /= 1000;
 	}
-	return sprintf_s(result, bufferSize, "%.3f%s%s", num, "Y", suffix);
+	return sprintf_s(result, bufferSize, "%.3g%s%s", num, "Y", suffix);
 }
 
 int print_humanreadable_gibi( char* result, int bufferSize, double num, const char* suffix /*= ""*/ )
