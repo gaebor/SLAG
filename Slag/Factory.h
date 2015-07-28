@@ -8,6 +8,7 @@
 #include "ModuleIdentifier.h"
 
 #include <windows.h>
+#include "opencv2/core/core.hpp"
 
 class ModuleWrapper;
 
@@ -39,6 +40,8 @@ public:
 		slag::SlagDestroyModule deleteModule;
 		slag::SlagInitialize initialize;
 	};
+
+	static std::vector<std::string> ReadSettings(cv::FileNode& settingsNode);
 
 private:
 	static const std::string extension;

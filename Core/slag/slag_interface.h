@@ -84,6 +84,8 @@ typedef int (*SlagInitialize)(void* module, int settingsc, const char** settings
 extern "C" {
 #endif
 
+#define SETTINGS_MAX_LENGTH 1024
+
 DLL_EXPORT void* SlagInstantiate(const char* moduleName, const char* InstanceName, const char** out_text, unsigned char** out_img, int* w, int* h);
 DLL_EXPORT void SlagDestroyMessage( void* message);
 DLL_EXPORT void SlagDestroyModule( void* module);

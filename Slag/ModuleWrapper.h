@@ -23,7 +23,6 @@ public:
 	void ThreadProcedure();
 
 public:
-	std::vector<std::string> settings;
 	ModuleIdentifier identifier;
 	// TODO async and sync inputs
 	std::map<PortNumber, MessageQueue*> inputQueues; //!< non-responsible for MessageQueues
@@ -35,6 +34,10 @@ public:
 
 	ExclusiveAccess<std::pair<double, double>> diffTime;
 	ExclusiveAccess<std::map<PortNumber, size_t>> bufferSize;
+
+	//! gets a global ptr
+	int global_settings_c;
+	const char** global_settings_v;
 
 protected:
 	friend class Factory;

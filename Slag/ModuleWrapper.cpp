@@ -8,8 +8,6 @@
 #include "HumanReadable.h"
 #include "Factory.h"
 
-typedef AsyncQueue<ManagedMessage> MessageQueue;
-
 ModuleWrapper::~ModuleWrapper(void)
 {
 	deleteModule(_module);
@@ -31,28 +29,17 @@ bool ModuleWrapper::Initialize( cv::FileNode node)
 	{
 		if (initialize == NULL)
 			return true;
-		settings.push_back(identifier);
-		auto settingsNode = node["Settings"];
-		if (settingsNode.isString())
-		{
-			settings.push_back(settingsNode);
-		}else if (settingsNode.isSeq())
-		{
-			for (auto settingNode : settingsNode)
-				settings.push_back(settingNode);
-		}else if(settingsNode.isMap())
-		{
-			for (auto settingNode : settingsNode)
-			{
-				settings.push_back(settingNode.name());
-				settings.push_back(settingNode);
-			}
-		}
+
+		auto settings = Factory::ReadSettings(node["Settings"]);
 		std::vector<const char*> settings_array;
+
 		for (const auto& setting : settings)
 			settings_array.push_back(setting.c_str());
+
 		//Initialize
 		return initialize(_module, settings_array.size(), settings_array.data()) == 0;
+		// module settings are lost after the module initialize!
+		//TODO global settings
 	}
 	return false;
 }

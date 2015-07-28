@@ -127,6 +127,27 @@ Factory::~Factory()
 		FreeLibrary(hndl);
 }
 
+std::vector<std::string> Factory::ReadSettings( cv::FileNode& settingsNode )
+{
+	std::vector<std::string> settings;
+	if (settingsNode.isString())
+	{
+		settings.push_back(settingsNode);
+	}else if (settingsNode.isSeq())
+	{
+		for (auto settingNode : settingsNode)
+			settings.push_back(settingNode);
+	}else if(settingsNode.isMap())
+	{
+		for (auto settingNode : settingsNode)
+		{
+			settings.push_back(settingNode.name());
+			settings.push_back(settingNode);
+		}
+	}
+	return settings;
+}
+
 const std::string Factory::extension = ".dll";
 
 static std::mutex mtx;

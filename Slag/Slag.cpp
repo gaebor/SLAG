@@ -93,7 +93,7 @@ void visualizer(std::map<ModuleIdentifier, std::shared_ptr<ModuleWrapper>>& modu
 	};
 
 	while (run)
-	{	
+	{
 		internal_func();
 		Sleep(speed);
 	}
@@ -102,13 +102,15 @@ void visualizer(std::map<ModuleIdentifier, std::shared_ptr<ModuleWrapper>>& modu
 
 int main(int argc, char* argv[])
 {
-
 	Factory factory;
 	std::list<std::unique_ptr<MessageQueue>> messageQueues;
 	std::map<ModuleIdentifier, std::shared_ptr<ModuleWrapper>> modules;
 	MessageQueue::LimitBehavior queueBehavior = MessageQueue::None;
 	size_t queueLimit = std::numeric_limits<size_t>::max();
 	int vizualizationSpeed;
+	
+	std::vector<std::string> global_settings;
+	std::vector<const char*> global_settings_v;
 
 	if (argc < 2)
 	{
@@ -122,13 +124,40 @@ int main(int argc, char* argv[])
 		std::cerr << "Cannot read \"" << argv[1] << '\"' << std::endl;
 		return 0;
 	}
-	if (!fs["Modules"].isSeq())
+
+	//graph settings
+	for (auto setting : fs["Graph"])
 	{
-		std::cerr << "graph definition xml should contain a \"Modules\" node with a list of modules" << std::endl;
-		return -1;
+		if (setting.name() == "QueueBehavior")
+		{
+			if (setting.operator std::string() == "Wait")
+				queueBehavior = MessageQueue::Wait;
+			else if (setting.operator std::string() == "Drop")
+				queueBehavior = MessageQueue::Drop;
+			else
+				queueBehavior = MessageQueue::None;
+		}else if (setting.name() == "QueueLimit")
+			queueLimit = setting.operator int();
+		else if (setting.name() == "VisualizationDelay")
+			vizualizationSpeed = setting.operator int();
 	}
 
 	//global settings
+	global_settings = Factory::ReadSettings(fs["GlobalSettings"]);
+	for (auto& setting : global_settings)
+	{
+		if (setting.size() >= SETTINGS_MAX_LENGTH)
+		{
+			std::cerr << "Global setting >>>\n" << setting << "\n<<< shouldn't exceed the length of " << SETTINGS_MAX_LENGTH << "!" << std::endl;
+			return -1;
+		}
+		//be careful, from now on, settings may change, but the NUMBER of settings doesn't!
+		//also no settings can be longer than this reserved length to ensure iterator validity
+		setting.reserve(SETTINGS_MAX_LENGTH);
+
+		global_settings_v.push_back(setting.c_str());
+	}
+
 	for (auto setting : fs["Graph"])
 	{
 		if (setting.name() == "QueueBehavior")
@@ -148,6 +177,7 @@ int main(int argc, char* argv[])
 	std::map<std::string, ModuleIdentifier> moduleIdentifiers;
 
 	//instantiate modules
+	if (fs["Modules"].isSeq()) //if there is no such node, then an empty graph will be constructed
 	for (auto node : fs["Modules"])
 	{
 		std::string moduleName = node["Name"];
@@ -175,6 +205,9 @@ int main(int argc, char* argv[])
 				return 0;
 			}
 			modules[moduleId] = moduleWrapper;
+			modules[moduleId]->global_settings_c = global_settings.size();
+			modules[moduleId]->global_settings_v = global_settings_v.data();
+
 			if (!(modules[moduleId]->Initialize(node)))
 			{
 				std::cerr << "Module \"" << (std::string)moduleId << "\" cannot be initialized!" << std::endl;
@@ -223,7 +256,8 @@ int main(int argc, char* argv[])
 				connections.insert(std::make_pair(output, PortIdentifier(fromModuleId,fromPort)));
 				++fromPort;
 			}
-		}else for (auto& output : outputNode)
+		}else if (outputNode.isMap())
+		for (auto& output : outputNode)
 		{
 			std::string outputNodeName = output.name();
 			if (outputNodeName[0] != '_')
