@@ -12,19 +12,6 @@ extern "C" {
 #endif
 
 //mandatory
-typedef void* (*SlagInstantiate_t)(const char* moduleName, const char* InstanceName, const char** out_text, unsigned char** out_img, int* w, int* h);
-typedef void (*SlagDestroyMessage_t)( void* message);
-typedef void (*SlagDestroyModule_t)( void* module);
-typedef void** (*SlagCompute_t)( void* module, void** input, int inputPortNumber, int* outputPortNumber);
-
-//optional
-typedef int (*SlagInitialize_t)(void* module, int settingsc, const char** settingsv);
-typedef void* (*SlagSerialize_t)(void* message, int* buffersize);
-typedef int (*SlagDeserialize_t)(void* message, void* buffer);
-
-#define SETTINGS_MAX_LENGTH 1024
-
-//mandatory
 
 //! SLAG calls this once, your module or whatever necessary data should be allocated
 /*!
@@ -49,7 +36,7 @@ typedef int (*SlagDeserialize_t)(void* message, void* buffer);
 		Set to 0 if you don't have any image to show!
 	@return pointer to whatever you call a module
 */
-DLL_EXPORT void* SlagInstantiate(const char* moduleName, const char* InstanceName, const char** out_text, unsigned char** out_img, int* w, int* h);
+typedef void* (*SlagInstantiate_t)(const char* moduleName, const char* InstanceName, const char** out_text, unsigned char** out_img, int* w, int* h);
 
 //! SLAG calls this if a message is useless anymore
 /*!
@@ -60,20 +47,22 @@ DLL_EXPORT void* SlagInstantiate(const char* moduleName, const char* InstanceNam
 	@param message pointer to a message, which was allocated by some of your modules.
 		You should know how to delete it!
 */
-DLL_EXPORT void SlagDestroyMessage( void* message);
+typedef void (*SlagDestroyMessage_t)( void* message);
 
 //! SLAG calls this after the graph has been finished
 /*!
 	Same memory management issues apply like SlagDestroyMessage
 	@param module pointer to a module. You should delete it however you like!
 */
-DLL_EXPORT void SlagDestroyModule( void* module);
+typedef void (*SlagDestroyModule_t)( void* module);
 
 //! the core of SLAG
 /*!
 
 */
-DLL_EXPORT void** SlagCompute( void* module, void** input, int inputPortNumber, int* outputPortNumber);
+typedef void** (*SlagCompute_t)( void* module, void** input, int inputPortNumber, int* outputPortNumber);
+
+typedef void** (*SlagFunction_t)(void** input, int inputPortNumber, int* outputPortNumber);
 
 //optional
 
@@ -86,8 +75,15 @@ DLL_EXPORT void** SlagCompute( void* module, void** input, int inputPortNumber, 
 		If you want to keep any of these settings later, you have to copy it to your heap.
 	@return 0 on success, otherwise initialization is considered to be failed and the graph doesn't even start
 */
-DLL_EXPORT int SlagInitialize(void* module, int settingsc, const char** settingsv);
+typedef int (*SlagInitialize_t)(void* module, int settingsc, const char** settingsv);
 
+//!
+typedef void* (*SlagSerialize_t)(void* message, int* buffersize);
+
+//!
+typedef int (*SlagDeserialize_t)(void* message, void* buffer);
+
+#define SETTINGS_MAX_LENGTH 1024
 
 #ifdef __cplusplus
 }

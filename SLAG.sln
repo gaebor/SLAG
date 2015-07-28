@@ -9,6 +9,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "AsyncQueueTest", "AsyncQueu
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SLAG_winapi", "SLAG_winapi\SLAG_winapi.vcxproj", "{BCC68842-4367-47B8-A6BD-04E25D9A2900}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CModules", "CModules\CModules.vcxproj", "{155DD34F-56E8-41B9-B799-8C8499854348}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -49,6 +51,14 @@ Global
 		{BCC68842-4367-47B8-A6BD-04E25D9A2900}.Release|Win32.Build.0 = Release|Win32
 		{BCC68842-4367-47B8-A6BD-04E25D9A2900}.Release|x64.ActiveCfg = Release|x64
 		{BCC68842-4367-47B8-A6BD-04E25D9A2900}.Release|x64.Build.0 = Release|x64
+		{155DD34F-56E8-41B9-B799-8C8499854348}.Debug|Win32.ActiveCfg = Debug|Win32
+		{155DD34F-56E8-41B9-B799-8C8499854348}.Debug|Win32.Build.0 = Debug|Win32
+		{155DD34F-56E8-41B9-B799-8C8499854348}.Debug|x64.ActiveCfg = Debug|x64
+		{155DD34F-56E8-41B9-B799-8C8499854348}.Debug|x64.Build.0 = Debug|x64
+		{155DD34F-56E8-41B9-B799-8C8499854348}.Release|Win32.ActiveCfg = Release|Win32
+		{155DD34F-56E8-41B9-B799-8C8499854348}.Release|Win32.Build.0 = Release|Win32
+		{155DD34F-56E8-41B9-B799-8C8499854348}.Release|x64.ActiveCfg = Release|x64
+		{155DD34F-56E8-41B9-B799-8C8499854348}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

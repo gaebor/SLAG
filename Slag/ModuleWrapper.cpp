@@ -10,7 +10,8 @@
 
 ModuleWrapper::~ModuleWrapper(void)
 {
-	deleteModule(_module);
+	if (_module)
+		deleteModule(_module);
 }
 
 ModuleWrapper::ModuleWrapper()
