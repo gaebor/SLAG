@@ -1,26 +1,26 @@
 #include "AbstractInterface.h"
 
-Module::Module()
+MyModule::MyModule()
 {
 
 }
 
-Module::~Module()
+MyModule::~MyModule()
 {
 
 }
 
-bool Module::Initialize( int settingsc, const char* settingsv[] )
+bool MyModule::Initialize( int settingsc, const char* settingsv[] )
 {
 	return true;
 }
 
-Message::~Message( void )
+MyMessage::~MyMessage( void )
 {
 
 }
 
-Message::Message( void )
+MyMessage::MyMessage( void )
 {
 
 }

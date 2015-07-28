@@ -61,7 +61,7 @@ void ModuleWrapper::ThreadProcedure()
 		for (auto& q : inputQueues)
 		{
 			// this actual deleteMsg function won't be used here, because the dequeue will override it and the nullptr won't be deleted anyway
-			ManagedMessage input(deleteMsg);
+			ManagedMessage input;
 
 			if (!q.second->DeQueue(input))
 				goto halt;
@@ -77,8 +77,8 @@ void ModuleWrapper::ThreadProcedure()
 			timer.Tick();
 			outputMessages_raw = compute(_module, inputMessages.data(), inputMessages.size(), &outputNumber);
 			self.second = prevTime;
+			prevTime = timer.Tock();
 		});
-		prevTime = timer.Tock();
 
 		//manage output data
 		if (outputMessages_raw == nullptr)
@@ -90,14 +90,15 @@ void ModuleWrapper::ThreadProcedure()
 		for (PortNumber i = 0; i < outputNumber; ++i)
 		{
 			auto messagePtr = outputMessages_raw[i];
-			ManagedMessage managedOutput(deleteMsg);
+			ManagedMessage managedOutput;
+
 			auto inputIt = std::find_if(receivedMessages.begin(), receivedMessages.end(), [&](const ManagedMessage& m){return m.get()==messagePtr;});
 			if (inputIt != receivedMessages.end())
 			{
 				managedOutput = *inputIt;
 			}else
 			{
-				managedOutput.reset(messagePtr);
+				managedOutput.reset(messagePtr, deleteMsg);
 			}
 
 			outputIt = outputQueues.find(i);

@@ -3,23 +3,23 @@
 
 #include <string>
 
-class IntMessage : public Message
+class IntMessage : public ::MyMessage
 {
 public:
 	IntMessage();
-	~IntMessage(){}
+	virtual ~IntMessage();
 	int val;
 };
 
-class AddModule : public Module
+class AddModule : public MyModule
 {
 public:
 	AddModule();
 	virtual ~AddModule(void);
 
-	Message** Compute(Message** input, int inputPortNumber, int* outputPortNumber);
+	MyMessage** Compute(MyMessage** input, int inputPortNumber, int* outputPortNumber);
 
 private:
-	Message* output_msg;
+	MyMessage* output_msg;
 	std::string text;
 };

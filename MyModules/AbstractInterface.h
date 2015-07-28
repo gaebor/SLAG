@@ -1,18 +1,18 @@
 #pragma once
 
-class Message
+class MyMessage
 {
 public:
-	Message(void);
-	virtual ~Message(void);
+	MyMessage(void);
+	virtual ~MyMessage(void);
 };
 
 //! node of the graph
-class Module
+class MyModule
 {
 public:
-	Module();
-	virtual ~Module(void);
+	MyModule();
+	virtual ~MyModule(void);
 
 	//! this is the essence of your module
 	/*!
@@ -21,7 +21,7 @@ public:
 		@param outputPortNumber length of the returned array
 		@return pointer to output array of messages
 	*/
-	virtual Message** Compute( Message** input, int inputPortNumber, int* outputPortNumber) = 0;
+	virtual MyMessage** Compute( MyMessage** input, int inputPortNumber, int* outputPortNumber) = 0;
 	//! receives the settings from the settings file
 	/*!
 		@return weather the initialization was successful.

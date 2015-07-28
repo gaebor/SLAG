@@ -12,7 +12,7 @@ AddModule::~AddModule(void)
 {
 }
 
-Message** AddModule::Compute( Message** input, int inputPortNumber, int* outputPortNumber )
+MyMessage** AddModule::Compute( MyMessage** input, int inputPortNumber, int* outputPortNumber )
 {
 	if (inputPortNumber == 0)
 	{
@@ -37,7 +37,12 @@ Message** AddModule::Compute( Message** input, int inputPortNumber, int* outputP
 	}
 }
 
-IntMessage::IntMessage() :val(0)
+IntMessage::IntMessage()
+	: val(0)
 {
+}
 
+IntMessage::~IntMessage()
+{
+	printf("");
 }

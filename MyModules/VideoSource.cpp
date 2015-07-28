@@ -45,7 +45,7 @@ bool VideoSource::Initialize( int settingsc, const char* settingsv[] )
 	return false;
 }
 
-Message** VideoSource::Compute( Message** input, int inputPortNumber, int* outputPortNumber )
+MyMessage** VideoSource::Compute( MyMessage** input, int inputPortNumber, int* outputPortNumber )
 {
 	auto output = new Frame();
 	capture >> output->image;
@@ -57,9 +57,11 @@ Message** VideoSource::Compute( Message** input, int inputPortNumber, int* outpu
 		*outputPortNumber =	0;
 		return nullptr;
 	}
-	*outputPictureWidth = output->image.cols;
-	*outputPictureHeight = output->image.rows;
-	*outputPicture = output->image.data;
+	
+	picture = output->image;
+	*outputPictureWidth = picture.cols;
+	*outputPictureHeight = picture.rows;
+	*outputPicture = picture.data;
 
 	output_array.assign(1,output);
 	*outputPortNumber = output_array.size();

@@ -32,7 +32,7 @@ extern "C" {
 DLL_EXPORT void* SlagInstantiate(const char* name, const char* instance, const char** out_text, unsigned char** out_img, int* w, int* h)
 {
 	std::string nameStr = name;
-	Module* result = nullptr;
+	MyModule* result = nullptr;
 	if (nameStr == "AddModule")
 	{
 		result = new AddModule();
@@ -53,23 +53,23 @@ DLL_EXPORT void* SlagInstantiate(const char* name, const char* instance, const c
 
 DLL_EXPORT void SlagDestroyMessage( void* message)
 {
-	delete (Message*)message;
+	delete static_cast<MyMessage*>(message);
 }
 
 DLL_EXPORT void SlagDestroyModule( void* module)
 {
-	delete (Module*)module;
+	delete static_cast<MyModule*>(module);
 }
 
 DLL_EXPORT void** SlagCompute( void* module, void** input, int inputPortNumber, int* outputPortNumber)
 {
-	return (void**)((Module*)module)->Compute((Message**)input, inputPortNumber, outputPortNumber);
+	return (void**)(static_cast<MyModule*>(module)->Compute((MyMessage**)input, inputPortNumber, outputPortNumber));
 }
 
 //! returns 0 on success
 DLL_EXPORT int SlagInitialize(void* module, int settingsc, const char* settingsv[])
 {
-	return (((::Module*)module)->Initialize(settingsc, settingsv)) ? 0 : -1 ;
+	return (static_cast<MyModule*>(module)->Initialize(settingsc, settingsv)) ? 0 : -1 ;
 }
 
 #ifdef __cplusplus

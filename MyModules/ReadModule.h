@@ -6,10 +6,10 @@
 #include "AbstractInterface.h"
 
 template<class Type>
-class ReadModule :	public Module
+class ReadModule :	public MyModule
 {
 public:
-	class Message : public ::Message
+	class Message : public ::MyMessage
 	{
 	public:
 		Type value;
@@ -23,7 +23,7 @@ public:
 			ifs.open(settingsv[0]);
 		return true;
 	}
-	::Message** Compute(::Message** input, int inputPortNumber, int* outputPortNumber)
+	::MyMessage** Compute(::MyMessage** input, int inputPortNumber, int* outputPortNumber)
 	{
 		if (getline(ifs, line).good())
 		{
@@ -47,5 +47,5 @@ public:
 private:
 	std::string line;
 	std::ifstream ifs;
-	::Message* output_msg;
+	::MyMessage* output_msg;
 };

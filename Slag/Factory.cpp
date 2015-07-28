@@ -83,8 +83,7 @@ Factory::ErrorCode Factory::InstantiateModule(ModuleWrapper& moduleWrapper)const
 				if (moduleWrapper._module)
 				{
 					result = Duplicate;
-					ManagedModule garbageCollector(f.second.deleteModule);
-					garbageCollector.reset(module);
+					ManagedModule garbageCollector(module, f.second.deleteModule);
 				}else
 				{
 					moduleWrapper._module = module;
