@@ -26,7 +26,8 @@
 extern "C" {
 #endif
 
-__declspec(dllexport) slag::Module* InstantiateModule(const char* name, const char* instance, const char** out_text, unsigned char** out_img, int* w, int* h)
+//! this function instantiates your modules
+DLL_EXPORT void* SlagInstantiate(const char* name, const char* instance, const char** out_text, unsigned char** out_img, int* w, int* h)
 {
 	std::string nameStr = name;
 	slag::Module* result = nullptr;
@@ -48,19 +49,25 @@ __declspec(dllexport) slag::Module* InstantiateModule(const char* name, const ch
 	return result;
 }
 
-__declspec(dllexport) void DestroyMessage( void* message)
+DLL_EXPORT void SlagDestroyMessage( void* message)
 {
 	delete (slag::Message*)message;
 }
 
-__declspec(dllexport) void DestroyModule( void* module)
+DLL_EXPORT void SlagDestroyModule( void* module)
 {
 	delete (slag::Module*)module;
 }
 
-__declspec(dllexport) void** Compute( void* module, void** input, int inputPortNumber, int* outputPortNumber)
+DLL_EXPORT void** SlagCompute( void* module, void** input, int inputPortNumber, int* outputPortNumber)
 {
 	return (void**)((slag::Module*)module)->Compute((slag::Message**)input, inputPortNumber, outputPortNumber);
+}
+
+//! returns 0 on success
+DLL_EXPORT int SlagInitialize(void* module, int settingsc, const char* settingsv[])
+{
+	return (((slag::Module*)module)->Initialize(settingsc, settingsv)) ? 0 : -1 ;
 }
 
 #ifdef __cplusplus

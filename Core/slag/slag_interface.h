@@ -66,8 +66,32 @@ public:
 	int* outputPictureHeight;
 };
 
-typedef Module* (__cdecl *ModuleFactoryFunction)(const char* moduleName, const char* InstanceName, const char** out_text, unsigned char** out_img, int* w, int* h);
+typedef void* (*SlagInstantiate)(const char* moduleName, const char* InstanceName, const char** out_text, unsigned char** out_img, int* w, int* h);
+typedef void (*SlagDestroyMessage)( void* message);
+typedef void (*SlagDestroyModule)( void* module);
+typedef void** (*SlagCompute)( void* module, void** input, int inputPortNumber, int* outputPortNumber);
+typedef int (*SlagInitialize)(void* module, int settingsc, const char** settingsv);
 
 }
+
+#ifdef __GNUC__
+#define DLL_EXPORT __attribute__ ((visibility ("default")))
+#elif defined _MSC_VER
+#define DLL_EXPORT __declspec(dllexport)
+#endif
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+DLL_EXPORT void* SlagInstantiate(const char* moduleName, const char* InstanceName, const char** out_text, unsigned char** out_img, int* w, int* h);
+DLL_EXPORT void SlagDestroyMessage( void* message);
+DLL_EXPORT void SlagDestroyModule( void* module);
+DLL_EXPORT void** SlagCompute( void* module, void** input, int inputPortNumber, int* outputPortNumber);
+DLL_EXPORT int SlagInitialize(void* module, int settingsc, const char** settingsv);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

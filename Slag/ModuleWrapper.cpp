@@ -6,10 +6,13 @@
 
 #include "Timer.h"
 #include "HumanReadable.h"
+#include "Factory.h"
+
+typedef AsyncQueue<ManagedMessage> MessageQueue;
 
 ModuleWrapper::~ModuleWrapper(void)
 {
-	delete _module;
+	deleteModule(_module);
 }
 
 ModuleWrapper::ModuleWrapper()
@@ -26,6 +29,8 @@ bool ModuleWrapper::Initialize( cv::FileNode node)
 {
 	if (_module != nullptr)
 	{
+		if (initialize == NULL)
+			return true;
 		settings.push_back(identifier);
 		auto settingsNode = node["Settings"];
 		if (settingsNode.isString())
@@ -47,15 +52,15 @@ bool ModuleWrapper::Initialize( cv::FileNode node)
 		for (const auto& setting : settings)
 			settings_array.push_back(setting.c_str());
 		//Initialize
-		return _module->Initialize(settings_array.size(), settings_array.data());
+		return initialize(_module, settings_array.size(), settings_array.data()) == 0;
 	}
 	return false;
 }
 
 void ModuleWrapper::ThreadProcedure()
 {
-	std::vector<slag::Message*> inputMessages(inputPortLength, nullptr);
-	slag::Message** outputMessages_raw;
+	std::vector<void*> inputMessages(inputPortLength, nullptr);
+	void** outputMessages_raw;
 
 	std::vector<ManagedMessage> receivedMessages;
 	
@@ -68,7 +73,8 @@ void ModuleWrapper::ThreadProcedure()
 		//manage input data
 		for (auto& q : inputQueues)
 		{
-			ManagedMessage input;
+			// this actual deleteMsg function won't be used here, because the dequeue will override it and the nullptr won't be deleted anyway
+			ManagedMessage input(deleteMsg);
 
 			if (!q.second->DeQueue(input))
 				goto halt;
@@ -82,7 +88,7 @@ void ModuleWrapper::ThreadProcedure()
 		{
 			self.first = timer.Tock();
 			timer.Tick();
-			outputMessages_raw = _module->Compute(inputMessages.data(), inputMessages.size(), &outputNumber);
+			outputMessages_raw = compute(_module, inputMessages.data(), inputMessages.size(), &outputNumber);
 			self.second = prevTime;
 		});
 		prevTime = timer.Tock();
@@ -97,7 +103,7 @@ void ModuleWrapper::ThreadProcedure()
 		for (PortNumber i = 0; i < outputNumber; ++i)
 		{
 			auto messagePtr = outputMessages_raw[i];
-			ManagedMessage managedOutput;
+			ManagedMessage managedOutput(deleteMsg);
 			auto inputIt = std::find_if(receivedMessages.begin(), receivedMessages.end(), [&](const ManagedMessage& m){return m.get()==messagePtr;});
 			if (inputIt != receivedMessages.end())
 			{
@@ -155,14 +161,3 @@ halt:
 	//std::cerr << (std::string)identifier << ": " << output_text.Get() << " (call interval: " << diffTime << ", compute time: " << computeTime << ")" <<std::endl;
 	//output_text.MakeEditable();
 }
-
-bool ModuleWrapper::SetModule( slag::Module* m )
-{
-	if (_module == nullptr)
-	{
-		_module = m;
-		return true;
-	}
-	return false;
-}
-

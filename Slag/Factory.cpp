@@ -5,6 +5,8 @@
 #include <memory>
 
 #include "ModuleIdentifier.h"
+#include "ModuleWrapper.h"
+
 
 std::vector<std::string> Factory::EnlistFiles( const std::string& path )
 {
@@ -37,12 +39,24 @@ Factory::Factory()
 		hndl = LoadLibraryA(dll.c_str());
 		if (hndl)
 		{
-			auto pModuleFactory = (slag::ModuleFactoryFunction) GetProcAddress(hndl, "InstantiateModule");
-			if (pModuleFactory)
+			auto instantiate = (slag::SlagInstantiate)GetProcAddress(hndl, "SlagInstantiate");
+			auto deleteMsg = (slag::SlagDestroyMessage)GetProcAddress(hndl, "SlagDestroyMessage");
+			auto deleteModule = (slag::SlagDestroyModule)GetProcAddress(hndl, "SlagDestroyModule");
+			auto compute = (slag::SlagCompute)GetProcAddress(hndl, "SlagCompute");
+			auto initialize = (slag::SlagInitialize)GetProcAddress(hndl, "SlagInitialize");
+
+			if (instantiate != NULL && deleteMsg != NULL && deleteModule != NULL && compute != NULL)
 			{
 				// cut the extension off
-				pModuleFactories[dll.substr(0, dll.size()-extension.size())]= pModuleFactory;
+				auto& f = pModuleFunctions[dll.substr(0, dll.size()-extension.size())];
+				f.instantiate = instantiate;
+				f.compute = compute;
+				f.deleteModule = deleteModule;
+				f.deleteMsg = deleteMsg;
+
 				module_dll_handles.push_back(hndl);
+				if (initialize != NULL)
+					f.initialize = initialize;
 			}else
 			{
 				//none of my business
@@ -59,32 +73,44 @@ Factory::ErrorCode Factory::InstantiateModule(ModuleWrapper& moduleWrapper)const
 
 	if (moduleId.dll.empty())
 	{// find out which dll can instantiate it
-		for (const auto& f : pModuleFactories)
+		for (const auto& f : pModuleFunctions)
 		{
 			//instantiate module
-			auto module = (f.second)(moduleId.name.c_str(), moduleId.instance.c_str(), &moduleWrapper.output_text_raw, &moduleWrapper.output_image_raw, &moduleWrapper.output_image_width, &moduleWrapper.output_image_height);
+			auto module = (f.second.instantiate)(moduleId.name.c_str(), moduleId.instance.c_str(), &moduleWrapper.output_text_raw, &moduleWrapper.output_image_raw, &moduleWrapper.output_image_width, &moduleWrapper.output_image_height);
 			if (module)
 			{
 				result = Success;
-				if (!moduleWrapper.SetModule(module))
+				if (moduleWrapper._module)
 				{
 					result = Duplicate;
-					std::shared_ptr<slag::Module> garbageCollector(module);
+					ManagedModule garbageCollector(f.second.deleteModule);
+					garbageCollector.reset(module);
 				}else
 				{
+					moduleWrapper._module = module;
+					moduleWrapper.deleteModule = f.second.deleteModule;
+					moduleWrapper.deleteMsg = f.second.deleteMsg;
+					moduleWrapper.compute = f.second.compute;
+					moduleWrapper.initialize = f.second.initialize;
+
 					moduleId.actual_dll = f.first;
 				}
 			}
 		}
 	}else
 	{
-		auto moduleFactory = pModuleFactories.find(moduleId.dll);
-		if (moduleFactory != pModuleFactories.end())
+		auto moduleFactory = pModuleFunctions.find(moduleId.dll);
+		if (moduleFactory != pModuleFunctions.end())
 		{
-			auto module = (moduleFactory->second)(moduleId.name.c_str(), moduleId.instance.c_str(), &moduleWrapper.output_text_raw, &moduleWrapper.output_image_raw, &moduleWrapper.output_image_width, &moduleWrapper.output_image_height);
+			auto module = (moduleFactory->second.instantiate)(moduleId.name.c_str(), moduleId.instance.c_str(), &moduleWrapper.output_text_raw, &moduleWrapper.output_image_raw, &moduleWrapper.output_image_width, &moduleWrapper.output_image_height);
 			if (module)
 			{
-				moduleWrapper.SetModule(module);
+				moduleWrapper._module = module;
+				moduleWrapper.deleteModule = moduleFactory->second.deleteModule;
+				moduleWrapper.deleteMsg = moduleFactory->second.deleteMsg;
+				moduleWrapper.compute = moduleFactory->second.compute;
+				moduleWrapper.initialize = moduleFactory->second.initialize;
+
 				moduleId.actual_dll = moduleFactory->first;
 				result = Success;
 			}else

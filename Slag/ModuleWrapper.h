@@ -9,9 +9,7 @@
 #include "opencv2/core/core.hpp"
 #include "ModuleIdentifier.h"
 #include "ExclusiveAccess.h"
-
-typedef std::shared_ptr<slag::Message> ManagedMessage;
-typedef AsyncQueue<ManagedMessage> MessageQueue;
+#include "InternalTypes.h"
 
 class Factory;
 
@@ -19,7 +17,6 @@ class ModuleWrapper
 {
 public:
 	ModuleWrapper();
-	bool SetModule(slag::Module* m);
 	~ModuleWrapper();
 
 	bool Initialize(cv::FileNode node);
@@ -41,9 +38,14 @@ public:
 
 protected:
 	friend class Factory;
+
 	const char* output_text_raw;
 	unsigned char* output_image_raw;
 	int output_image_width, output_image_height;
-private:
-	slag::Module* _module; // responsible for it!
+
+	void* _module; // responsible for it!
+	slag::SlagCompute compute;
+	slag::SlagInitialize initialize;
+	slag::SlagDestroyModule deleteModule;
+	slag::SlagDestroyMessage deleteMsg;
 };

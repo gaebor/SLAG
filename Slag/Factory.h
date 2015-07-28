@@ -6,9 +6,10 @@
 
 #include "slag/slag_interface.h"
 #include "ModuleIdentifier.h"
-#include "ModuleWrapper.h"
 
 #include <windows.h>
+
+class ModuleWrapper;
 
 class Factory
 {
@@ -29,8 +30,18 @@ public:
 public:
 	ErrorCode InstantiateModule(ModuleWrapper& moduleWrapper)const;
 
+	struct Functions
+	{
+		Functions() :instantiate(NULL), initialize(NULL), compute(NULL), deleteMsg(NULL), deleteModule(NULL){}
+		slag::SlagInstantiate instantiate;
+		slag::SlagCompute compute;
+		slag::SlagDestroyMessage deleteMsg;
+		slag::SlagDestroyModule deleteModule;
+		slag::SlagInitialize initialize;
+	};
+
 private:
 	static const std::string extension;
-	std::map<std::string, slag::ModuleFactoryFunction> pModuleFactories;
+	std::map<std::string, Functions> pModuleFunctions;
 	std::vector<HMODULE> module_dll_handles;
 };
