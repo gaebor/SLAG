@@ -6,18 +6,16 @@
 class ManagedModule : public std::shared_ptr<void>
 {
 public:
-	ManagedModule(slag::SlagDestroyModule deleter, void* module = nullptr)
-		: std::shared_ptr<void>(module, deleter){}
+	ManagedModule(SlagDestroyModule_t deleter, void* module = nullptr);
 
-	~ManagedModule(){}
+	~ManagedModule();
 };
 
 class ManagedMessage : public std::shared_ptr<void>
 {
 public:
-	ManagedMessage(slag::SlagDestroyMessage deleter, void* message = nullptr)
-		: std::shared_ptr<void>(message, deleter){}
-	~ManagedMessage(){}
+	ManagedMessage(SlagDestroyMessage_t deleter, void* message = nullptr);
+	~ManagedMessage();
 };
 
 typedef AsyncQueue<ManagedMessage> MessageQueue;

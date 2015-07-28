@@ -3,13 +3,13 @@
 #include <iostream>
 #include <fstream>
 
-#include "slag/slag_interface.h"
+#include "AbstractInterface.h"
 
 template<class Type>
-class ReadModule :	public slag::Module
+class ReadModule :	public Module
 {
 public:
-	class Message : public slag::Message
+	class Message : public ::Message
 	{
 	public:
 		Type value;
@@ -19,11 +19,11 @@ public:
 
 	bool Initialize(int settingsc, const char* settingsv[])
 	{
-		if (settingsc > 1)
-			ifs.open(settingsv[1]);
+		if (settingsc > 0)
+			ifs.open(settingsv[0]);
 		return true;
 	}
-	slag::Message** Compute(slag::Message** input, int inputPortNumber, int* outputPortNumber)
+	::Message** Compute(::Message** input, int inputPortNumber, int* outputPortNumber)
 	{
 		if (getline(ifs, line).good())
 		{
@@ -47,5 +47,5 @@ public:
 private:
 	std::string line;
 	std::ifstream ifs;
-	slag::Message* output_msg;
+	::Message* output_msg;
 };

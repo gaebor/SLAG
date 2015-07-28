@@ -1,9 +1,9 @@
 #pragma once
-#include "slag/slag_interface.h"
+#include "AbstractInterface.h"
 
 #include <string>
 
-class IntMessage : public slag::Message
+class IntMessage : public Message
 {
 public:
 	IntMessage();
@@ -11,15 +11,15 @@ public:
 	int val;
 };
 
-class AddModule : public slag::Module
+class AddModule : public Module
 {
 public:
 	AddModule();
 	virtual ~AddModule(void);
 
-	slag::Message** Compute(slag::Message** input, int inputPortNumber, int* outputPortNumber);
+	Message** Compute(Message** input, int inputPortNumber, int* outputPortNumber);
 
 private:
-	slag::Message* output_msg;
+	Message* output_msg;
 	std::string text;
 };

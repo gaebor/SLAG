@@ -2,6 +2,8 @@
 
 #include "slag/slag_interface.h"
 
+#include "AbstractInterface.h"
+
 #include "AddModule.h"
 #include "VideoSource.h"
 #include "ReadModule.h"
@@ -30,7 +32,7 @@ extern "C" {
 DLL_EXPORT void* SlagInstantiate(const char* name, const char* instance, const char** out_text, unsigned char** out_img, int* w, int* h)
 {
 	std::string nameStr = name;
-	slag::Module* result = nullptr;
+	Module* result = nullptr;
 	if (nameStr == "AddModule")
 	{
 		result = new AddModule();
@@ -51,23 +53,23 @@ DLL_EXPORT void* SlagInstantiate(const char* name, const char* instance, const c
 
 DLL_EXPORT void SlagDestroyMessage( void* message)
 {
-	delete (slag::Message*)message;
+	delete (Message*)message;
 }
 
 DLL_EXPORT void SlagDestroyModule( void* module)
 {
-	delete (slag::Module*)module;
+	delete (Module*)module;
 }
 
 DLL_EXPORT void** SlagCompute( void* module, void** input, int inputPortNumber, int* outputPortNumber)
 {
-	return (void**)((slag::Module*)module)->Compute((slag::Message**)input, inputPortNumber, outputPortNumber);
+	return (void**)((Module*)module)->Compute((Message**)input, inputPortNumber, outputPortNumber);
 }
 
 //! returns 0 on success
 DLL_EXPORT int SlagInitialize(void* module, int settingsc, const char* settingsv[])
 {
-	return (((slag::Module*)module)->Initialize(settingsc, settingsv)) ? 0 : -1 ;
+	return (((::Module*)module)->Initialize(settingsc, settingsv)) ? 0 : -1 ;
 }
 
 #ifdef __cplusplus

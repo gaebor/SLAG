@@ -34,11 +34,11 @@ public:
 	struct Functions
 	{
 		Functions() :instantiate(NULL), initialize(NULL), compute(NULL), deleteMsg(NULL), deleteModule(NULL){}
-		slag::SlagInstantiate instantiate;
-		slag::SlagCompute compute;
-		slag::SlagDestroyMessage deleteMsg;
-		slag::SlagDestroyModule deleteModule;
-		slag::SlagInitialize initialize;
+		SlagInstantiate_t instantiate;
+		SlagCompute_t compute;
+		SlagDestroyMessage_t deleteMsg;
+		SlagDestroyModule_t deleteModule;
+		SlagInitialize_t initialize;
 	};
 
 	static std::vector<std::string> ReadSettings(cv::FileNode& settingsNode);

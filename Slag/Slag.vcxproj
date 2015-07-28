@@ -94,7 +94,7 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
-      <AdditionalIncludeDirectories>$(SolutionDir)Core;e:\PROGRAMOK\poco-1.4.7p1\Foundation\include;E:\PROGRAMOK\poco-1.4.7p1\Util\include;E:\PROGRAMOK\opencv\build\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)inc;e:\PROGRAMOK\poco-1.4.7p1\Foundation\include;E:\PROGRAMOK\poco-1.4.7p1\Util\include;E:\PROGRAMOK\opencv\build\include</AdditionalIncludeDirectories>
       <TreatWChar_tAsBuiltInType>false</TreatWChar_tAsBuiltInType>
     </ClCompile>
     <Link>
@@ -111,7 +111,7 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
-      <AdditionalIncludeDirectories>$(SolutionDir)Core;e:\PROGRAMOK\poco-1.4.7p1\Foundation\include;E:\PROGRAMOK\poco-1.4.7p1\Util\include;E:\PROGRAMOK\opencv\build\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)inc;e:\PROGRAMOK\poco-1.4.7p1\Foundation\include;E:\PROGRAMOK\poco-1.4.7p1\Util\include;E:\PROGRAMOK\opencv\build\include</AdditionalIncludeDirectories>
       <TreatWChar_tAsBuiltInType>false</TreatWChar_tAsBuiltInType>
     </ClCompile>
     <Link>
@@ -130,7 +130,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
-      <AdditionalIncludeDirectories>$(SolutionDir)Core;e:\PROGRAMOK\poco-1.4.7p1\Foundation\include;E:\PROGRAMOK\poco-1.4.7p1\Util\include;E:\PROGRAMOK\opencv\build\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)inc;e:\PROGRAMOK\poco-1.4.7p1\Foundation\include;E:\PROGRAMOK\poco-1.4.7p1\Util\include;E:\PROGRAMOK\opencv\build\include</AdditionalIncludeDirectories>
       <TreatWChar_tAsBuiltInType>false</TreatWChar_tAsBuiltInType>
     </ClCompile>
     <Link>
@@ -151,7 +151,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
-      <AdditionalIncludeDirectories>$(SolutionDir)Core;e:\PROGRAMOK\poco-1.4.7p1\Foundation\include;E:\PROGRAMOK\poco-1.4.7p1\Util\include;E:\PROGRAMOK\opencv\build\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)inc;e:\PROGRAMOK\poco-1.4.7p1\Foundation\include;E:\PROGRAMOK\poco-1.4.7p1\Util\include;E:\PROGRAMOK\opencv\build\include</AdditionalIncludeDirectories>
       <TreatWChar_tAsBuiltInType>false</TreatWChar_tAsBuiltInType>
     </ClCompile>
     <Link>
@@ -166,17 +166,14 @@
   <ItemGroup>
     <ClCompile Include="Factory.cpp" />
     <ClCompile Include="HumanReadable.cpp" />
+    <ClCompile Include="InternalTypes.cpp" />
     <ClCompile Include="ModuleIdentifier.cpp" />
     <ClCompile Include="ModuleWrapper.cpp" />
     <ClCompile Include="Slag.cpp" />
     <ClCompile Include="Timer.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Core\Core.vcxproj">
-      <Project>{d5848f3a-716c-4924-8560-a531ea714660}</Project>
-    </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
+    <ClInclude Include="..\inc\slag\slag_interface.h" />
     <ClInclude Include="AsyncQueue.h" />
     <ClInclude Include="ExclusiveAccess.h" />
     <ClInclude Include="Factory.h" />

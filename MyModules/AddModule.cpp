@@ -12,7 +12,7 @@ AddModule::~AddModule(void)
 {
 }
 
-slag::Message** AddModule::Compute( slag::Message** input, int inputPortNumber, int* outputPortNumber )
+Message** AddModule::Compute( Message** input, int inputPortNumber, int* outputPortNumber )
 {
 	if (inputPortNumber == 0)
 	{

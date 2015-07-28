@@ -1,9 +1,9 @@
 #pragma once
-#include "slag/slag_interface.h"
+#include "AbstractInterface.h"
 
 #include "opencv2/highgui/highgui.hpp"
 
-class Frame : public slag::Message
+class Frame : public Message
 {
 public:
 	Frame(void);
@@ -12,18 +12,18 @@ public:
 	cv::Mat image;
 };
 
-class __declspec(dllexport) VideoSource : public slag::Module
+class VideoSource : public Module
 {
 public:
 	VideoSource(void);
 	virtual ~VideoSource(void);
 
 	bool Initialize(int settingsc, const char* settingsv[]);
-	slag::Message** Compute(slag::Message** input, int inputPortNumber, int* outputPortNumber);
+	Message** Compute(Message** input, int inputPortNumber, int* outputPortNumber);
 
 private:
 	std::string text;
 	cv::Mat picture;
 	cv::VideoCapture capture;
-	std::vector<slag::Message*> output_array;
+	std::vector<Message*> output_array;
 };

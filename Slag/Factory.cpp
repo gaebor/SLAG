@@ -39,11 +39,11 @@ Factory::Factory()
 		hndl = LoadLibraryA(dll.c_str());
 		if (hndl)
 		{
-			auto instantiate = (slag::SlagInstantiate)GetProcAddress(hndl, "SlagInstantiate");
-			auto deleteMsg = (slag::SlagDestroyMessage)GetProcAddress(hndl, "SlagDestroyMessage");
-			auto deleteModule = (slag::SlagDestroyModule)GetProcAddress(hndl, "SlagDestroyModule");
-			auto compute = (slag::SlagCompute)GetProcAddress(hndl, "SlagCompute");
-			auto initialize = (slag::SlagInitialize)GetProcAddress(hndl, "SlagInitialize");
+			auto instantiate = (SlagInstantiate_t)GetProcAddress(hndl, "SlagInstantiate");
+			auto deleteMsg = (SlagDestroyMessage_t)GetProcAddress(hndl, "SlagDestroyMessage");
+			auto deleteModule = (SlagDestroyModule_t)GetProcAddress(hndl, "SlagDestroyModule");
+			auto compute = (SlagCompute_t)GetProcAddress(hndl, "SlagCompute");
+			auto initialize = (SlagInitialize_t)GetProcAddress(hndl, "SlagInitialize");
 
 			if (instantiate != NULL && deleteMsg != NULL && deleteModule != NULL && compute != NULL)
 			{

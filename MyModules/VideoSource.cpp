@@ -45,7 +45,7 @@ bool VideoSource::Initialize( int settingsc, const char* settingsv[] )
 	return false;
 }
 
-slag::Message** VideoSource::Compute( slag::Message** input, int inputPortNumber, int* outputPortNumber )
+Message** VideoSource::Compute( Message** input, int inputPortNumber, int* outputPortNumber )
 {
 	auto output = new Frame();
 	capture >> output->image;

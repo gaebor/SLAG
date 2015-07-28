@@ -47,8 +47,8 @@ protected:
 	int output_image_width, output_image_height;
 
 	void* _module; // responsible for it!
-	slag::SlagCompute compute;
-	slag::SlagInitialize initialize;
-	slag::SlagDestroyModule deleteModule;
-	slag::SlagDestroyMessage deleteMsg;
+	SlagCompute_t compute;
+	SlagInitialize_t initialize;
+	SlagDestroyModule_t deleteModule;
+	SlagDestroyMessage_t deleteMsg;
 };
