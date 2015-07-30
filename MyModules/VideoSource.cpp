@@ -1,5 +1,7 @@
 #include "VideoSource.h"
 
+#include "opencv2/imgproc/imgproc.hpp"
+
 Frame::Frame(void)
 {
 }
@@ -58,7 +60,8 @@ MyMessage** VideoSource::Compute( MyMessage** input, int inputPortNumber, int* o
 		return nullptr;
 	}
 	
-	picture = output->image;
+	cv::cvtColor(output->image, picture, CV_BGR2RGBA);
+
 	*outputPictureWidth = picture.cols;
 	*outputPictureHeight = picture.rows;
 	*outputPicture = picture.data;

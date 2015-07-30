@@ -166,6 +166,7 @@
   <ItemGroup>
     <ClCompile Include="Factory.cpp" />
     <ClCompile Include="HumanReadable.cpp" />
+    <ClCompile Include="Imshow.cpp" />
     <ClCompile Include="InternalTypes.cpp" />
     <ClCompile Include="ModuleIdentifier.cpp" />
     <ClCompile Include="ModuleWrapper.cpp" />
@@ -178,6 +179,7 @@
     <ClInclude Include="ExclusiveAccess.h" />
     <ClInclude Include="Factory.h" />
     <ClInclude Include="HumanReadable.h" />
+    <ClInclude Include="Imshow.h" />
     <ClInclude Include="InternalTypes.h" />
     <ClInclude Include="ModuleIdentifier.h" />
     <ClInclude Include="ModuleWrapper.h" />

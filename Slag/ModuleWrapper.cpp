@@ -7,6 +7,7 @@
 #include "Timer.h"
 #include "HumanReadable.h"
 #include "Factory.h"
+#include "Imshow.h"
 
 ModuleWrapper::~ModuleWrapper(void)
 {
@@ -14,13 +15,14 @@ ModuleWrapper::~ModuleWrapper(void)
 		deleteModule(_module);
 }
 
-ModuleWrapper::ModuleWrapper()
+ModuleWrapper::ModuleWrapper(const bool* run)
 :	inputPortLength(0),
 	diffTime(std::make_pair(0.0, 0.0)),
 	_module(nullptr),
 	output_image_raw(nullptr),
 	output_text_raw(nullptr),
-	output_image_width(0), output_image_height(0)
+	output_image_width(0), output_image_height(0),
+	do_run(run)
 {
 }
 
@@ -56,7 +58,7 @@ void ModuleWrapper::ThreadProcedure()
 	Timer timer;
 	double prevTime = 0.0;
 	
-	while (true)
+	while (*do_run)
 	{
 		//manage input data
 		for (auto& q : inputQueues)
@@ -128,8 +130,12 @@ void ModuleWrapper::ThreadProcedure()
 		}
 
 		size_t picure_size = 0;
-		if (output_image_raw != nullptr && (picure_size = output_image_width * output_image_height) > 0)
+		if (output_image_raw != nullptr && (picure_size = output_image_width * output_image_height * 3) > 0)
+		{
+			std::string name = identifier;
+			Imshow(name.c_str(), output_image_width, output_image_height, output_image_raw);
 			output_image.Modify([&](std::vector<unsigned char>& self){self.assign(output_image_raw, output_image_raw + picure_size);});
+		}
 
 	}
 halt:

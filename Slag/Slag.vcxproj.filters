@@ -19,6 +19,9 @@
     <Filter Include="Interface">
       <UniqueIdentifier>{fd02416a-676e-4267-a9cb-242f47c88b3c}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Imshow">
+      <UniqueIdentifier>{b53b3151-a4b1-4a49-961e-0fbe01a6f431}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Slag.cpp">
@@ -40,6 +43,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="InternalTypes.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Imshow.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -70,6 +76,9 @@
     </ClInclude>
     <ClInclude Include="..\inc\slag\slag_interface.h">
       <Filter>Interface</Filter>
+    </ClInclude>
+    <ClInclude Include="Imshow.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

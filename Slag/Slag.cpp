@@ -8,13 +8,12 @@
 #include <mutex>
 #include <set>
 
-#include <windows.h>
-
 #include "Factory.h"
 #include "ModuleIdentifier.h"
 #include "AsyncQueue.h"
 #include "ModuleWrapper.h"
 #include "HumanReadable.h"
+#include "Imshow.h"
 
 bool run = true; //signaling the visualizer
 
@@ -25,9 +24,6 @@ static inline int round_int( double x )
 
 void visualizer(std::map<ModuleIdentifier, std::shared_ptr<ModuleWrapper>>& modules, int speed = 0)
 {
-	HANDLE hStdOut = GetStdHandle(STD_OUTPUT_HANDLE);
-	COORD coord;
-	coord.X = coord.Y = 0;
 	std::string nameTag = "  module  ";
 
 	size_t nameOffset = nameTag.size();
@@ -47,12 +43,11 @@ void visualizer(std::map<ModuleIdentifier, std::shared_ptr<ModuleWrapper>>& modu
 	auto internal_func = [&]()
 	{
 		system("cls");
-		SetConsoleCursorPosition(hStdOut, coord);
 
 		printf("%s", nameTag.c_str());
 		for (auto i = nameTag.size(); i < nameOffset; ++i)
 			putchar(' ');
-		printf("|  speed   |   load   | text output\n");
+		printf("|  speed   | overhead | text output\n");
 		for (int i = 0; i < nameOffset; ++i)
 			putchar('-');
 		printf("+----------+----------+-\n");
@@ -66,9 +61,9 @@ void visualizer(std::map<ModuleIdentifier, std::shared_ptr<ModuleWrapper>>& modu
 			const int load = round_int(10*(m.second->diffTime.Get().second)/(m.second->diffTime.Get().first));
 			m.second->diffTime.MakeEditable();
 			printf("%s|%s|", (nameIt++)->c_str(), line);
-			for (int i = 0; i < load; ++i)
+			for (int i = 0; i < 10-load; ++i)
 				putchar('=');
-			for (int i = load; i < 10; ++i)
+			for (int i = 10-load; i < 10; ++i)
 				putchar(' ');
 			putchar('|');
 
@@ -98,6 +93,21 @@ void visualizer(std::map<ModuleIdentifier, std::shared_ptr<ModuleWrapper>>& modu
 		Sleep(speed);
 	}
 	internal_func();
+}
+
+BOOL WINAPI consoleHandler(DWORD signal) {
+	switch (signal)
+	{
+	case CTRL_C_EVENT:
+	case CTRL_BREAK_EVENT:
+	case CTRL_CLOSE_EVENT:
+		run = false; //TODO end the Compute for each module
+		break;
+	default:
+		break;
+	}
+
+	return TRUE;
 }
 
 int main(int argc, char* argv[])
@@ -186,7 +196,7 @@ int main(int argc, char* argv[])
 			std::cerr << "module should have a non-empty \"Name\"!" << std::endl;
 			return -1;
 		}
-		std::shared_ptr<ModuleWrapper> moduleWrapper(new ModuleWrapper());
+		std::shared_ptr<ModuleWrapper> moduleWrapper(new ModuleWrapper(&run));
 		moduleWrapper->identifier = ModuleIdentifier(moduleName.c_str());
 		auto& moduleId = moduleWrapper->identifier;
 
@@ -313,25 +323,34 @@ int main(int argc, char* argv[])
 		return -1;
 	}
 
-	std::vector<std::shared_ptr<std::thread>> moduleThreads(modules.size());
-	auto threadIt = moduleThreads.begin();
-	for (auto m : modules)
-	{
-		threadIt->reset(new std::thread([](ModuleWrapper* _m){_m->ThreadProcedure();}, m.second.get()));
-		++threadIt;
+	run = true;
+	//! register console termination handler
+	if (!SetConsoleCtrlHandler(consoleHandler, TRUE)) {
+		printf("\nERROR: Could not set control handler"); 
+		return 1;
 	}
 
-	std::thread visualizer_thread(visualizer, modules, vizualizationSpeed);
-
-	threadIt = moduleThreads.begin();
-	for (threadIt = moduleThreads.begin(); threadIt != moduleThreads.end(); ++threadIt)
+	std::thread module_processes([&]()
 	{
-		(*threadIt)->join();
-	}
+		std::vector<std::shared_ptr<std::thread>> moduleThreads(modules.size());
+		auto threadIt = moduleThreads.begin();
+		for (auto m : modules)
+		{
+			threadIt->reset(new std::thread([](ModuleWrapper* _m){_m->ThreadProcedure();}, m.second.get()));
+			++threadIt;
+		}
 
-	run = false;
+		threadIt = moduleThreads.begin();
+		for (threadIt = moduleThreads.begin(); threadIt != moduleThreads.end(); ++threadIt)
+		{
+			(*threadIt)->join();
+		}
+		run = false;
+	});
 
-	visualizer_thread.join();
+	visualizer(modules, vizualizationSpeed);
+
+	module_processes.join();
 
 	return 0;
 }

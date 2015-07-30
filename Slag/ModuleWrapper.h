@@ -16,7 +16,7 @@ class Factory;
 class ModuleWrapper
 {
 public:
-	ModuleWrapper();
+	ModuleWrapper(const bool* run);
 	~ModuleWrapper();
 
 	bool Initialize(cv::FileNode node);
@@ -38,6 +38,7 @@ public:
 	//! gets a global ptr
 	int global_settings_c;
 	const char** global_settings_v;
+	const bool* do_run;
 
 protected:
 	friend class Factory;
