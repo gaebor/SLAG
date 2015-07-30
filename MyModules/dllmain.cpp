@@ -29,7 +29,7 @@ extern "C" {
 #endif
 
 //! this function instantiates your modules
-DLL_EXPORT void* SlagInstantiate(const char* name, const char* instance, const char** out_text, unsigned char** out_img, int* w, int* h)
+DLL_EXPORT void* SlagInstantiate(const char* name, const char* instance, const char** out_text, unsigned char** out_img, int* w, int* h, enum ImageType* type)
 {
 	std::string nameStr = name;
 	MyModule* result = nullptr;
@@ -47,6 +47,7 @@ DLL_EXPORT void* SlagInstantiate(const char* name, const char* instance, const c
 		result->outputPicture = out_img;
 		result->outputPictureWidth = w;
 		result->outputPictureHeight = h;
+		result->imageType = type;
 	}
 	return result;
 }

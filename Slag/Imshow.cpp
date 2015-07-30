@@ -4,12 +4,11 @@
 #include <string>
 #include <vector>
 #include <algorithm>
-#include <memory>
-#include <thread>
 
 #include <windows.h>
 
-#include "ExclusiveAccess.h"
+#include "opencv2/imgproc/imgproc.hpp"
+#include "opencv2/core/core.hpp"
 
 #define SLAG_WINDOW_CLASS_NAME "SlagImshow"
 
@@ -61,18 +60,9 @@ public:
 
 	const std::string _name;
 	HWND _hwnd;
-	std::unique_ptr<std::thread> _thread;
-	struct ImageData
-	{
-		int w,h;
-		std::vector<unsigned char> data;
-	}image_data;
-	bool redraw;
 };
 
-typedef ExclusiveAccess<WindowWrapper> ManagedWindow;
-
-static ExclusiveAccess<std::list<ManagedWindow>> _images;
+static std::list<WindowWrapper> _images;
 
 static int bitdepth, planes;
 
@@ -80,9 +70,9 @@ struct NameFinder
 {
 	NameFinder(const std::string& name): _name(name){}
 	const std::string _name;
-	bool operator()(const ManagedWindow& w)
+	bool operator()(const WindowWrapper& w)
 	{
-		return w.Get()._name == _name;
+		return w._name == _name;
 	}
 };
 
@@ -90,9 +80,9 @@ struct HwndFinder
 {
 	HwndFinder(const HWND& hwnd): _hwnd(hwnd){}
 	const HWND _hwnd;
-	bool operator()(const ManagedWindow& w)
+	bool operator()(const WindowWrapper& w)
 	{
-		return w.Get()._hwnd == _hwnd;
+		return w._hwnd == _hwnd;
 	}
 };
 
@@ -112,45 +102,15 @@ LRESULT CALLBACK WndProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 		break;
 	case WM_CLOSE:
 		{
-		_images.NonEditable();
-		auto it = std::find_if(_images.Set().begin(), _images.Set().end(), HwndFinder(hwnd));
-		if (it == _images.Set().end())
+		auto it = std::find_if(_images.begin(), _images.end(), HwndFinder(hwnd));
+		if (it == _images.end())
 			MessageBox(NULL, "wanted to delete a non-existent window!", "Error!", MB_ICONEXCLAMATION | MB_OK);
 		else
-			_images.Set().erase(it);
-
-		_images.MakeEditable();
+			_images.erase(it);
 		}break;
 	case WM_PAINT:
 		{
-			printf("painted");
-			PAINTSTRUCT ps;
-			HDC hdc = BeginPaint(hwnd, &ps);
 
-			HDC hdcBuffer = CreateCompatibleDC(hdc);
-
-			_images.NonEditable();
-			auto it = std::find_if(_images.Set().begin(), _images.Set().end(), HwndFinder(hwnd));
-			if (it != _images.Set().end())
-			{
-				auto& image_data = *it;
-				_images.MakeEditable();
-				image_data.NonEditable();
-
-				HBITMAP hbm = CreateBitmap(image_data.Get().image_data.w,image_data.Get().image_data.h, planes, bitdepth, image_data.Get().image_data.data.data());
-
-				HBITMAP hbmOldBuffer = (HBITMAP)SelectObject(hdcBuffer, hbm);
-				
-				BitBlt(hdc, 0, 0, image_data.Get().image_data.w, image_data.Get().image_data.h, hdcBuffer, 0, 0, SRCCOPY);
-				image_data.MakeEditable();
-
-				SelectObject(hdcBuffer, hbmOldBuffer);
-				DeleteObject(hbm);
-			}
-			_images.MakeEditable();
-			DeleteDC(hdcBuffer);
-
-			EndPaint(hwnd, &ps);
 		}break;
 	case WM_DESTROY:
 		PostQuitMessage(0);
@@ -161,63 +121,105 @@ LRESULT CALLBACK WndProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 	return 0;
 }
 
-void Imshow( const char* window_name, int width, int height, const unsigned char* bits )
+inline int GetCvType(ImageType type)
 {
-	_images.NonEditable();
-	auto it = std::find_if(_images.Set().begin(), _images.Set().end(), NameFinder(window_name));
-	if (it == _images.Set().end())
+	switch (type)
 	{
-		 _images.Set().emplace_back(window_name);
-		 it = _images.Set().end();
+	case RGB:
+	case BGR:  return CV_8UC3;
+	case RGBA: return CV_8UC4;
+	case GREY:
+	default:   return CV_8UC1;
+	}
+}
+
+inline int GetCvConversion(ImageType type)
+{
+	switch (type)
+	{
+	case RGB:  return cv::COLOR_RGB2BGRA;
+	case BGR:  return cv::COLOR_BGR2BGRA;
+	case RGBA: return 0;
+	case GREY: 
+	default:   return cv::COLOR_GRAY2BGRA;
+	}
+}
+
+void Imshow( const char* window_name, const ImageContainer& imageContainer)
+{
+	auto it = std::find_if(_images.begin(), _images.end(), NameFinder(window_name));
+	if (it == _images.end())
+	{
+		 _images.emplace_back(window_name);
+		 it = _images.end();
 		 --it;
 	}
-	it->NonEditable();
-	auto& windowWrapper = it->Set();
-	_images.MakeEditable();
-	windowWrapper.image_data.w = width;
-	windowWrapper.image_data.h = height;
-	windowWrapper.image_data.data.assign(bits, bits + (bitdepth/8)*width*height);
-	it->Set().redraw = true;
-	it->MakeEditable();
+	auto& windowWrapper = *it;
+
+	cv::Mat converted;
+	cv::cvtColor(cv::Mat(imageContainer.h, imageContainer.w, GetCvType(imageContainer.type), (void*)imageContainer.data.data()), converted, GetCvConversion(imageContainer.type));
+
+	PAINTSTRUCT ps;
+	HDC hdc = BeginPaint(windowWrapper._hwnd, &ps);
+
+	HDC hdcBuffer = CreateCompatibleDC(hdc);
+
+	HBITMAP hbm = CreateBitmap(imageContainer.w,imageContainer.h, planes, bitdepth, converted.data);
+
+	HBITMAP hbmOldBuffer = (HBITMAP)SelectObject(hdcBuffer, hbm);
+
+	BitBlt(hdc, 0, 0, imageContainer.w,imageContainer.h, hdcBuffer, 0, 0, SRCCOPY);
+
+	SelectObject(hdcBuffer, hbmOldBuffer);
+	DeleteObject(hbm);
+	DeleteDC(hdcBuffer);
+
+	EndPaint(windowWrapper._hwnd, &ps);
 
 }
 
-WindowWrapper::WindowWrapper(const char* name)
-	: _name(name), redraw(false)
+int FeedImshow()
 {
-	_thread.reset(new std::thread([&]()
-	{
-		_hwnd = CreateWindowEx(
-			0,
-			SLAG_WINDOW_CLASS_NAME,
-			_name.c_str(),
-			WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU,
-			CW_USEDEFAULT, CW_USEDEFAULT, 640, 480, //default size
-			NULL, NULL, hInstance, NULL);
-
-		if (!_hwnd)
-		{
-			auto error = GetLastError();
-			MessageBox(NULL, "CreateWindow Failed!", "Error!", MB_ICONEXCLAMATION | MB_OK);
-			return;
-		}
-
-		MSG Msg;
-		ShowWindow(_hwnd, startupInfo.wShowWindow);
-		UpdateWindow(_hwnd);
-
-		while(GetMessage(&Msg, _hwnd, 0, 0) > 0)
+	MSG Msg;
+	
+	for (auto& i : _images)
+		if (GetMessage(&Msg, i._hwnd, 0, 0) > 0)
 		{
 			TranslateMessage(&Msg);
 			DispatchMessage(&Msg);
-			if (redraw)
-			{
-				UpdateWindow(_hwnd);
-				redraw = false;
-			}
-		}
+		}else
+			return -1;
+	return 1;
+}
 
-	}));
+WindowWrapper::WindowWrapper(const char* name)
+	: _name(name)
+{
+	_hwnd = CreateWindowEx(
+		0,
+		SLAG_WINDOW_CLASS_NAME,
+		_name.c_str(),
+		WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU,
+		CW_USEDEFAULT, CW_USEDEFAULT, 640, 480, //default size
+		NULL, NULL, hInstance, NULL);
+
+	if (!_hwnd)
+	{
+		auto error = GetLastError();
+		MessageBox(NULL, "CreateWindow Failed!", "Error!", MB_ICONEXCLAMATION | MB_OK);
+		return;
+	}
+
+	ShowWindow(_hwnd, startupInfo.wShowWindow);
+	UpdateWindow(_hwnd);
+
+	//MSG Msg;
+	//
+	//while(GetMessage(&Msg, _hwnd, 0, 0) > 0)
+	//{
+	//	TranslateMessage(&Msg);
+	//	DispatchMessage(&Msg);
+	//}
 }
 
 WindowWrapper::~WindowWrapper()
@@ -225,6 +227,4 @@ WindowWrapper::~WindowWrapper()
 	if (_hwnd)
 		if (!DestroyWindow(_hwnd))
 			MessageBox(NULL, "DestroyWindow Failed!", "Error!", MB_ICONEXCLAMATION | MB_OK);
-
-	_thread->join();
 }

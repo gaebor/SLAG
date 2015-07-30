@@ -1,3 +1,8 @@
 #pragma once
+#include "InternalTypes.h"
 
-void Imshow(const char* window_name, int w, int h, const unsigned char* bits);
+//!please guarantee that the @param imageContainer is protected against data race during the call
+void Imshow(const char* window_name, const ImageContainer& imageContainer);
+
+//!call this in a loop
+int FeedImshow();

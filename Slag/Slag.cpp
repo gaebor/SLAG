@@ -60,7 +60,7 @@ void visualizer(std::map<ModuleIdentifier, std::shared_ptr<ModuleWrapper>>& modu
 			print_humanreadable_time(line, 1024, m.second->diffTime.Get().first);
 			const int load = round_int(10*(m.second->diffTime.Get().second)/(m.second->diffTime.Get().first));
 			m.second->diffTime.MakeEditable();
-			printf("%s|%s|", (nameIt++)->c_str(), line);
+			printf("%s|%s|", nameIt->c_str(), line);
 			for (int i = 0; i < 10-load; ++i)
 				putchar('=');
 			for (int i = 10-load; i < 10; ++i)
@@ -84,7 +84,18 @@ void visualizer(std::map<ModuleIdentifier, std::shared_ptr<ModuleWrapper>>& modu
 			for (int i = 0; i < nameOffset; ++i)
 				putchar('-');
 			printf("+----------+----------+-\n");
+
+			/************************************************************************/
+			/* image output                                                         */
+			/************************************************************************/
+			
+			m.second->output_image.NonEditable();
+			if (!m.second->output_image.Get().data.empty())
+				Imshow(nameIt->c_str(), m.second->output_image.Get());
+			m.second->output_image.MakeEditable();
+			++nameIt;
 		}
+		FeedImshow();
 	};
 
 	while (run)

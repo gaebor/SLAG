@@ -22,7 +22,9 @@ ModuleWrapper::ModuleWrapper(const bool* run)
 	output_image_raw(nullptr),
 	output_text_raw(nullptr),
 	output_image_width(0), output_image_height(0),
-	do_run(run)
+	do_run(run),
+	imageType(ImageType::GREY),
+	output_image()
 {
 }
 
@@ -52,13 +54,14 @@ void ModuleWrapper::ThreadProcedure()
 	std::vector<void*> inputMessages(inputPortLength, nullptr);
 	void** outputMessages_raw;
 
+	//Dequeued input messages which haven't been Enqueued to the output yet
 	std::vector<ManagedMessage> receivedMessages;
 	
 	//TODO more reference counting
 	Timer timer;
 	double prevTime = 0.0;
 	
-	while (*do_run)
+	while (*do_run) //a terminating signal leaves every message in the queue and quits the loop
 	{
 		//manage input data
 		for (auto& q : inputQueues)
@@ -130,11 +133,15 @@ void ModuleWrapper::ThreadProcedure()
 		}
 
 		size_t picure_size = 0;
-		if (output_image_raw != nullptr && (picure_size = output_image_width * output_image_height * 3) > 0)
+		if (output_image_raw != nullptr && (picure_size = output_image_width * output_image_height * GetByteDepth(imageType)) > 0)
 		{
-			std::string name = identifier;
-			Imshow(name.c_str(), output_image_width, output_image_height, output_image_raw);
-			output_image.Modify([&](std::vector<unsigned char>& self){self.assign(output_image_raw, output_image_raw + picure_size);});
+			output_image.Modify([&](ImageContainer& self)
+			{
+				self.data.assign(output_image_raw, output_image_raw + picure_size);
+				self.h = output_image_height;
+				self.w = output_image_width;
+				self.type = imageType;
+			});
 		}
 
 	}

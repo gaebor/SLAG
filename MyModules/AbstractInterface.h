@@ -1,4 +1,5 @@
 #pragma once
+#include "slag\slag_interface.h"
 
 class MyMessage
 {
@@ -44,5 +45,6 @@ public:
 	unsigned char** outputPicture;
 	int* outputPictureWidth;
 	int* outputPictureHeight;
+	ImageType* imageType;
 };
 

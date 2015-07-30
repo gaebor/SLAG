@@ -1,24 +1,33 @@
+#pragma once
 #include <memory>
+
+#include <vector>
 
 #include "AsyncQueue.h"
 #include "slag/slag_interface.h"
 
-//class ManagedModule : public std::shared_ptr<void>
-//{
-//public:
-//	ManagedModule(SlagDestroyModule_t deleter, void* module = nullptr);
-//
-//	~ManagedModule();
-//};
-//
-//class ManagedMessage : public std::shared_ptr<void>
-//{
-//public:
-//	ManagedMessage(SlagDestroyMessage_t deleter, void* message = nullptr);
-//	~ManagedMessage();
-//};
+inline size_t GetByteDepth(ImageType t)
+{
+	switch (t)
+	{
+	case RGB:
+	case BGR:  return 3;
+	case RGBA: return 4;
+	case GREY:
+	default:   return 4;
+	}
+}
 
 typedef std::shared_ptr<void> ManagedMessage;
 typedef std::shared_ptr<void> ManagedModule;
 
 typedef AsyncQueue<ManagedMessage> MessageQueue;
+
+struct ImageContainer
+{
+	ImageContainer();
+	int w;
+	int h;
+	ImageType type;
+	std::vector<unsigned char> data;
+};

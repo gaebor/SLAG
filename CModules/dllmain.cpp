@@ -39,7 +39,7 @@ void** Mul(void** input, int inputPortNumber, int* outputPortNumber)
 	return &result;
 }
 
-DLL_EXPORT void* SlagInstantiate(const char* moduleName, const char* InstanceName, const char** out_text, unsigned char** out_img, int* w, int* h)
+DLL_EXPORT void* SlagInstantiate(const char* moduleName, const char* InstanceName, const char** out_text, unsigned char** out_img, int* w, int* h, enum ImageType* type)
 {
 	SlagFunction_t function = NULL;
 

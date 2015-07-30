@@ -76,7 +76,15 @@ Factory::ErrorCode Factory::InstantiateModule(ModuleWrapper& moduleWrapper)const
 		for (const auto& f : pModuleFunctions)
 		{
 			//instantiate module
-			auto module = (f.second.instantiate)(moduleId.name.c_str(), moduleId.instance.c_str(), &moduleWrapper.output_text_raw, &moduleWrapper.output_image_raw, &moduleWrapper.output_image_width, &moduleWrapper.output_image_height);
+			auto module = (f.second.instantiate)(
+				moduleId.name.c_str(),
+				moduleId.instance.c_str(),
+				&moduleWrapper.output_text_raw,
+				&moduleWrapper.output_image_raw,
+				&moduleWrapper.output_image_width,
+				&moduleWrapper.output_image_height,
+				&moduleWrapper.imageType);
+
 			if (module)
 			{
 				result = Success;
@@ -101,7 +109,15 @@ Factory::ErrorCode Factory::InstantiateModule(ModuleWrapper& moduleWrapper)const
 		auto moduleFactory = pModuleFunctions.find(moduleId.dll);
 		if (moduleFactory != pModuleFunctions.end())
 		{
-			auto module = (moduleFactory->second.instantiate)(moduleId.name.c_str(), moduleId.instance.c_str(), &moduleWrapper.output_text_raw, &moduleWrapper.output_image_raw, &moduleWrapper.output_image_width, &moduleWrapper.output_image_height);
+			auto module = (moduleFactory->second.instantiate)(
+				moduleId.name.c_str(),
+				moduleId.instance.c_str(),
+				&moduleWrapper.output_text_raw,
+				&moduleWrapper.output_image_raw,
+				&moduleWrapper.output_image_width,
+				&moduleWrapper.output_image_height,
+				&moduleWrapper.imageType);
+
 			if (module)
 			{
 				moduleWrapper._module = module;

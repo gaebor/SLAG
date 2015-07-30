@@ -30,7 +30,8 @@ public:
 	size_t inputPortLength;
 
 	ExclusiveAccess<std::string> output_text;
-	ExclusiveAccess<std::vector<unsigned char>> output_image;
+
+	ExclusiveAccess<ImageContainer> output_image;
 
 	ExclusiveAccess<std::pair<double, double>> diffTime;
 	ExclusiveAccess<std::map<PortNumber, size_t>> bufferSize;
@@ -46,6 +47,7 @@ protected:
 	const char* output_text_raw;
 	unsigned char* output_image_raw;
 	int output_image_width, output_image_height;
+	ImageType imageType;
 
 	void* _module; // responsible for it!
 	SlagCompute_t compute;

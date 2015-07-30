@@ -11,6 +11,14 @@
 extern "C" {
 #endif
 
+enum ImageType
+{
+	GREY,
+	RGB,
+	BGR,
+	RGBA
+};
+
 //mandatory
 
 //! SLAG calls this once, your module or whatever necessary data should be allocated
@@ -36,7 +44,12 @@ extern "C" {
 		Set to 0 if you don't have any image to show!
 	@return pointer to whatever you call a module
 */
-typedef void* (*SlagInstantiate_t)(const char* moduleName, const char* InstanceName, const char** out_text, unsigned char** out_img, int* w, int* h);
+typedef void* (*SlagInstantiate_t)(
+	const char* moduleName,
+	const char* InstanceName,
+	const char** out_text,
+	unsigned char** out_img,
+	int* w, int* h, enum ImageType* imageType);
 
 //! SLAG calls this if a message is useless anymore
 /*!
