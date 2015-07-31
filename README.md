@@ -26,6 +26,7 @@ These should be implemented in your Library
 In theory, SLAG can be implemented for any platform which can load and run a C Library.
 Of course, your Library have to compile for that particular platform (that's YOUR job).
 Although, it is very understandable to fulfil one of the following Platform Requirements:
+
 Input capability | Platform service | Output capability
 ---------------- | ---------------- | -----------------
 you can locate and read (text) files | File Access | you can create and write files with given path
