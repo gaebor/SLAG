@@ -14,94 +14,10 @@
 #include "ModuleWrapper.h"
 #include "HumanReadable.h"
 #include "Imshow.h"
-#include "Timer.h"
+#include "OS_dependent.h"
 
 bool run = true; //signaling the termination event
 double hardResetTime = 0.0;
-
-static inline int round_int( double x )
-{
-	return x+0.5;
-}
-
-void visualize_text(std::map<ModuleIdentifier, std::shared_ptr<ModuleWrapper>>& modules, int speed = 0)
-{
-	std::string nameTag = "  module  ";
-
-	size_t nameOffset = nameTag.size();
-	for (auto& m : modules)
-	{
-		nameOffset = std::max(nameOffset, std::string(m.first).size());
-	}
-
-	std::vector<std::string> names;
-	for (auto& m : modules)
-	{
-		auto name = (std::string)m.first;
-		name += std::string(nameOffset - name.size(), ' ');
-		names.push_back( name );
-	}
-
-	auto internal_func = [&]()
-	{
-		system("cls");
-
-		printf("%s", nameTag.c_str());
-		for (auto i = nameTag.size(); i < nameOffset; ++i)
-			putchar(' ');
-		printf("|  speed   | overhead | text output\n");
-		for (int i = 0; i < nameOffset; ++i)
-			putchar('-');
-		printf("+----------+----------+-\n");
-
-		auto nameIt = names.begin();
-		for (auto& m : modules)
-		{
-			char line[1024];
-			m.second->diffTime.NonEditable();
-			print_humanreadable_time(line, 1024, m.second->diffTime.Get().first);
-			const int load = round_int(10*(m.second->diffTime.Get().second)/(m.second->diffTime.Get().first));
-			m.second->diffTime.MakeEditable();
-			printf("%s|%s|", nameIt->c_str(), line);
-			for (int i = 0; i < 10-load; ++i)
-				putchar('=');
-			for (int i = 10-load; i < 10; ++i)
-				putchar(' ');
-			putchar('|');
-
-			m.second->output_text.Modify([&](std::string& self)
-			{
-				std::cout << self << "\n";
-				self.clear();
-			});
-
-			m.second->bufferSize.Modify([&](const std::map<PortNumber, size_t>& self)
-			{
-				for (auto& q : self)
-				{
-					int offset = print_humanreadable_giga(line, 1024, q.second, " ");
-					for (; offset < nameOffset;++offset)
-						putchar(' ');
-					printf("%s|> %d\n", line, q.first);
-				}
-			});
-			
-			for (int i = 0; i < nameOffset; ++i)
-				putchar('-');
-			printf("+----------+----------+-\n");
-
-			++nameIt;
-		}
-		//FeedImshow();
-	};
-
-	while (run)
-	{
-		internal_func();
-		Sleep(speed);
-	}
-	internal_func();
-}
 
 BOOL WINAPI consoleHandler(DWORD signal) {
 	switch (signal)
@@ -372,7 +288,7 @@ int main(int argc, char* argv[])
 		run = false;
 	});
 
-	std::thread text_visualizer(visualize_text, modules, vizualizationSpeed);
+	set_output_text_speed(vizualizationSpeed);
 
 	///************************************************************************/
 	///* image output                                                         */
@@ -403,7 +319,7 @@ int main(int argc, char* argv[])
 	}
 
 	module_processes.join();
-	text_visualizer.join();
+	terminate_output_text();
 	resetTimer.join();
 
 	return 0;

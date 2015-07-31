@@ -29,11 +29,11 @@ public:
 	std::map<PortNumber, std::vector<MessageQueue*>> outputQueues; //!< output can be duplicated and distributed to many modules
 	size_t inputPortLength;
 
-	ExclusiveAccess<std::string> output_text;
+	//ExclusiveAccess<std::string> output_text;
 
 	ExclusiveAccess<ImageContainer> output_image;
 
-	ExclusiveAccess<std::pair<double, double>> diffTime;
+	//ExclusiveAccess<std::pair<double, double>> diffTime;
 	ExclusiveAccess<std::map<PortNumber, size_t>> bufferSize;
 
 	//! gets a global ptr

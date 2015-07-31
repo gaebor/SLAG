@@ -19,7 +19,7 @@
     <Filter Include="Interface">
       <UniqueIdentifier>{fd02416a-676e-4267-a9cb-242f47c88b3c}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Imshow">
+    <Filter Include="OS_dependent">
       <UniqueIdentifier>{b53b3151-a4b1-4a49-961e-0fbe01a6f431}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
@@ -36,9 +36,6 @@
     <ClCompile Include="ModuleIdentifier.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Timer.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="HumanReadable.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -46,7 +43,13 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Imshow.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>OS_dependent</Filter>
+    </ClCompile>
+    <ClCompile Include="Timer.cpp">
+      <Filter>OS_dependent</Filter>
+    </ClCompile>
+    <ClCompile Include="OutputText.cpp">
+      <Filter>OS_dependent</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -62,9 +65,6 @@
     <ClInclude Include="AsyncQueue.h">
       <Filter>AsyncRoutines</Filter>
     </ClInclude>
-    <ClInclude Include="Timer.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="HumanReadable.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -78,7 +78,10 @@
       <Filter>Interface</Filter>
     </ClInclude>
     <ClInclude Include="Imshow.h">
-      <Filter>Header Files</Filter>
+      <Filter>OS_dependent</Filter>
+    </ClInclude>
+    <ClInclude Include="OS_dependent.h">
+      <Filter>OS_dependent</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

@@ -4,10 +4,10 @@
 #include <set>
 #include <algorithm>
 
-#include "Timer.h"
-#include "HumanReadable.h"
 #include "Factory.h"
 #include "Imshow.h"
+
+#include "OS_dependent.h"
 
 ModuleWrapper::~ModuleWrapper(void)
 {
@@ -17,7 +17,6 @@ ModuleWrapper::~ModuleWrapper(void)
 
 ModuleWrapper::ModuleWrapper(const bool* run)
 :	inputPortLength(0),
-	diffTime(std::make_pair(0.0, 0.0)),
 	_module(nullptr),
 	output_image_raw(nullptr),
 	output_text_raw(nullptr),
@@ -59,7 +58,7 @@ void ModuleWrapper::ThreadProcedure()
 	
 	//TODO more reference counting
 	Timer timer;
-	double prevTime = 0.0;
+	double prevTime = 0.0, diffTime = 0.0, computeTime = 0.0;
 	
 	while (*do_run) //a terminating signal leaves every message in the queue and quits the loop
 	{
@@ -77,14 +76,12 @@ void ModuleWrapper::ThreadProcedure()
 		}
 		
 		PortNumber outputNumber;
-		diffTime.Modify([&](std::pair<double, double>& self)
-		{
-			self.first = timer.Tock();
-			timer.Tick();
-			outputMessages_raw = compute(_module, inputMessages.data(), inputMessages.size(), &outputNumber);
-			self.second = prevTime;
-			prevTime = timer.Tock();
-		});
+		diffTime = timer.Tock();
+		timer.Tick();
+		outputMessages_raw = compute(_module, inputMessages.data(), inputMessages.size(), &outputNumber);
+		computeTime = prevTime;
+		prevTime = timer.Tock();
+		handle_statistics(identifier.name, diffTime, computeTime);
 
 		//manage output data
 		if (outputMessages_raw == nullptr)
@@ -128,9 +125,7 @@ void ModuleWrapper::ThreadProcedure()
 		});
 
 		if (output_text_raw != nullptr)
-		{
-			output_text.Modify([&](std::string& self){self = output_text_raw;});
-		}
+			handle_output_text(identifier.name, output_text_raw);
 
 		size_t picure_size = 0;
 		if (output_image_raw != nullptr && (picure_size = output_image_width * output_image_height * GetByteDepth(imageType)) > 0)
@@ -146,10 +141,8 @@ void ModuleWrapper::ThreadProcedure()
 
 	}
 halt:
-	diffTime.Modify([&](std::pair<double, double>& self)
-	{
-		self.first = timer.Tock();
-	});
+	diffTime = timer.Tock();
+	handle_statistics(identifier.name, diffTime, computeTime);
 
 	if (*do_run) //in this case soft terminate
 		for (auto& qs : outputQueues)

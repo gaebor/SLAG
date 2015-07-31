@@ -170,6 +170,7 @@
     <ClCompile Include="InternalTypes.cpp" />
     <ClCompile Include="ModuleIdentifier.cpp" />
     <ClCompile Include="ModuleWrapper.cpp" />
+    <ClCompile Include="OutputText.cpp" />
     <ClCompile Include="Slag.cpp" />
     <ClCompile Include="Timer.cpp" />
   </ItemGroup>
@@ -183,7 +184,7 @@
     <ClInclude Include="InternalTypes.h" />
     <ClInclude Include="ModuleIdentifier.h" />
     <ClInclude Include="ModuleWrapper.h" />
-    <ClInclude Include="Timer.h" />
+    <ClInclude Include="OS_dependent.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

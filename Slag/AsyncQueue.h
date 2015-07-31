@@ -49,13 +49,19 @@ public:
 	{
 	}
 
-	//!clears and resets the queue
+	//!clears and resets the queue like it would be a new one
 	void Reset()
 	{
 		WakeUp();
 		_content.reset();
 	}
 
+	//!puts an item into the queue
+	/*!
+		if the behavior is Wait, then the call locks until the queue is small enough.
+		if the behavior is Drop and the queue is long, then the entire queue is dropped and the new one is enqueued
+		if the EnQueue is in a locking state and a WakeUp is called, then the enqueue fails and the functions returns
+	*/
 	void EnQueue(const _Ty& element)
 	{
 		if (limitBehavior == Wait)
@@ -78,6 +84,11 @@ public:
 			_belowLimit.reset();
 	}
 
+	//! extract one item from the queue
+	/*!
+		the call locks until there is something to extract from the queue or a WakeUp is called.
+		@return the success of the Dequeuing, false if the WakeUp is called meanwhile 
+	*/
 	bool DeQueue(_Ty& element)
 	{
 		_content.wait();
@@ -100,8 +111,9 @@ public:
 	{
 		_content.set(); //even if it is empty
 	}
-	//!this drops all the elements in the waiting queue and then wakes up the DeQueue. This cause the DeQueue to return false.
+	//!this drops all the elements in the waiting queue and then wakes up
 	/*!
+		This cause the DeQueue to return false and terminates the pending EnQueue calls if those ware waiting for something
 		@return the number of dropped elements
 	*/
 	size_t WakeUp()

@@ -1,4 +1,4 @@
-#include "Timer.h"
+#include "OS_dependent.h"
 
 Timer::Timer(void)
 {

@@ -102,13 +102,27 @@ inline int GetCvType(ImageType type)
 
 inline int GetCvConversion(ImageType type)
 {
-	switch (type)
+	switch (bitdepth)
 	{
-	case RGB:  return cv::COLOR_RGB2BGRA;
-	case BGR:  return cv::COLOR_BGR2BGRA;
-	case RGBA: return -1;
-	case GREY: 
-	default:   return cv::COLOR_GRAY2BGRA;
+	case 32:
+		switch (type)
+		{
+		case RGB:  return cv::COLOR_RGB2BGRA;
+		case BGR:  return cv::COLOR_BGR2BGRA;
+		case RGBA: return cv::COLOR_RGBA2BGRA;
+		case GREY: 
+		default:   return cv::COLOR_GRAY2BGRA;
+		}
+	case 24:
+		switch (type)
+		{
+		case RGB:  return cv::COLOR_RGB2BGR;
+		case BGR:  return -1;
+		case RGBA: return cv::COLOR_RGBA2BGR;
+		case GREY: 
+		default:   return cv::COLOR_GRAY2BGR;
+		}
+	default: return -1;
 	}
 }
 
