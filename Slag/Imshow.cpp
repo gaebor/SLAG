@@ -9,6 +9,7 @@
 
 #include "opencv2/imgproc/imgproc.hpp"
 #include "opencv2/core/core.hpp"
+#include "ExclusiveAccess.h"
 
 #define SLAG_WINDOW_CLASS_NAME "SlagImshow"
 
@@ -58,6 +59,7 @@ public:
 	WindowWrapper(const char*);
 	~WindowWrapper();
 
+	ImageContainer _image;
 	const std::string _name;
 	HWND _hwnd;
 };
@@ -86,6 +88,30 @@ struct HwndFinder
 	}
 };
 
+inline int GetCvType(ImageType type)
+{
+	switch (type)
+	{
+	case RGB:
+	case BGR:  return CV_8UC3;
+	case RGBA: return CV_8UC4;
+	case GREY:
+	default:   return CV_8UC1;
+	}
+}
+
+inline int GetCvConversion(ImageType type)
+{
+	switch (type)
+	{
+	case RGB:  return cv::COLOR_RGB2BGRA;
+	case BGR:  return cv::COLOR_BGR2BGRA;
+	case RGBA: return -1;
+	case GREY: 
+	default:   return cv::COLOR_GRAY2BGRA;
+	}
+}
+
 LRESULT CALLBACK WndProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 {
 	switch(msg)
@@ -109,8 +135,35 @@ LRESULT CALLBACK WndProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 			_images.erase(it);
 		}break;
 	case WM_PAINT:
+	case WM_TIMER:
 		{
+			auto it = std::find_if(_images.begin(), _images.end(), HwndFinder(hwnd));
+			if (it != _images.end())
+			{
+				cv::Mat converted;
+				cv::Mat header(it->_image.h, it->_image.w, GetCvType(it->_image.type), (void*)it->_image.data.data());
+				if (GetCvConversion(it->_image.type) >= 0)
+					cv::cvtColor(header, converted, GetCvConversion(it->_image.type));
+				else
+					converted = header;
+	
+				PAINTSTRUCT ps;
+				HDC hdc = BeginPaint(it->_hwnd, &ps);
 
+				HDC hdcBuffer = CreateCompatibleDC(hdc);
+
+				HBITMAP hbm = CreateBitmap(converted.cols,converted.rows, planes, bitdepth, converted.data);
+
+				HBITMAP hbmOldBuffer = (HBITMAP)SelectObject(hdcBuffer, hbm);
+
+				BitBlt(hdc, 0, 0, converted.cols,converted.rows, hdcBuffer, 0, 0, SRCCOPY);
+
+				SelectObject(hdcBuffer, hbmOldBuffer);
+				DeleteObject(hbm);
+				DeleteDC(hdcBuffer);
+
+				EndPaint(it->_hwnd, &ps);
+			}
 		}break;
 	case WM_DESTROY:
 		PostQuitMessage(0);
@@ -119,30 +172,6 @@ LRESULT CALLBACK WndProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 		return DefWindowProc(hwnd, msg, wParam, lParam);
 	}
 	return 0;
-}
-
-inline int GetCvType(ImageType type)
-{
-	switch (type)
-	{
-	case RGB:
-	case BGR:  return CV_8UC3;
-	case RGBA: return CV_8UC4;
-	case GREY:
-	default:   return CV_8UC1;
-	}
-}
-
-inline int GetCvConversion(ImageType type)
-{
-	switch (type)
-	{
-	case RGB:  return cv::COLOR_RGB2BGRA;
-	case BGR:  return cv::COLOR_BGR2BGRA;
-	case RGBA: return 0;
-	case GREY: 
-	default:   return cv::COLOR_GRAY2BGRA;
-	}
 }
 
 void Imshow( const char* window_name, const ImageContainer& imageContainer)
@@ -154,42 +183,25 @@ void Imshow( const char* window_name, const ImageContainer& imageContainer)
 		 it = _images.end();
 		 --it;
 	}
-	auto& windowWrapper = *it;
-
-	cv::Mat converted;
-	cv::cvtColor(cv::Mat(imageContainer.h, imageContainer.w, GetCvType(imageContainer.type), (void*)imageContainer.data.data()), converted, GetCvConversion(imageContainer.type));
-
-	PAINTSTRUCT ps;
-	HDC hdc = BeginPaint(windowWrapper._hwnd, &ps);
-
-	HDC hdcBuffer = CreateCompatibleDC(hdc);
-
-	HBITMAP hbm = CreateBitmap(imageContainer.w,imageContainer.h, planes, bitdepth, converted.data);
-
-	HBITMAP hbmOldBuffer = (HBITMAP)SelectObject(hdcBuffer, hbm);
-
-	BitBlt(hdc, 0, 0, imageContainer.w,imageContainer.h, hdcBuffer, 0, 0, SRCCOPY);
-
-	SelectObject(hdcBuffer, hbmOldBuffer);
-	DeleteObject(hbm);
-	DeleteDC(hdcBuffer);
-
-	EndPaint(windowWrapper._hwnd, &ps);
-
+	
+	it->_image = imageContainer;
+	InvalidateRect(it->_hwnd, NULL, FALSE);
+	//UpdateWindow(it->_hwnd);
 }
 
-int FeedImshow()
+void FeedImshow()
 {
-	MSG Msg;
-	
-	for (auto& i : _images)
-		if (GetMessage(&Msg, i._hwnd, 0, 0) > 0)
+	static MSG Msg;
+
+	if (!_images.empty())
+	{
+		const auto result = GetMessage(&Msg, NULL, 0, 0);
+		if (result >= 0)
 		{
 			TranslateMessage(&Msg);
 			DispatchMessage(&Msg);
-		}else
-			return -1;
-	return 1;
+		}
+	}	
 }
 
 WindowWrapper::WindowWrapper(const char* name)
@@ -210,16 +222,9 @@ WindowWrapper::WindowWrapper(const char* name)
 		return;
 	}
 
-	ShowWindow(_hwnd, startupInfo.wShowWindow);
+	ShowWindow(_hwnd, SW_SHOWNORMAL);
 	UpdateWindow(_hwnd);
 
-	//MSG Msg;
-	//
-	//while(GetMessage(&Msg, _hwnd, 0, 0) > 0)
-	//{
-	//	TranslateMessage(&Msg);
-	//	DispatchMessage(&Msg);
-	//}
 }
 
 WindowWrapper::~WindowWrapper()

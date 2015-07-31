@@ -5,4 +5,4 @@
 void Imshow(const char* window_name, const ImageContainer& imageContainer);
 
 //!call this in a loop
-int FeedImshow();
+void FeedImshow();

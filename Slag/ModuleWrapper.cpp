@@ -150,11 +150,13 @@ halt:
 	{
 		self.first = timer.Tock();
 	});
-		
-	for (auto& qs : outputQueues)
-		for (auto& q : qs.second)
-			q->WaitForEmpty();
+
+	if (*do_run) //in this case soft terminate
+		for (auto& qs : outputQueues)
+			for (auto& q : qs.second)
+				q->WaitForEmpty();
 	
+	//TODO wake up only the synced queues
 	for (auto& qs : outputQueues)
 		for (auto& q : qs.second)
 			q->WakeUp();

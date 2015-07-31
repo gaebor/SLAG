@@ -14,15 +14,17 @@
 #include "ModuleWrapper.h"
 #include "HumanReadable.h"
 #include "Imshow.h"
+#include "Timer.h"
 
-bool run = true; //signaling the visualizer
+bool run = true; //signaling the termination event
+double hardResetTime = 0.0;
 
 static inline int round_int( double x )
 {
 	return x+0.5;
 }
 
-void visualizer(std::map<ModuleIdentifier, std::shared_ptr<ModuleWrapper>>& modules, int speed = 0)
+void visualize_text(std::map<ModuleIdentifier, std::shared_ptr<ModuleWrapper>>& modules, int speed = 0)
 {
 	std::string nameTag = "  module  ";
 
@@ -67,35 +69,30 @@ void visualizer(std::map<ModuleIdentifier, std::shared_ptr<ModuleWrapper>>& modu
 				putchar(' ');
 			putchar('|');
 
-			m.second->output_text.NonEditable();
-			std::cout << m.second->output_text.Get() << "\n";
-			m.second->output_text.Set() = "";
-			m.second->output_text.MakeEditable();
-
-			m.second->bufferSize.NonEditable();
-			for (auto& q : m.second->bufferSize.Get())
+			m.second->output_text.Modify([&](std::string& self)
 			{
-				int offset = print_humanreadable_giga(line, 1024, q.second, " ");
-				for (; offset < nameOffset;++offset)
-					putchar(' ');
-				printf("%s|> %d\n", line, q.first);
-			}
-			m.second->bufferSize.MakeEditable();
+				std::cout << self << "\n";
+				self.clear();
+			});
+
+			m.second->bufferSize.Modify([&](const std::map<PortNumber, size_t>& self)
+			{
+				for (auto& q : self)
+				{
+					int offset = print_humanreadable_giga(line, 1024, q.second, " ");
+					for (; offset < nameOffset;++offset)
+						putchar(' ');
+					printf("%s|> %d\n", line, q.first);
+				}
+			});
+			
 			for (int i = 0; i < nameOffset; ++i)
 				putchar('-');
 			printf("+----------+----------+-\n");
 
-			/************************************************************************/
-			/* image output                                                         */
-			/************************************************************************/
-			
-			m.second->output_image.NonEditable();
-			if (!m.second->output_image.Get().data.empty())
-				Imshow(nameIt->c_str(), m.second->output_image.Get());
-			m.second->output_image.MakeEditable();
 			++nameIt;
 		}
-		FeedImshow();
+		//FeedImshow();
 	};
 
 	while (run)
@@ -161,6 +158,8 @@ int main(int argc, char* argv[])
 			queueLimit = setting.operator int();
 		else if (setting.name() == "VisualizationDelay")
 			vizualizationSpeed = setting.operator int();
+		else if (setting.name() == "HardResetTime")
+			hardResetTime = setting.operator double();
 	}
 
 	//global settings
@@ -341,6 +340,20 @@ int main(int argc, char* argv[])
 		return 1;
 	}
 
+	Timer timer;
+	const auto startTime = timer.Tock();
+	std::thread resetTimer([&]()
+	{
+		if (hardResetTime > 0)
+		{
+			while (run)
+			{
+				if (startTime + hardResetTime <= timer.Tock())
+					run = false;
+			}
+		}
+	});
+
 	std::thread module_processes([&]()
 	{
 		std::vector<std::shared_ptr<std::thread>> moduleThreads(modules.size());
@@ -359,9 +372,39 @@ int main(int argc, char* argv[])
 		run = false;
 	});
 
-	visualizer(modules, vizualizationSpeed);
+	std::thread text_visualizer(visualize_text, modules, vizualizationSpeed);
+
+	///************************************************************************/
+	///* image output                                                         */
+	///************************************************************************/
+	std::vector<std::string> names;
+	for (auto& m : modules)
+		names.push_back((std::string)m.first);
+
+	while(run)
+	{
+		auto nameIt = names.begin();
+		for (auto& m : modules)
+		{
+			m.second->output_image.Modify([&](const ImageContainer& self)
+			{
+				if (!self.data.empty())
+					Imshow(nameIt->c_str(), self);
+			});
+			++nameIt;
+		}
+		FeedImshow();
+	}
+
+	//if the modules haven't ran empty at this point, then the termination must be a CTRL+C (hard reset)
+	for (auto& q : messageQueues)
+	{
+		q->WakeUp();
+	}
 
 	module_processes.join();
+	text_visualizer.join();
+	resetTimer.join();
 
 	return 0;
 }
