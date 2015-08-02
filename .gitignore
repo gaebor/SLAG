@@ -14,10 +14,14 @@ $RECYCLE.BIN/
 *.msm
 *.msp
 
+#Doxygen
+doxy/html/*
+
 # Windows shortcuts
 *.lnk
 
 # binaries
+bin/*
 *.exe
 *.obj
 *.pdb
