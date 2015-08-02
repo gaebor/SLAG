@@ -27,6 +27,11 @@ ModuleWrapper::ModuleWrapper(const bool* run)
 {
 }
 
+ModuleWrapper::ModuleWrapper( const ModuleWrapper& other )
+{
+	printf("%s tried to copy\n", other.printableName.c_str());
+}
+
 bool ModuleWrapper::Initialize( cv::FileNode node)
 {
 	if (_module != nullptr)
@@ -81,7 +86,12 @@ void ModuleWrapper::ThreadProcedure()
 		outputMessages_raw = compute(_module, inputMessages.data(), inputMessages.size(), &outputNumber);
 		computeTime = prevTime;
 		prevTime = timer.Tock();
-		handle_statistics(identifier.name, diffTime, computeTime);
+
+		for (const auto& q : inputQueues)
+		{
+			bufferSize[q.first] = q.second->GetSize();
+		}
+		handle_statistics(printableName, diffTime, computeTime, bufferSize);
 
 		//manage output data
 		if (outputMessages_raw == nullptr)
@@ -115,17 +125,8 @@ void ModuleWrapper::ThreadProcedure()
 		}
 		receivedMessages.clear();
 
-		//visualization
-		bufferSize.Modify([&](std::map<PortNumber, size_t>& self)
-		{
-			for (const auto& q : inputQueues)
-			{
-				self[q.first] = q.second->GetSize();
-			}
-		});
-
 		if (output_text_raw != nullptr)
-			handle_output_text(identifier.name, output_text_raw);
+			handle_output_text(printableName, output_text_raw);
 
 		size_t picure_size = 0;
 		if (output_image_raw != nullptr && (picure_size = output_image_width * output_image_height * GetByteDepth(imageType)) > 0)
@@ -142,7 +143,7 @@ void ModuleWrapper::ThreadProcedure()
 	}
 halt:
 	diffTime = timer.Tock();
-	handle_statistics(identifier.name, diffTime, computeTime);
+	handle_statistics(printableName, diffTime, computeTime, bufferSize);
 
 	if (*do_run) //in this case soft terminate
 		for (auto& qs : outputQueues)

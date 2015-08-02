@@ -16,6 +16,7 @@ struct ModuleTextualData
 	}
 	std::string output;
 	double speed, computeSpeed;
+	std::map<PortNumber, size_t> bufferSizes;
 };
 
 static bool run = true;
@@ -60,17 +61,12 @@ static std::thread _textThread([]()
 			putchar('|');
 			std::cout << m.second.output << "\n";
 
-			//m.second->bufferSize.Modify([&](const std::map<PortNumber, size_t>& self)
-			//{
-			//	for (auto& q : self)
-			//	{
-			//		int offset = print_humanreadable_giga(line, 1024, q.second, " ");
-			//		for (; offset < nameOffset;++offset)
-			//			putchar(' ');
-			//		printf("%s|> %d\n", line, q.first);
-			//	}
-			//});
-
+			for (auto& q : m.second.bufferSizes)
+			{
+				print_humanreadable_giga(line, 1024, q.second);
+				printf("%*s|> %d\n", nameOffset, line, q.first);
+			}
+			
 			for (int i = 0; i < nameOffset; ++i)
 				putchar('-');
 			printf("+----------+----------+-\n");
@@ -109,11 +105,12 @@ void handle_output_text( const std::string& module_name_and_instance, const char
 	nameOffset =  std::max<int>(module_name_and_instance.size(), nameOffset);
 }
 
-void handle_statistics( const std::string& module_name_and_instance, double speed, double computeSpeed )
+void handle_statistics( const std::string& module_name_and_instance, double speed, double computeSpeed, const std::map<PortNumber, size_t>& buffer_sizes)
 {
 	AutoLock lock(_mutex);
 	auto& data = _texts[module_name_and_instance];
 	data.speed = speed;
 	data.computeSpeed = computeSpeed;
 	nameOffset =  std::max<int>(module_name_and_instance.size(), nameOffset);
+	data.bufferSizes = buffer_sizes;
 }

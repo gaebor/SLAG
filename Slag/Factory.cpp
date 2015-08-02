@@ -100,7 +100,7 @@ Factory::ErrorCode Factory::InstantiateModule(ModuleWrapper& moduleWrapper)const
 					moduleWrapper.compute = f.second.compute;
 					moduleWrapper.initialize = f.second.initialize;
 
-					moduleId.actual_dll = f.first;
+					moduleId.dll = f.first;
 				}
 			}
 		}
@@ -126,13 +126,14 @@ Factory::ErrorCode Factory::InstantiateModule(ModuleWrapper& moduleWrapper)const
 				moduleWrapper.compute = moduleFactory->second.compute;
 				moduleWrapper.initialize = moduleFactory->second.initialize;
 
-				moduleId.actual_dll = moduleFactory->first;
+				moduleId.dll = moduleFactory->first;
 				result = Success;
 			}else
 				result = CannotInstantiateByLibrary;
 		}else
 			result = NoSuchLibrary;
 	}
+	moduleWrapper.printableName = moduleWrapper.identifier;
 	return result;
 }
 

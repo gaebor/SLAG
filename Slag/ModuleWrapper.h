@@ -24,6 +24,7 @@ public:
 
 public:
 	ModuleIdentifier identifier;
+	std::string printableName;
 	// TODO async and sync inputs
 	std::map<PortNumber, MessageQueue*> inputQueues; //!< non-responsible for MessageQueues
 	std::map<PortNumber, std::vector<MessageQueue*>> outputQueues; //!< output can be duplicated and distributed to many modules
@@ -34,7 +35,7 @@ public:
 	ExclusiveAccess<ImageContainer> output_image;
 
 	//ExclusiveAccess<std::pair<double, double>> diffTime;
-	ExclusiveAccess<std::map<PortNumber, size_t>> bufferSize;
+	std::map<PortNumber, size_t> bufferSize;
 
 	//! gets a global ptr
 	int global_settings_c;
@@ -54,4 +55,6 @@ protected:
 	SlagInitialize_t initialize;
 	SlagDestroyModule_t deleteModule;
 	SlagDestroyMessage_t deleteMsg;
+public:
+	ModuleWrapper(const ModuleWrapper& other);
 };

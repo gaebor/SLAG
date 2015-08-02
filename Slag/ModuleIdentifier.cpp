@@ -14,9 +14,6 @@ ModuleIdentifier::ModuleIdentifier( const char* id )
 ModuleIdentifier::operator std::string() const
 {
 	std::ostringstream oss;
-	if (!dll.empty())
-		oss << dll << '/';
-
 	oss << name;
 
 	if (!instance.empty())
@@ -27,9 +24,7 @@ ModuleIdentifier::operator std::string() const
 
 bool ModuleIdentifier::operator<( const ModuleIdentifier& other ) const
 {
-	if (actual_dll != other.actual_dll)
-		return actual_dll < other.actual_dll;
-	else if (name != other.name)
+	if (name != other.name)
 		return name < other.name;
 	else
 		return instance < other.instance;
@@ -40,7 +35,6 @@ ModuleIdentifier& ModuleIdentifier::assign( const std::string& n, const std::str
 	name = n;
 	instance = i;
 	dll = d;
-	actual_dll = "";
 	return *this;
 }
 
@@ -90,7 +84,7 @@ PortIdentifier::PortIdentifier( const char* id ) : module(""), port(0)
 	auto portSeparator = idStr.find(':');
 	if (portSeparator != idStr.rfind(':'))
 	{
-		//parse error
+		//parse error, more than one ':'
 	}
 	if (portSeparator != std::string::npos)
 	{

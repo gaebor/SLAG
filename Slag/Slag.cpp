@@ -38,7 +38,7 @@ int main(int argc, char* argv[])
 {
 	Factory factory;
 	std::list<std::unique_ptr<MessageQueue>> messageQueues;
-	std::map<ModuleIdentifier, std::shared_ptr<ModuleWrapper>> modules;
+	std::map<ModuleIdentifier, ModuleWrapper> modules;
 	MessageQueue::LimitBehavior queueBehavior = MessageQueue::None;
 	size_t queueLimit = std::numeric_limits<size_t>::max();
 	int vizualizationSpeed;
@@ -94,24 +94,6 @@ int main(int argc, char* argv[])
 		global_settings_v.push_back(setting.c_str());
 	}
 
-	for (auto setting : fs["Graph"])
-	{
-		if (setting.name() == "QueueBehavior")
-		{
-			if (setting.operator std::string() == "Wait")
-				queueBehavior = MessageQueue::Wait;
-			else if (setting.operator std::string() == "Drop")
-				queueBehavior = MessageQueue::Drop;
-			else
-				queueBehavior = MessageQueue::None;
-		}else if (setting.name() == "QueueLimit")
-			queueLimit = setting.operator int();
-		else if (setting.name() == "VisualizationDelay")
-			vizualizationSpeed = setting.operator int();
-	}
-
-	std::map<std::string, ModuleIdentifier> moduleIdentifiers;
-
 	//instantiate modules
 	if (fs["Modules"].isSeq()) //if there is no such node, then an empty graph will be constructed
 	for (auto node : fs["Modules"])
@@ -122,34 +104,32 @@ int main(int argc, char* argv[])
 			std::cerr << "module should have a non-empty \"Name\"!" << std::endl;
 			return -1;
 		}
-		std::shared_ptr<ModuleWrapper> moduleWrapper(new ModuleWrapper(&run));
-		moduleWrapper->identifier = ModuleIdentifier(moduleName.c_str());
-		auto& moduleId = moduleWrapper->identifier;
+		auto insret_result = modules.emplace(moduleName.c_str(), &run);
+		auto& moduleId = insret_result.first->first;
 
-		auto result = factory.InstantiateModule(*moduleWrapper);
+		if (!insret_result.second)
+		{
+			std::cerr << "Module \"" << (std::string)moduleId << "\" appears more than one in the graph. Please give it a disjoint name or instance!" << std::endl;
+			return -1;
+		}
+		auto& moduleWrapper = insret_result.first->second;
+		moduleWrapper.identifier = moduleId;
+		auto result = factory.InstantiateModule(moduleWrapper);
 
 		switch (result)
 		{
 		case Factory::Duplicate:
-			std::cerr << "More than one library can instantiate module \"" << (std::string)(moduleId) << "\", the one in \"" << moduleId.actual_dll << "\" will be used!" << std::endl;
+			std::cerr << "More than one library can instantiate module \"" << (std::string)(moduleId) << "\", the one in \"" << moduleId.dll << "\" will be used!" << std::endl;
 		case Factory::Success:
 			{
-			auto it = modules.find(moduleId);
-			if (it != modules.end())
-			{
-				std::cerr << "Module \"" << (std::string)moduleId << "\" from library \"" << moduleId.actual_dll << "\" has been loaded more than once!" << std::endl;
-				return 0;
-			}
-			modules[moduleId] = moduleWrapper;
-			modules[moduleId]->global_settings_c = global_settings.size();
-			modules[moduleId]->global_settings_v = global_settings_v.data();
+			moduleWrapper.global_settings_c = global_settings.size();
+			moduleWrapper.global_settings_v = global_settings_v.data();
 
-			if (!(modules[moduleId]->Initialize(node)))
+			if (!moduleWrapper.Initialize(node))
 			{
 				std::cerr << "Module \"" << (std::string)moduleId << "\" cannot be initialized!" << std::endl;
 				return 0;
 			}
-			moduleIdentifiers[moduleName] = moduleId;
 			}break;
 		case Factory::NoSuchLibrary:
 			{
@@ -173,23 +153,30 @@ int main(int argc, char* argv[])
 
 	//the key is the input port (destination), because a destination can receive only from one source!
 	//the mapped value is the output port (source), one source can send to many destinations
-	std::map<std::string,PortIdentifier> connections;
+	std::map<PortIdentifier,PortIdentifier> connections;
 	
 	for (auto node : fs["Modules"])
 	{
-		const auto& fromModuleId = moduleIdentifiers[node["Name"]];
+		const std::string fromModuleStr = node["Name"];
+		const auto fromModuleId = ModuleIdentifier(fromModuleStr.c_str());
 		auto outputNode = node["Outputs"];
-
+		
 		if (outputNode.isString())
 		{
-			connections.insert(std::pair<std::string, PortIdentifier>(outputNode, PortIdentifier(fromModuleId,0)));
+			const std::string outputNodeStr = outputNode;
+			const auto outputPortId = PortIdentifier(outputNodeStr.c_str());
+
+			connections[outputPortId] = PortIdentifier(fromModuleId,0);
 		}
 		else if (outputNode.isSeq())
 		{
 			PortNumber fromPort = 0;
 			for (auto& output : outputNode)
 			{
-				connections.insert(std::make_pair(output, PortIdentifier(fromModuleId,fromPort)));
+				const std::string outputNodeStr = output;
+				const auto outputPortId = PortIdentifier(outputNodeStr.c_str());
+
+				connections[outputPortId] = PortIdentifier(fromModuleId,fromPort);
 				++fromPort;
 			}
 		}else if (outputNode.isMap())
@@ -202,15 +189,18 @@ int main(int argc, char* argv[])
 				return -1;
  			}
 			PortNumber fromPort = atoi(outputNodeName.substr(1).c_str());
-			PortIdentifier portId(std::string(output).c_str());
 			if (output.isSeq())
 			{
 				for (auto& port : output)
 				{
-					connections.insert(std::make_pair(port, PortIdentifier(fromModuleId,fromPort)));
+					PortIdentifier outputPortId(std::string(port).c_str());
+					connections[outputPortId] = PortIdentifier(fromModuleId,fromPort);
 				}
 			}else
-				connections.insert(std::make_pair(output, PortIdentifier(fromModuleId,fromPort)));
+			{
+				PortIdentifier outputPortId(std::string(output).c_str());
+				connections[outputPortId] = PortIdentifier(fromModuleId,fromPort);
+			}
 		}
 	}
 
@@ -218,11 +208,10 @@ int main(int argc, char* argv[])
 	std::map<PortIdentifier, PortIdentifier> checked_connections;
 	for (const auto& connection : connections)
 	{
-		const auto colon_pos = connection.first.find(':');
-		const auto toModuleStr = connection.first.substr(0,colon_pos);
-		const auto toPort = colon_pos == std::string::npos ? 0 : atoi(connection.first.substr(colon_pos+1).c_str());
-		if (moduleIdentifiers.find(toModuleStr) != moduleIdentifiers.end())
-			checked_connections.emplace(PortIdentifier(moduleIdentifiers[toModuleStr], toPort),connection.second);
+		const auto& toPort = connection.first;
+		const auto& fromModule = connection.second;
+		if (modules.find(toPort.module) != modules.end())
+			checked_connections[toPort] = fromModule;
 			//automatically overrides duplicate inputs
 	}
 
@@ -237,10 +226,12 @@ int main(int argc, char* argv[])
 		newMessageQueue->limitBehavior = queueBehavior;
 		newMessageQueue->queueLimit = queueLimit;
 
-		modules[fromModule.module]->outputQueues[fromModule.port].push_back(newMessageQueue);
-		modules[toModule.module]->inputQueues[toModule.port] = newMessageQueue;
+		auto fromModulePtr = modules.find(fromModule.module);
+		auto toModulePtr = modules.find(toModule.module);
+		fromModulePtr->second.outputQueues[fromModule.port].push_back(newMessageQueue);
+		toModulePtr->second.inputQueues[toModule.port] = newMessageQueue;
 
-		auto& inputLength = modules[toModule.module]->inputPortLength;
+		auto& inputLength = toModulePtr->second.inputPortLength;
 		inputLength = std::max(inputLength, toModule.port+(size_t)1);
 	}
 	}catch(std::exception& e)
@@ -274,9 +265,9 @@ int main(int argc, char* argv[])
 	{
 		std::vector<std::shared_ptr<std::thread>> moduleThreads(modules.size());
 		auto threadIt = moduleThreads.begin();
-		for (auto m : modules)
+		for (auto& m : modules)
 		{
-			threadIt->reset(new std::thread([](ModuleWrapper* _m){_m->ThreadProcedure();}, m.second.get()));
+			threadIt->reset(new std::thread([](ModuleWrapper* _m){_m->ThreadProcedure();}, &m.second));
 			++threadIt;
 		}
 
@@ -302,7 +293,7 @@ int main(int argc, char* argv[])
 		auto nameIt = names.begin();
 		for (auto& m : modules)
 		{
-			m.second->output_image.Modify([&](const ImageContainer& self)
+			m.second.output_image.Modify([&](const ImageContainer& self)
 			{
 				if (!self.data.empty())
 					Imshow(nameIt->c_str(), self);

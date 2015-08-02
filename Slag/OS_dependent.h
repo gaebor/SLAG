@@ -3,6 +3,9 @@
 
 #include <windows.h>
 #include <string>
+#include <map>
+
+#include "ModuleIdentifier.h"
 
 class Timer
 {
@@ -20,6 +23,6 @@ private:
 void handle_output_text(const std::string& module_name_and_instance, const char* text);
 void terminate_output_text();
 void set_output_text_speed(int milisec_to_wait);
-void handle_statistics(const std::string& module_name_and_instance, double speed, double computeSpeed);
+void handle_statistics(const std::string& module_name_and_instance, double speed, double computeSpeed, const std::map<PortNumber, size_t>& buffer_sizes);
 
 #endif //INCLUDE_OS_DEPENDENT_H
