@@ -4,6 +4,7 @@
 #include <windows.h>
 #include <string>
 #include <map>
+#include <vector>
 
 #include "ModuleIdentifier.h"
 #include "slag\slag_interface.h"
@@ -72,5 +73,23 @@ void set_output_text_speed(int milisec_to_wait);
 void handle_statistics(const std::string& module_name_and_instance, double speed, double computeSpeed, const std::map<PortNumber, size_t>& buffer_sizes);
 void handle_output_image(const std::string& module_name_and_instance, int w, int h, ImageType type, const unsigned char* data);
 void terminate_output_image();
+
+//!loads a library, .so or .dll
+void* load_library(const char* file_name);
+
+//!closes a library
+bool close_library(void* library);
+
+//!extracts symbol from library
+void* get_symbol_from_library(void* library, const char* symbol_name);
+
+//!list files like *.dll or *.so
+/*!
+	/todo give a search path
+*/
+std::vector<std::string> enlist_libraries();
+
+//! takes off the extension and directory, leaves filename only!
+std::string get_file_name(const std::string& file_name);
 
 #endif //INCLUDE_OS_DEPENDENT_H

@@ -12,7 +12,7 @@ struct ModuleIdentifier
 	ModuleIdentifier& assign(const std::string& n = "", const std::string& i = "", const std::string& d = "");
 	std::string name;
 	std::string instance;
-	std::string dll;
+	std::string library;
 	operator std::string ()const;
 	bool operator< (const ModuleIdentifier& other)const;
 };

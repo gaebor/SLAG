@@ -1,54 +1,31 @@
 #include "Factory.h"
 
 #include <iostream>
-#include <mutex>
-#include <memory>
 
-#include "ModuleIdentifier.h"
 #include "ModuleWrapper.h"
-
-
-std::vector<std::string> Factory::EnlistFiles( const std::string& path )
-{
-	std::vector<std::string> result;
-
-	WIN32_FIND_DATA FindFileData;
-	HANDLE hFind;
-
-	hFind = FindFirstFile(path.c_str(), &FindFileData);
-
-	if (hFind != INVALID_HANDLE_VALUE)
-	{
-		do{
-			result.emplace_back(FindFileData.cFileName);
-		}while (FindNextFile(hFind, &FindFileData));
-		FindClose(hFind);
-	}
-
-	return result;
-}
+#include "OS_dependent.h"
 
 Factory::Factory()
 {
-	HMODULE hndl;
+	void* hndl;
 
-	auto files = EnlistFiles(std::string("*")+extension);
+	auto files = enlist_libraries();
 
-	for (const auto& dll : files)
+	for (const auto& library : files)
 	{
-		hndl = LoadLibraryA(dll.c_str());
-		if (hndl)
+		hndl = load_library(library.c_str());
+		if (hndl != nullptr)
 		{
-			auto instantiate = (SlagInstantiate_t)GetProcAddress(hndl, "SlagInstantiate");
-			auto deleteMsg = (SlagDestroyMessage_t)GetProcAddress(hndl, "SlagDestroyMessage");
-			auto deleteModule = (SlagDestroyModule_t)GetProcAddress(hndl, "SlagDestroyModule");
-			auto compute = (SlagCompute_t)GetProcAddress(hndl, "SlagCompute");
-			auto initialize = (SlagInitialize_t)GetProcAddress(hndl, "SlagInitialize");
+			auto instantiate = (SlagInstantiate_t)get_symbol_from_library(hndl, "SlagInstantiate");
+			auto deleteMsg = (SlagDestroyMessage_t)get_symbol_from_library(hndl, "SlagDestroyMessage");
+			auto deleteModule = (SlagDestroyModule_t)get_symbol_from_library(hndl, "SlagDestroyModule");
+			auto compute = (SlagCompute_t)get_symbol_from_library(hndl, "SlagCompute");
+			auto initialize = (SlagInitialize_t)get_symbol_from_library(hndl, "SlagInitialize");
 
 			if (instantiate != NULL && deleteMsg != NULL && deleteModule != NULL && compute != NULL)
 			{
 				// cut the extension off
-				auto& f = pModuleFunctions[dll.substr(0, dll.size()-extension.size())];
+				auto& f = pModuleFunctions[get_file_name(library)];
 				f.instantiate = instantiate;
 				f.compute = compute;
 				f.deleteModule = deleteModule;
@@ -60,7 +37,7 @@ Factory::Factory()
 			}else
 			{
 				//none of my business
-				FreeLibrary(hndl);
+				close_library(hndl);
 			}
 		}
 	}
@@ -71,8 +48,8 @@ Factory::ErrorCode Factory::InstantiateModule(ModuleWrapper& moduleWrapper)const
 	ErrorCode result = CannotInstantiate;
 	auto& moduleId = moduleWrapper.identifier;
 
-	if (moduleId.dll.empty())
-	{// find out which dll can instantiate it
+	if (moduleId.library.empty())
+	{// find out which library can instantiate it
 		for (const auto& f : pModuleFunctions)
 		{
 			//instantiate module
@@ -100,13 +77,13 @@ Factory::ErrorCode Factory::InstantiateModule(ModuleWrapper& moduleWrapper)const
 					moduleWrapper.compute = f.second.compute;
 					moduleWrapper.initialize = f.second.initialize;
 
-					moduleId.dll = f.first;
+					moduleId.library = f.first;
 				}
 			}
 		}
 	}else
 	{
-		auto moduleFactory = pModuleFunctions.find(moduleId.dll);
+		auto moduleFactory = pModuleFunctions.find(moduleId.library);
 		if (moduleFactory != pModuleFunctions.end())
 		{
 			auto module = (moduleFactory->second.instantiate)(
@@ -126,7 +103,7 @@ Factory::ErrorCode Factory::InstantiateModule(ModuleWrapper& moduleWrapper)const
 				moduleWrapper.compute = moduleFactory->second.compute;
 				moduleWrapper.initialize = moduleFactory->second.initialize;
 
-				moduleId.dll = moduleFactory->first;
+				moduleId.library = moduleFactory->first;
 				result = Success;
 			}else
 				result = CannotInstantiateByLibrary;
@@ -140,7 +117,7 @@ Factory::ErrorCode Factory::InstantiateModule(ModuleWrapper& moduleWrapper)const
 Factory::~Factory()
 {
 	for (auto hndl : module_dll_handles)
-		FreeLibrary(hndl);
+		close_library(hndl);
 }
 
 std::vector<std::string> Factory::ReadSettings( cv::FileNode& settingsNode )
@@ -163,7 +140,3 @@ std::vector<std::string> Factory::ReadSettings( cv::FileNode& settingsNode )
 	}
 	return settings;
 }
-
-const std::string Factory::extension = ".dll";
-
-static std::mutex mtx;

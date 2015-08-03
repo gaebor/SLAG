@@ -103,7 +103,7 @@ int main(int argc, char* argv[])
 		switch (result)
 		{
 		case Factory::Duplicate:
-			std::cerr << "More than one library can instantiate module \"" << (std::string)(moduleId) << "\", the one in \"" << moduleId.dll << "\" will be used!" << std::endl;
+			std::cerr << "More than one library can instantiate module \"" << (std::string)(moduleId) << "\", the one in \"" << moduleId.library << "\" will be used!" << std::endl;
 		case Factory::Success:
 			{
 			moduleWrapper.global_settings_c = global_settings.size();
@@ -117,12 +117,12 @@ int main(int argc, char* argv[])
 			}break;
 		case Factory::NoSuchLibrary:
 			{
-				std::cerr << "No library \"" << moduleId.dll << "\" to instantiate Module \"" << (std::string)moduleId << "\"!" << std::endl;
+				std::cerr << "No library \"" << moduleId.library << "\" to instantiate Module \"" << (std::string)moduleId << "\"!" << std::endl;
 				return -1;
 			}break;
 		case Factory::CannotInstantiateByLibrary:
 			{
-				std::cerr << "The library \"" << moduleId.dll << "\" cannot instantiate Module \"" << (std::string)moduleId << "\"!" << std::endl;
+				std::cerr << "The library \"" << moduleId.library << "\" cannot instantiate Module \"" << (std::string)moduleId << "\"!" << std::endl;
 				return -1;
 			}break;
 		case Factory::CannotInstantiate:

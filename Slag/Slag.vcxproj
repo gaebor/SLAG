@@ -101,7 +101,7 @@
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>E:\PROGRAMOK\poco-1.4.7p1\lib;e:\PROGRAMOK\opencv\build\x86\vc11\staticlib\</AdditionalLibraryDirectories>
-      <AdditionalDependencies>libtiff.lib;libpng.lib;libjpeg.lib;libjasper.lib;IlmImf.lib;zlib.lib;Vfw32.Lib;comctl32.lib;PocoFoundationmtd.lib;PocoUtilmtd.lib;opencv_core248d.lib;opencv_imgproc248d.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Shlwapi.lib;libtiff.lib;libpng.lib;libjpeg.lib;libjasper.lib;IlmImf.lib;zlib.lib;Vfw32.Lib;comctl32.lib;PocoFoundationmtd.lib;PocoUtilmtd.lib;opencv_core248d.lib;opencv_imgproc248d.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -118,7 +118,7 @@
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>E:\PROGRAMOK\poco-1.4.7p1\lib64;e:\PROGRAMOK\opencv\build\x64\vc11\staticlib\</AdditionalLibraryDirectories>
-      <AdditionalDependencies>libtiff.lib;libpng.lib;libjpeg.lib;libjasper.lib;IlmImf.lib;zlib.lib;Vfw32.Lib;comctl32.lib;PocoFoundationmtd.lib;PocoUtilmtd.lib;opencv_core248d.lib;opencv_imgproc248d.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Shlwapi.lib;libtiff.lib;libpng.lib;libjpeg.lib;libjasper.lib;IlmImf.lib;zlib.lib;Vfw32.Lib;comctl32.lib;PocoFoundationmtd.lib;PocoUtilmtd.lib;opencv_core248d.lib;opencv_imgproc248d.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -139,7 +139,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalLibraryDirectories>E:\PROGRAMOK\poco-1.4.7p1\lib;e:\PROGRAMOK\opencv\build\x86\vc11\staticlib\</AdditionalLibraryDirectories>
-      <AdditionalDependencies>libtiff.lib;libpng.lib;libjpeg.lib;libjasper.lib;IlmImf.lib;zlib.lib;Vfw32.Lib;comctl32.lib;PocoFoundationmt.lib;PocoUtilmt.lib;opencv_core248.lib;opencv_imgproc248.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Shlwapi.lib;libtiff.lib;libpng.lib;libjpeg.lib;libjasper.lib;IlmImf.lib;zlib.lib;Vfw32.Lib;comctl32.lib;PocoFoundationmt.lib;PocoUtilmt.lib;opencv_core248.lib;opencv_imgproc248.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -160,7 +160,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalLibraryDirectories>E:\PROGRAMOK\poco-1.4.7p1\lib64;e:\PROGRAMOK\opencv\build\x64\vc11\staticlib\</AdditionalLibraryDirectories>
-      <AdditionalDependencies>libtiff.lib;libpng.lib;libjpeg.lib;libjasper.lib;IlmImf.lib;zlib.lib;Vfw32.Lib;comctl32.lib;PocoFoundationmt.lib;PocoUtilmt.lib;opencv_core248.lib;opencv_imgproc248.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Shlwapi.lib;libtiff.lib;libpng.lib;libjpeg.lib;libjasper.lib;IlmImf.lib;zlib.lib;Vfw32.Lib;comctl32.lib;PocoFoundationmt.lib;PocoUtilmt.lib;opencv_core248.lib;opencv_imgproc248.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -168,6 +168,7 @@
     <ClCompile Include="HumanReadable.cpp" />
     <ClCompile Include="Imshow.cpp" />
     <ClCompile Include="InternalTypes.cpp" />
+    <ClCompile Include="LoadLibrary.cpp" />
     <ClCompile Include="ModuleIdentifier.cpp" />
     <ClCompile Include="ModuleWrapper.cpp" />
     <ClCompile Include="OutputText.cpp" />

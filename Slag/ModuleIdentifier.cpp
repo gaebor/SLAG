@@ -34,7 +34,7 @@ ModuleIdentifier& ModuleIdentifier::assign( const std::string& n, const std::str
 {
 	name = n;
 	instance = i;
-	dll = d;
+	library = d;
 	return *this;
 }
 

@@ -7,15 +7,12 @@
 #include "slag/slag_interface.h"
 #include "ModuleIdentifier.h"
 
-#include <windows.h>
 #include "opencv2/core/core.hpp"
 
 class ModuleWrapper;
 
 class Factory
 {
-private:
-	static std::vector<std::string> EnlistFiles(const std::string& path);
 public:
 	Factory();
 	~Factory();
@@ -46,5 +43,5 @@ public:
 private:
 	static const std::string extension;
 	std::map<std::string, Functions> pModuleFunctions;
-	std::vector<HMODULE> module_dll_handles;
+	std::vector<void*> module_dll_handles;
 };

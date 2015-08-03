@@ -54,6 +54,9 @@
     <ClCompile Include="TerminationSignal.cpp">
       <Filter>OS_dependent</Filter>
     </ClCompile>
+    <ClCompile Include="LoadLibrary.cpp">
+      <Filter>OS_dependent</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Factory.h">
