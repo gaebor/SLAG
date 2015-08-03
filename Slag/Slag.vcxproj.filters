@@ -51,6 +51,9 @@
     <ClCompile Include="OutputText.cpp">
       <Filter>OS_dependent</Filter>
     </ClCompile>
+    <ClCompile Include="TerminationSignal.cpp">
+      <Filter>OS_dependent</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Factory.h">
@@ -68,17 +71,11 @@
     <ClInclude Include="HumanReadable.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="ExclusiveAccess.h">
-      <Filter>AsyncRoutines</Filter>
-    </ClInclude>
     <ClInclude Include="InternalTypes.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\inc\slag\slag_interface.h">
       <Filter>Interface</Filter>
-    </ClInclude>
-    <ClInclude Include="Imshow.h">
-      <Filter>OS_dependent</Filter>
     </ClInclude>
     <ClInclude Include="OS_dependent.h">
       <Filter>OS_dependent</Filter>

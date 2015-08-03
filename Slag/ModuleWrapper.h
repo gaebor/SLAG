@@ -8,7 +8,6 @@
 #include "AsyncQueue.h"
 #include "opencv2/core/core.hpp"
 #include "ModuleIdentifier.h"
-#include "ExclusiveAccess.h"
 #include "InternalTypes.h"
 
 class Factory;
@@ -30,11 +29,6 @@ public:
 	std::map<PortNumber, std::vector<MessageQueue*>> outputQueues; //!< output can be duplicated and distributed to many modules
 	size_t inputPortLength;
 
-	//ExclusiveAccess<std::string> output_text;
-
-	ExclusiveAccess<ImageContainer> output_image;
-
-	//ExclusiveAccess<std::pair<double, double>> diffTime;
 	std::map<PortNumber, size_t> bufferSize;
 
 	//! gets a global ptr

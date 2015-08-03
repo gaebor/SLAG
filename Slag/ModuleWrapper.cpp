@@ -5,7 +5,6 @@
 #include <algorithm>
 
 #include "Factory.h"
-#include "Imshow.h"
 
 #include "OS_dependent.h"
 
@@ -22,14 +21,13 @@ ModuleWrapper::ModuleWrapper(const bool* run)
 	output_text_raw(nullptr),
 	output_image_width(0), output_image_height(0),
 	do_run(run),
-	imageType(ImageType::GREY),
-	output_image()
+	imageType(ImageType::GREY)
 {
 }
 
 ModuleWrapper::ModuleWrapper( const ModuleWrapper& other )
 {
-	printf("%s tried to copy\n", other.printableName.c_str());
+	throw std::exception("Copy constructor called");
 }
 
 bool ModuleWrapper::Initialize( cv::FileNode node)
@@ -129,15 +127,9 @@ void ModuleWrapper::ThreadProcedure()
 			handle_output_text(printableName, output_text_raw);
 
 		size_t picure_size = 0;
-		if (output_image_raw != nullptr && (picure_size = output_image_width * output_image_height * GetByteDepth(imageType)) > 0)
+		if (output_image_raw != nullptr)
 		{
-			output_image.Modify([&](ImageContainer& self)
-			{
-				self.data.assign(output_image_raw, output_image_raw + picure_size);
-				self.h = output_image_height;
-				self.w = output_image_width;
-				self.type = imageType;
-			});
+			handle_output_image(printableName, output_image_width, output_image_height, imageType, output_image_raw);
 		}
 
 	}
@@ -155,7 +147,4 @@ halt:
 		for (auto& q : qs.second)
 			q->WakeUp();
 
-	//output_text.NonEditable();
-	//std::cerr << (std::string)identifier << ": " << output_text.Get() << " (call interval: " << diffTime << ", compute time: " << computeTime << ")" <<std::endl;
-	//output_text.MakeEditable();
 }

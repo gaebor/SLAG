@@ -1,15 +1,18 @@
-#include "Imshow.h"
+#include "OS_dependent.h"
+
+#include <windows.h>
 
 #include <list>
 #include <string>
 #include <vector>
 #include <algorithm>
-
-#include <windows.h>
+#include <mutex>
+#include <thread>
 
 #include "opencv2/imgproc/imgproc.hpp"
 #include "opencv2/core/core.hpp"
-#include "ExclusiveAccess.h"
+
+#include "slag/slag_interface.h"
 
 #define SLAG_WINDOW_CLASS_NAME "SlagImshow"
 
@@ -19,6 +22,10 @@ static const int init_val = init();
 static WNDCLASSEX windowsClass;
 static HINSTANCE hInstance;
 static STARTUPINFO startupInfo;
+static std::mutex _mutex;
+static bool _run = true;
+
+typedef std::lock_guard<std::mutex> AutoLock;
 
 LRESULT CALLBACK WndProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam );
 
@@ -53,15 +60,25 @@ int init()
 	return 0;
 }
 
+struct ImageContainer
+{
+	ImageContainer():w(0), h(0), type(ImageType::GREY), data(){}
+	int w;
+	int h;
+	ImageType type;
+	std::vector<unsigned char> data;
+};
+
 class WindowWrapper
 {
 public:
-	WindowWrapper(const char*);
+	WindowWrapper(const std::string& name);
 	~WindowWrapper();
 
 	ImageContainer _image;
 	const std::string _name;
 	HWND _hwnd;
+	bool _valid;
 };
 
 static std::list<WindowWrapper> _images;
@@ -87,6 +104,18 @@ struct HwndFinder
 		return w._hwnd == _hwnd;
 	}
 };
+
+inline size_t GetByteDepth(ImageType t)
+{
+	switch (t)
+	{
+	case RGB:
+	case BGR:  return 3;
+	case RGBA: return 4;
+	case GREY:
+	default:   return 4;
+	}
+}
 
 inline int GetCvType(ImageType type)
 {
@@ -142,6 +171,7 @@ LRESULT CALLBACK WndProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 		break;
 	case WM_CLOSE:
 		{
+		AutoLock lock(_mutex);
 		auto it = std::find_if(_images.begin(), _images.end(), HwndFinder(hwnd));
 		if (it == _images.end())
 			MessageBox(NULL, "wanted to delete a non-existent window!", "Error!", MB_ICONEXCLAMATION | MB_OK);
@@ -151,6 +181,7 @@ LRESULT CALLBACK WndProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 	case WM_PAINT:
 	case WM_TIMER:
 		{
+			_mutex.lock();
 			auto it = std::find_if(_images.begin(), _images.end(), HwndFinder(hwnd));
 			if (it != _images.end())
 			{
@@ -160,7 +191,8 @@ LRESULT CALLBACK WndProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 					cv::cvtColor(header, converted, GetCvConversion(it->_image.type));
 				else
 					converted = header;
-	
+				
+				_mutex.unlock();
 				PAINTSTRUCT ps;
 				HDC hdc = BeginPaint(it->_hwnd, &ps);
 
@@ -177,6 +209,9 @@ LRESULT CALLBACK WndProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 				DeleteDC(hdcBuffer);
 
 				EndPaint(it->_hwnd, &ps);
+			}else
+			{
+				_mutex.unlock();
 			}
 		}break;
 	case WM_DESTROY:
@@ -186,21 +221,6 @@ LRESULT CALLBACK WndProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 		return DefWindowProc(hwnd, msg, wParam, lParam);
 	}
 	return 0;
-}
-
-void Imshow( const char* window_name, const ImageContainer& imageContainer)
-{
-	auto it = std::find_if(_images.begin(), _images.end(), NameFinder(window_name));
-	if (it == _images.end())
-	{
-		 _images.emplace_back(window_name);
-		 it = _images.end();
-		 --it;
-	}
-	
-	it->_image = imageContainer;
-	InvalidateRect(it->_hwnd, NULL, FALSE);
-	//UpdateWindow(it->_hwnd);
 }
 
 void FeedImshow()
@@ -218,27 +238,9 @@ void FeedImshow()
 	}	
 }
 
-WindowWrapper::WindowWrapper(const char* name)
-	: _name(name)
+WindowWrapper::WindowWrapper(const std::string& name)
+	: _name(name), _valid(true), _hwnd(NULL)
 {
-	_hwnd = CreateWindowEx(
-		0,
-		SLAG_WINDOW_CLASS_NAME,
-		_name.c_str(),
-		WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU,
-		CW_USEDEFAULT, CW_USEDEFAULT, 640, 480, //default size
-		NULL, NULL, hInstance, NULL);
-
-	if (!_hwnd)
-	{
-		auto error = GetLastError();
-		MessageBox(NULL, "CreateWindow Failed!", "Error!", MB_ICONEXCLAMATION | MB_OK);
-		return;
-	}
-
-	ShowWindow(_hwnd, SW_SHOWNORMAL);
-	UpdateWindow(_hwnd);
-
 }
 
 WindowWrapper::~WindowWrapper()
@@ -246,4 +248,60 @@ WindowWrapper::~WindowWrapper()
 	if (_hwnd)
 		if (!DestroyWindow(_hwnd))
 			MessageBox(NULL, "DestroyWindow Failed!", "Error!", MB_ICONEXCLAMATION | MB_OK);
+}
+
+//_hwnd = CreateWindowEx(
+//	0,
+//	SLAG_WINDOW_CLASS_NAME,
+//	_name.c_str(),
+//	WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU,
+//	CW_USEDEFAULT, CW_USEDEFAULT, 640, 480, //default size
+//	NULL, NULL, hInstance, NULL);
+//
+//if (!_hwnd)
+//{
+//	auto error = GetLastError();
+//	MessageBox(NULL, "CreateWindow Failed!", "Error!", MB_ICONEXCLAMATION | MB_OK);
+//	return;
+//}
+//
+//ShowWindow(_hwnd, SW_SHOWNORMAL);
+//UpdateWindow(_hwnd);
+
+void handle_output_image( const std::string& module_name_and_instance, int w, int h, ImageType type, const unsigned char* data )
+{
+	AutoLock lock(_mutex);
+	auto it = std::find_if(_images.begin(), _images.end(), NameFinder(module_name_and_instance));
+	if (it == _images.end())
+	{
+		_images.emplace_back(module_name_and_instance.c_str());
+		it = _images.end();
+		--it;
+	}
+
+	size_t picure_size;
+	if (w > 0 && h > 0 && (picure_size = w * h * GetByteDepth(type)) > 0)
+	{
+		it->_image.w = w;
+		it->_image.h = h;
+		it->_image.type = type;
+		it->_image.data.assign(data, data + picure_size);
+
+		it->_valid = false;
+	}
+}
+
+static std::thread _thread([]()
+{
+	while (_run)
+	{
+
+	}
+});
+
+void terminate_output_image()
+{
+	_images.clear();
+	_run = false;
+	_thread.join();
 }

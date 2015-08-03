@@ -172,15 +172,14 @@
     <ClCompile Include="ModuleWrapper.cpp" />
     <ClCompile Include="OutputText.cpp" />
     <ClCompile Include="Slag.cpp" />
+    <ClCompile Include="TerminationSignal.cpp" />
     <ClCompile Include="Timer.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\inc\slag\slag_interface.h" />
     <ClInclude Include="AsyncQueue.h" />
-    <ClInclude Include="ExclusiveAccess.h" />
     <ClInclude Include="Factory.h" />
     <ClInclude Include="HumanReadable.h" />
-    <ClInclude Include="Imshow.h" />
     <ClInclude Include="InternalTypes.h" />
     <ClInclude Include="ModuleIdentifier.h" />
     <ClInclude Include="ModuleWrapper.h" />

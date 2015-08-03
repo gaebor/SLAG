@@ -13,26 +13,9 @@
 #include "AsyncQueue.h"
 #include "ModuleWrapper.h"
 #include "HumanReadable.h"
-#include "Imshow.h"
 #include "OS_dependent.h"
 
 bool run = true; //signaling the termination event
-double hardResetTime = 0.0;
-
-BOOL WINAPI consoleHandler(DWORD signal) {
-	switch (signal)
-	{
-	case CTRL_C_EVENT:
-	case CTRL_BREAK_EVENT:
-	case CTRL_CLOSE_EVENT:
-		run = false; //TODO end the Compute for each module
-		break;
-	default:
-		break;
-	}
-
-	return TRUE;
-}
 
 int main(int argc, char* argv[])
 {
@@ -42,7 +25,8 @@ int main(int argc, char* argv[])
 	MessageQueue::LimitBehavior queueBehavior = MessageQueue::None;
 	size_t queueLimit = std::numeric_limits<size_t>::max();
 	int vizualizationSpeed;
-	
+	double hardResetTime = 0.0;
+
 	std::vector<std::string> global_settings;
 	std::vector<const char*> global_settings_v;
 
@@ -240,26 +224,7 @@ int main(int argc, char* argv[])
 		return -1;
 	}
 
-	run = true;
-	//! register console termination handler
-	if (!SetConsoleCtrlHandler(consoleHandler, TRUE)) {
-		printf("\nERROR: Could not set control handler"); 
-		return 1;
-	}
-
-	Timer timer;
-	const auto startTime = timer.Tock();
-	std::thread resetTimer([&]()
-	{
-		if (hardResetTime > 0)
-		{
-			while (run)
-			{
-				if (startTime + hardResetTime <= timer.Tock())
-					run = false;
-			}
-		}
-	});
+	init_termination_signal(&run, hardResetTime);
 
 	std::thread module_processes([&]()
 	{
@@ -281,10 +246,7 @@ int main(int argc, char* argv[])
 
 	set_output_text_speed(vizualizationSpeed);
 
-	///************************************************************************/
-	///* image output                                                         */
-	///************************************************************************/
-	std::vector<std::string> names;
+	/*std::vector<std::string> names;
 	for (auto& m : modules)
 		names.push_back((std::string)m.first);
 
@@ -301,7 +263,9 @@ int main(int argc, char* argv[])
 			++nameIt;
 		}
 		FeedImshow();
-	}
+	}*/
+
+	wait_termination_signal();
 
 	//if the modules haven't ran empty at this point, then the termination must be a CTRL+C (hard reset)
 	for (auto& q : messageQueues)
@@ -311,7 +275,7 @@ int main(int argc, char* argv[])
 
 	module_processes.join();
 	terminate_output_text();
-	resetTimer.join();
+	terminate_output_image();
 
 	return 0;
 }
