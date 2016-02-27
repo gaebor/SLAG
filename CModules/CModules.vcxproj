@@ -161,7 +161,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="dllmain.cpp" />
+    <ClCompile Include="CModules.c" />
   </ItemGroup>
   <ItemGroup>
     <None Include="def.def" />
