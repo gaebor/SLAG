@@ -85,7 +85,7 @@ int main(int argc, char* argv[])
 		//instantiate modules
 		for (auto moduleStr : cfg.GetSection("modules"))
 		{
-			auto arguments = ConfigReader::SplitArguments(moduleStr);
+			auto arguments = split_to_argv(moduleStr);
 			
 			const std::string moduleName = arguments[0];
 			if (moduleName.empty())
@@ -150,8 +150,8 @@ int main(int argc, char* argv[])
 			if (c.find("->") == std::string::npos || c.find("->") != c.rfind("->"))
 				continue;
 
-			const auto fromModuleId = PortIdentifier(ConfigReader::trim(c.substr(0, c.find("->"))).c_str());
-			const auto toModuleId = PortIdentifier(ConfigReader::trim(c.substr(c.find("->") + 2)).c_str());
+			const auto fromModuleId = PortIdentifier(ConfigReader::trim1(c.substr(0, c.find("->"))).c_str());
+			const auto toModuleId = PortIdentifier(ConfigReader::trim1(c.substr(c.find("->") + 2)).c_str());
 				
 			connections[toModuleId] = fromModuleId;
 

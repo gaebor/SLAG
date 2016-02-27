@@ -5,12 +5,25 @@
 #include <memory>
 #include <mutex>
 #include <iostream>
+#include <sstream>
 #include <algorithm>
 
 #include "Poco/Thread.h"
 
 #include "HumanReadable.h"
 #include "ModuleIdentifier.h"
+
+std::vector<std::string> split_to_argv(const std::string& line)
+{
+	std::istringstream iss(line);
+	std::vector<std::string> result;
+	std::string arg;
+	while (iss >> arg)
+	{
+		result.push_back(arg);
+	}
+	return result;
+}
 
 struct ModuleTextualData
 {

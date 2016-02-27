@@ -50,10 +50,10 @@ int main(int argc, char* argv[])
 	if (argc > 1 && strcmp("--help", argv[1]) == 0)
 	{
 		printf("usage: %s [options]\n", argv[0]);
-		printf("\t-n <int>\tlogarithm of number of elements to enqueue, total elements = 2^n, default is 2^%d=%d\n", (int)log2(n), n);
-		printf("\t-s <int>\tsleep parameter, forces the enqueue to be slower, default is %d\n", sleep_constant);
+		printf("\t-n <int>\tlogarithm of number of elements to enqueue, total elements = 2^n, default is 2^%d=%lu\n", (int)log2(n), n);
+		printf("\t-s <int>\tsleep parameter, forces the enqueue to be slower, default is %lu\n", sleep_constant);
 		printf("\t-f\tperforms force halt, drops elements from the queue, default is %s\n", force_halt ? "true" : "false");
-		printf("\t-l <int>\tqueue length limit, see -b, default is %u\n", limit);
+		printf("\t-l <int>\tqueue length limit, see -b, default is %lu\n", limit);
 		printf("\t-b <int>\toverloaded queue behavior, default is %d\n\t\t%d is nothing\n\t\t%d is drop when above limit\n\t\t%d is wait until queue reduces below the limit\n", behavior, HighWaterQueue::LimitBehavior::None, HighWaterQueue::LimitBehavior::Drop, HighWaterQueue::LimitBehavior::Wait);
 		printf("\t-r <int>\tbitfield containing which tests should run, default is %d\n", run);
 		printf("\t\t1: enqueue all elements, then dequeue all in one thread\n");

@@ -36,11 +36,11 @@ public:
 
 	AsyncQueue(LimitBehavior l = None)
 	:	limitBehavior(l),
+		queueLimit(std::numeric_limits<decltype(queueLimit)>::max()),
+		_highWater(0),
 		_content(false),
 		_empty(false),
-		_belowLimit(false),
-		_highWater(0),
-		queueLimit(std::numeric_limits<decltype(queueLimit)>::max())
+		_belowLimit(false)
 	{
 		_belowLimit.set();
 		_empty.set();

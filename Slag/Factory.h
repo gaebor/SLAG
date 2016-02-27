@@ -31,7 +31,7 @@ public:
 
 	struct Functions
 	{
-		Functions() :instantiate(NULL), initialize(NULL), compute(NULL), deleteMsg(NULL), deleteModule(NULL){}
+		Functions() :instantiate(NULL), compute(NULL), deleteMsg(NULL), deleteModule(NULL), initialize(NULL){}
 		SlagInstantiate_t instantiate;
 		SlagCompute_t compute;
 		SlagDestroyMessage_t deleteMsg;

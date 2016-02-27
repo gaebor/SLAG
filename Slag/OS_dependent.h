@@ -78,4 +78,7 @@ std::vector<std::string> enlist_libraries();
 //! takes off the extension and directory, leaves filename only!
 std::string get_file_name(const std::string& file_name);
 
+//! splits a string like the command line do
+std::vector<std::string> split_to_argv(const std::string& line);
+
 #endif //INCLUDE_OS_DEPENDENT_H

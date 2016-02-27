@@ -1,5 +1,6 @@
 #include "../OS_dependent.h"
 #include "../Timer.h"
+#include "Poco/Thread.h"
 
 static bool* run;
 static double startTime;
@@ -21,6 +22,6 @@ void wait_termination_signal()
 	{
 		if ( timeout > 0 && startTime + timeout <= timer.Tock())
 			*run = false;
-		sleep(1);
+		Poco::Thread::sleep(1);
 	}
 }

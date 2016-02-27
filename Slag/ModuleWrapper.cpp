@@ -27,7 +27,7 @@ ModuleWrapper::ModuleWrapper(const bool* run)
 ModuleWrapper::ModuleWrapper( const ModuleWrapper& other )
 : imageType(ImageType::GREY)
 {
-	throw std::exception("Copy constructor called");
+	throw std::exception();
 }
 
 bool ModuleWrapper::Initialize(const std::vector<std::string> settings)
