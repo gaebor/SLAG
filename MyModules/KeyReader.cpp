@@ -1,6 +1,6 @@
 #include "KeyReader.h"
 #include <sstream>
-#include <conio.h>
+#include <stdio.h>
 #include <ctype.h>
 
 KeyReader::KeyReader() :outouts(1,nullptr)
@@ -20,7 +20,7 @@ MyMessage** KeyReader::Compute(MyMessage** input, int inputPortNumber, int* outp
 	else
 	{
 		auto output = new IntMessage();
-		output->val = _getch();
+		output->val = fgetc(stdin);
 		outouts[0] = output;
 		std::ostringstream oss;
 		oss << output->val;

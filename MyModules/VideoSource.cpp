@@ -1,6 +1,6 @@
 #include "VideoSource.h"
 
-#include "opencv2\imgproc\imgproc.hpp"
+#include "opencv2/imgproc/imgproc.hpp"
 
 Frame::Frame(void)
 {
