@@ -1,7 +1,7 @@
 #ifndef INCLUDE_TIMER_H
 #define INCLUDE_TIMER_H
 
-#include "Poco\Clock.h"
+#include "Poco/Clock.h"
 
 //!basic time functions
 class Timer

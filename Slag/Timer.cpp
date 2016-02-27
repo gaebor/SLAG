@@ -1,6 +1,6 @@
 #include "Timer.h"
 #include <stdio.h>
-#include "Poco\DateTime.h"
+#include "Poco/DateTime.h"
 
 Timer::Timer(void)
 {
@@ -23,7 +23,6 @@ void Timer::Tick()
 
 static int init();
 
-static SYSTEMTIME startUpTime;
 static const int init_val = init();
 
 static char timeStr[30];

@@ -2,11 +2,9 @@
 #define INCLUDE_OS_DEPENDENT_H
 
 #include <string>
-#include <map>
 #include <vector>
 
-#include "ModuleIdentifier.h"
-#include "slag\slag_interface.h"
+#include "slag/slag_interface.h"
 
 //!initializes termination events
 /*!
