@@ -4,11 +4,16 @@ Standalone Lightweight Abstract Graph
 ## Aim
 The SLAG aims to be a modular process graph, in which you can load, connect and run modules, interacting with each other.
 It wants to be OS independent, as much as it is possible.
+
+## Dependencies
+In order to compile SLAG all you need is
+* [PoCo](http://pocoproject.org/)
+
 ## Usage
 The interface of the SLAG is rather simple, you have to implement a given set of C functions, and pack it in a shared library (SO) or a dynamic library (DLL).
 From now on I call such a thing a *Library*.
 
-If you implemented the required functions, your Library will be noticed by SLAG and SLAG will be able to run your code.
+If you implemented the required functions, your Library will be noticed by the SLAG executable and SLAG will be able to run your code.
 ## The requirements
 These should be implemented in your Library
 * **Instantiate**: Your Library have to set up a *Module* in order to perform calculations
