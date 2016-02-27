@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project DefaultTargets="Build" ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
       <Configuration>Debug</Configuration>
@@ -28,26 +28,26 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v110</PlatformToolset>
+    <PlatformToolset>v120</PlatformToolset>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v110</PlatformToolset>
+    <PlatformToolset>v120</PlatformToolset>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v110</PlatformToolset>
+    <PlatformToolset>v120</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v110</PlatformToolset>
+    <PlatformToolset>v120</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
@@ -94,14 +94,15 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
-      <AdditionalIncludeDirectories>$(SolutionDir)inc;e:\PROGRAMOK\poco-1.4.7p1\Foundation\include;E:\PROGRAMOK\poco-1.4.7p1\Util\include;E:\PROGRAMOK\opencv\build\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>e:\PROGRAMOK\poco\Util\include;e:\PROGRAMOK\poco\XML\include;e:\PROGRAMOK\poco\Foundation\include;$(SolutionDir)inc</AdditionalIncludeDirectories>
       <TreatWChar_tAsBuiltInType>false</TreatWChar_tAsBuiltInType>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>E:\PROGRAMOK\poco-1.4.7p1\lib;e:\PROGRAMOK\opencv\build\x86\vc11\staticlib\</AdditionalLibraryDirectories>
-      <AdditionalDependencies>Shlwapi.lib;libtiff.lib;libpng.lib;libjpeg.lib;libjasper.lib;IlmImf.lib;zlib.lib;Vfw32.Lib;comctl32.lib;PocoFoundationmtd.lib;PocoUtilmtd.lib;opencv_core248d.lib;opencv_imgproc248d.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>E:\PROGRAMOK\poco\lib</AdditionalLibraryDirectories>
+      <AdditionalDependencies>shlwapi.lib;PocoFoundationmtd.lib;PocoUtilmtd.lib;PocoXMLmtd.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -111,14 +112,14 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
-      <AdditionalIncludeDirectories>$(SolutionDir)inc;e:\PROGRAMOK\poco-1.4.7p1\Foundation\include;E:\PROGRAMOK\poco-1.4.7p1\Util\include;E:\PROGRAMOK\opencv\build\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>e:\PROGRAMOK\poco\Util\include;e:\PROGRAMOK\poco\XML\include;e:\PROGRAMOK\poco\Foundation\include;$(SolutionDir)inc</AdditionalIncludeDirectories>
       <TreatWChar_tAsBuiltInType>false</TreatWChar_tAsBuiltInType>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>E:\PROGRAMOK\poco-1.4.7p1\lib64;e:\PROGRAMOK\opencv\build\x64\vc11\staticlib\</AdditionalLibraryDirectories>
-      <AdditionalDependencies>Shlwapi.lib;libtiff.lib;libpng.lib;libjpeg.lib;libjasper.lib;IlmImf.lib;zlib.lib;Vfw32.Lib;comctl32.lib;PocoFoundationmtd.lib;PocoUtilmtd.lib;opencv_core248d.lib;opencv_imgproc248d.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>E:\PROGRAMOK\poco\lib64\</AdditionalLibraryDirectories>
+      <AdditionalDependencies>shlwapi.lib;PocoFoundationmtd.lib;PocoUtilmtd.lib;PocoXMLmtd.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -130,16 +131,17 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
-      <AdditionalIncludeDirectories>$(SolutionDir)inc;e:\PROGRAMOK\poco-1.4.7p1\Foundation\include;E:\PROGRAMOK\poco-1.4.7p1\Util\include;E:\PROGRAMOK\opencv\build\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>e:\PROGRAMOK\poco\Util\include;e:\PROGRAMOK\poco\XML\include;e:\PROGRAMOK\poco\Foundation\include;$(SolutionDir)inc</AdditionalIncludeDirectories>
       <TreatWChar_tAsBuiltInType>false</TreatWChar_tAsBuiltInType>
+      <DebugInformationFormat>None</DebugInformationFormat>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalLibraryDirectories>E:\PROGRAMOK\poco-1.4.7p1\lib;e:\PROGRAMOK\opencv\build\x86\vc11\staticlib\</AdditionalLibraryDirectories>
-      <AdditionalDependencies>Shlwapi.lib;libtiff.lib;libpng.lib;libjpeg.lib;libjasper.lib;IlmImf.lib;zlib.lib;Vfw32.Lib;comctl32.lib;PocoFoundationmt.lib;PocoUtilmt.lib;opencv_core248.lib;opencv_imgproc248.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>E:\PROGRAMOK\poco\lib</AdditionalLibraryDirectories>
+      <AdditionalDependencies>shlwapi.lib;PocoFoundationmt.lib;PocoUtilmt.lib;PocoXMLmt.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -151,19 +153,21 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
-      <AdditionalIncludeDirectories>$(SolutionDir)inc;e:\PROGRAMOK\poco-1.4.7p1\Foundation\include;E:\PROGRAMOK\poco-1.4.7p1\Util\include;E:\PROGRAMOK\opencv\build\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>e:\PROGRAMOK\poco\Util\include;e:\PROGRAMOK\poco\XML\include;e:\PROGRAMOK\poco\Foundation\include;$(SolutionDir)inc</AdditionalIncludeDirectories>
       <TreatWChar_tAsBuiltInType>false</TreatWChar_tAsBuiltInType>
+      <DebugInformationFormat>None</DebugInformationFormat>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalLibraryDirectories>E:\PROGRAMOK\poco-1.4.7p1\lib64;e:\PROGRAMOK\opencv\build\x64\vc11\staticlib\</AdditionalLibraryDirectories>
-      <AdditionalDependencies>Shlwapi.lib;libtiff.lib;libpng.lib;libjpeg.lib;libjasper.lib;IlmImf.lib;zlib.lib;Vfw32.Lib;comctl32.lib;PocoFoundationmt.lib;PocoUtilmt.lib;opencv_core248.lib;opencv_imgproc248.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>E:\PROGRAMOK\poco\lib64\</AdditionalLibraryDirectories>
+      <AdditionalDependencies>shlwapi.lib;PocoFoundationmt.lib;PocoUtilmt.lib;PocoXMLmt.lib</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="ConfigReader.cpp" />
     <ClCompile Include="Factory.cpp" />
     <ClCompile Include="HumanReadable.cpp" />
     <ClCompile Include="Imshow.cpp" />
@@ -179,12 +183,14 @@
   <ItemGroup>
     <ClInclude Include="..\inc\slag\slag_interface.h" />
     <ClInclude Include="AsyncQueue.h" />
+    <ClInclude Include="ConfigReader.h" />
     <ClInclude Include="Factory.h" />
     <ClInclude Include="HumanReadable.h" />
     <ClInclude Include="InternalTypes.h" />
     <ClInclude Include="ModuleIdentifier.h" />
     <ClInclude Include="ModuleWrapper.h" />
     <ClInclude Include="OS_dependent.h" />
+    <ClInclude Include="Timer.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

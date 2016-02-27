@@ -3,13 +3,13 @@
 #include <vector>
 #include <string>
 
-#ifdef _MSC_VER
+#if defined _MSC_VER
 #include <windows.h>
 #include <Shlwapi.h>
 
 void* load_library(const char* file_name)
 {
-	return LoadLibrary(file_name);
+	return ::LoadLibraryA(file_name);
 }
 
 bool close_library( void* library )
@@ -47,7 +47,7 @@ std::string get_file_name(const std::string& file_name)
 	return std::string(PathFindFileName(file_name.c_str()), PathFindExtension(file_name.c_str()));
 }
 
-#elif #define __GNUC__
+#elif defined __GNUC__
 
 #include <dlfcn.h>
 

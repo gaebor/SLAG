@@ -1,32 +1,12 @@
 #ifndef INCLUDE_OS_DEPENDENT_H
 #define INCLUDE_OS_DEPENDENT_H
 
-#include <windows.h>
 #include <string>
 #include <map>
 #include <vector>
 
 #include "ModuleIdentifier.h"
 #include "slag\slag_interface.h"
-
-//!basic time functions
-class Timer
-{
-public:
-	//!initializes timer, also calls a Tick
-	Timer(void);
-	~Timer(void);
-	//!marks and returns time interval between now and "tick"
-	double Tock();
-	//!marks start time
-	void Tick();
-	//!returns a pointer to a C string, containing the readable, unique start time of the process
-	static const char* GetStartTime();
-private:
-	static LARGE_INTEGER freq;
-	LARGE_INTEGER tick;
-	LARGE_INTEGER tock;
-};
 
 //!initializes termination events
 /*!
@@ -69,8 +49,14 @@ void terminate_output_text();
 */
 void set_output_text_speed(int milisec_to_wait);
 
-
+//! textual visualization speed can be set
+/*!
+Textual output should be readable for a human, so you don't want to update it at 60fps or so.
+You can neglect this if you think otherwise, although additional overhead is expected due to thread locks.
+*/
 void handle_statistics(const std::string& module_name_and_instance, double speed, double computeSpeed, const std::map<PortNumber, size_t>& buffer_sizes);
+
+ImageType get_image_type(void);
 void handle_output_image(const std::string& module_name_and_instance, int w, int h, ImageType type, const unsigned char* data);
 void terminate_output_image();
 

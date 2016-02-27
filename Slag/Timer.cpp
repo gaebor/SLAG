@@ -1,10 +1,9 @@
-#include "OS_dependent.h"
-
-#include <chrono>
+#include "Timer.h"
+#include <stdio.h>
+#include "Poco\DateTime.h"
 
 Timer::Timer(void)
 {
-	static BOOL f = QueryPerformanceFrequency(&freq);
 	Tick();
 }
 
@@ -14,32 +13,28 @@ Timer::~Timer(void)
 
 double Timer::Tock()
 {
-	QueryPerformanceCounter(&tock);
-	return (double)(tock.QuadPart-tick.QuadPart)/freq.QuadPart;
+	return clock.elapsed() / 1000000.0;
 }
 
 void Timer::Tick()
 {
-	QueryPerformanceCounter(&tick);
+	clock.update();
 }
-
-LARGE_INTEGER Timer::freq;
 
 static int init();
 
 static SYSTEMTIME startUpTime;
 static const int init_val = init();
 
-static char timeStr[1024];
+static char timeStr[30];
 
 static int init()
 {
-	GetLocalTime(&startUpTime);
-
-	Timer now;
-	double fraqtime = now.Tock();
-	fraqtime = fraqtime-(size_t)fraqtime;
-	sprintf_s(timeStr, 1024, "%d_%d_%d_%02d%02d%02d_%f", startUpTime.wYear, startUpTime.wMonth, startUpTime.wDay, startUpTime.wHour, startUpTime.wMinute, startUpTime.wSecond, fraqtime );
+	Poco::DateTime dateTime;
+	sprintf(timeStr, "%04d_%02d_%02d_%02dh%02dm%02ds_%03d%03dus",
+		dateTime.year(), dateTime.month(), dateTime.day(),
+		dateTime.hour(), dateTime.minute(), dateTime.second(),
+		dateTime.millisecond(), dateTime.microsecond());
 
 	return 0;
 }

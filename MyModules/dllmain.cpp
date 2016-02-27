@@ -7,6 +7,7 @@
 #include "AddModule.h"
 #include "VideoSource.h"
 #include "ReadModule.h"
+#include "KeyReader.h"
 
 //BOOL APIENTRY DllMain( HMODULE hModule,
 //                       DWORD  ul_reason_for_call,
@@ -29,7 +30,7 @@ extern "C" {
 #endif
 
 //! this function instantiates your modules
-DLL_EXPORT void* SlagInstantiate(const char* name, const char* instance, const char** out_text, unsigned char** out_img, int* w, int* h, enum ImageType* type)
+DLL_EXPORT void* __stdcall SlagInstantiate(const char* name, const char* instance, const char** out_text, unsigned char** out_img, int* w, int* h, enum ImageType type)
 {
 	std::string nameStr = name;
 	MyModule* result = nullptr;
@@ -40,6 +41,8 @@ DLL_EXPORT void* SlagInstantiate(const char* name, const char* instance, const c
 		result = new VideoSource();
 	else if (nameStr == "ReadInt")
 		result = new ReadModule<int>();
+	else if (nameStr == "KeyReader")
+		result = new KeyReader();
 
 	if (result)
 	{
@@ -52,23 +55,23 @@ DLL_EXPORT void* SlagInstantiate(const char* name, const char* instance, const c
 	return result;
 }
 
-DLL_EXPORT void SlagDestroyMessage( void* message)
+DLL_EXPORT void __stdcall SlagDestroyMessage(void* message)
 {
 	delete static_cast<MyMessage*>(message);
 }
 
-DLL_EXPORT void SlagDestroyModule( void* module)
+DLL_EXPORT void __stdcall SlagDestroyModule(void* module)
 {
 	delete static_cast<MyModule*>(module);
 }
 
-DLL_EXPORT void** SlagCompute( void* module, void** input, int inputPortNumber, int* outputPortNumber)
+DLL_EXPORT void** __stdcall SlagCompute(void* module, void** input, int inputPortNumber, int* outputPortNumber)
 {
 	return (void**)(static_cast<MyModule*>(module)->Compute((MyMessage**)input, inputPortNumber, outputPortNumber));
 }
 
 //! returns 0 on success
-DLL_EXPORT int SlagInitialize(void* module, int settingsc, const char* settingsv[])
+DLL_EXPORT int __stdcall SlagInitialize(void* module, int settingsc, const char* settingsv[])
 {
 	return (static_cast<MyModule*>(module)->Initialize(settingsc, settingsv)) ? 0 : -1 ;
 }

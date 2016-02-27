@@ -1,11 +1,10 @@
 #include "ModuleWrapper.h"
 
-#include <iostream>
 #include <set>
 #include <algorithm>
 
 #include "Factory.h"
-
+#include "Timer.h"
 #include "OS_dependent.h"
 
 ModuleWrapper::~ModuleWrapper(void)
@@ -21,23 +20,23 @@ ModuleWrapper::ModuleWrapper(const bool* run)
 	output_text_raw(nullptr),
 	output_image_width(0), output_image_height(0),
 	do_run(run),
-	imageType(ImageType::GREY)
+	imageType(get_image_type())
 {
 }
 
 ModuleWrapper::ModuleWrapper( const ModuleWrapper& other )
+: imageType(ImageType::GREY)
 {
 	throw std::exception("Copy constructor called");
 }
 
-bool ModuleWrapper::Initialize( cv::FileNode node)
+bool ModuleWrapper::Initialize(const std::vector<std::string> settings)
 {
 	if (_module != nullptr)
 	{
 		if (initialize == NULL)
 			return true;
 
-		auto settings = Factory::ReadSettings(node["Settings"]);
 		std::vector<const char*> settings_array;
 
 		for (const auto& setting : settings)
@@ -53,13 +52,12 @@ bool ModuleWrapper::Initialize( cv::FileNode node)
 
 void ModuleWrapper::ThreadProcedure()
 {
-	std::vector<void*> inputMessages(inputPortLength, nullptr);
+	std::vector<void*> inputMessages(inputPortLength+1, nullptr);//HACK
 	void** outputMessages_raw;
 
 	//Dequeued input messages which haven't been Enqueued to the output yet
 	std::vector<ManagedMessage> receivedMessages;
 	
-	//TODO more reference counting
 	Timer timer;
 	double prevTime = 0.0, diffTime = 0.0, computeTime = 0.0;
 	
@@ -89,7 +87,6 @@ void ModuleWrapper::ThreadProcedure()
 		{
 			bufferSize[q.first] = q.second->GetSize();
 		}
-		handle_statistics(printableName, diffTime, computeTime, bufferSize);
 
 		//manage output data
 		if (outputMessages_raw == nullptr)
@@ -123,6 +120,7 @@ void ModuleWrapper::ThreadProcedure()
 		}
 		receivedMessages.clear();
 
+		handle_statistics(printableName, diffTime, computeTime, bufferSize);
 		if (output_text_raw != nullptr)
 			handle_output_text(printableName, output_text_raw);
 

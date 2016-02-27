@@ -1,4 +1,5 @@
-#pragma once
+#ifndef INCLUDE_ASYNC_QUEUE_H
+#define INCLUDE_ASYNC_QUEUE_H
 
 #include <Poco/Event.h>
 #include <Poco/Mutex.h>
@@ -157,3 +158,5 @@ private:
 	Poco::Mutex _mutex;
 	Container _queue;
 };
+
+#endif //INCLUDE_ASYNC_QUEUE_H

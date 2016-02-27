@@ -1,14 +1,17 @@
-#pragma once
+#ifndef INCLUDE_HUMAN_READABLE_H
+#define INCLUDE_HUMAN_READABLE_H
 
-#ifdef _cplusplus
+#ifdef __cplusplus
 extern "C" 
 {
-#endif // _cplusplus
+#endif // __cplusplus
 
 int print_humanreadable_time(char* result, int bufferSize, double num, const char* suffix = "");
 int print_humanreadable_giga(char* result, int bufferSize, double num, const char* suffix = "");
 int print_humanreadable_gibi(char* result, int bufferSize, double num, const char* suffix = "");
 
-#ifdef _cplusplus
+#ifdef __cplusplus
 }
-#endif // _cplusplus
+#endif // __cplusplus
+
+#endif //INCLUDE_HUMAN_READABLE_H

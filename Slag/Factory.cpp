@@ -60,7 +60,7 @@ Factory::ErrorCode Factory::InstantiateModule(ModuleWrapper& moduleWrapper)const
 				&moduleWrapper.output_image_raw,
 				&moduleWrapper.output_image_width,
 				&moduleWrapper.output_image_height,
-				&moduleWrapper.imageType);
+				moduleWrapper.imageType);
 
 			if (module)
 			{
@@ -93,7 +93,7 @@ Factory::ErrorCode Factory::InstantiateModule(ModuleWrapper& moduleWrapper)const
 				&moduleWrapper.output_image_raw,
 				&moduleWrapper.output_image_width,
 				&moduleWrapper.output_image_height,
-				&moduleWrapper.imageType);
+				moduleWrapper.imageType);
 
 			if (module)
 			{
@@ -120,23 +120,33 @@ Factory::~Factory()
 		close_library(hndl);
 }
 
-std::vector<std::string> Factory::ReadSettings( cv::FileNode& settingsNode )
+std::vector<std::string> Factory::ReadSettings(const Poco::Util::AbstractConfiguration* settingsNode)
 {
 	std::vector<std::string> settings;
-	if (settingsNode.isString())
+	if (settingsNode)
 	{
-		settings.push_back(settingsNode);
-	}else if (settingsNode.isSeq())
-	{
-		for (auto settingNode : settingsNode)
-			settings.push_back(settingNode);
-	}else if(settingsNode.isMap())
-	{
-		for (auto settingNode : settingsNode)
+		Poco::Util::AbstractConfiguration::Keys keys;
+		settingsNode->keys(keys);
+		for (auto k : keys)
 		{
-			settings.push_back(settingNode.name());
-			settings.push_back(settingNode);
+			settings.push_back(k);
+			settings.push_back(settingsNode->getString(k));
 		}
 	}
+	//if (settingsNode.isString())
+	//{
+	//	settings.push_back(settingsNode);
+	//}else if (settingsNode.isSeq())
+	//{
+	//	for (auto settingNode : settingsNode)
+	//		settings.push_back(settingNode);
+	//}else if(settingsNode.isMap())
+	//{
+	//	for (auto settingNode : settingsNode)
+	//	{
+	//		settings.push_back(settingNode.name());
+	//		settings.push_back(settingNode);
+	//	}
+	//}
 	return settings;
 }

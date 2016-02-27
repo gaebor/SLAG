@@ -1,14 +1,14 @@
-#pragma once
+#ifndef INCLUDE_MODULE_WRAPPER_H
+#define INCLUDE_MODULE_WRAPPER_H
 
 #include <vector>
-#include <string>
-#include <memory>
+#include <map>
 
 #include "slag/slag_interface.h"
 #include "AsyncQueue.h"
-#include "opencv2/core/core.hpp"
 #include "ModuleIdentifier.h"
 #include "InternalTypes.h"
+#include "Poco/Util/AbstractConfiguration.h"
 
 class Factory;
 
@@ -18,7 +18,7 @@ public:
 	ModuleWrapper(const bool* run);
 	~ModuleWrapper();
 
-	bool Initialize(cv::FileNode node);
+	bool Initialize(const std::vector<std::string> settings);
 	void ThreadProcedure();
 
 public:
@@ -42,7 +42,7 @@ protected:
 	const char* output_text_raw;
 	unsigned char* output_image_raw;
 	int output_image_width, output_image_height;
-	ImageType imageType;
+	const ImageType imageType;
 
 	void* _module; // responsible for it!
 	SlagCompute_t compute;
@@ -52,3 +52,5 @@ protected:
 public:
 	ModuleWrapper(const ModuleWrapper& other);
 };
+
+#endif //INCLUDE_MODULE_WRAPPER_H

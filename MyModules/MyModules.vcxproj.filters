@@ -27,6 +27,9 @@
     <ClCompile Include="AbstractInterface.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="KeyReader.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="VideoSource.h">
@@ -41,5 +44,13 @@
     <ClInclude Include="AbstractInterface.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="KeyReader.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="def.def">
+      <Filter>Source Files</Filter>
+    </None>
   </ItemGroup>
 </Project>

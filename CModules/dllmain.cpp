@@ -14,7 +14,8 @@ void** Add(void** input, int inputPortNumber, int* outputPortNumber)
 
 	for(; inputPortNumber > 0; --inputPortNumber, ++input)
 	{
-		(*sum) += *((int*)(*input));
+		if (*input != NULL)
+			(*sum) += *((int*)(*input));
 
 		*outputPortNumber = 1;
 	}
@@ -32,14 +33,15 @@ void** Mul(void** input, int inputPortNumber, int* outputPortNumber)
 	*outputPortNumber = 0;
 	for(; inputPortNumber > 0; --inputPortNumber, ++input)
 	{
-		(*sum) *= *((int*)(*input));
+		if (*input != NULL)
+			(*sum) *= *((int*)(*input));
 		*outputPortNumber = 1;
 	}
 	result = sum;
 	return &result;
 }
 
-DLL_EXPORT void* SlagInstantiate(const char* moduleName, const char* InstanceName, const char** out_text, unsigned char** out_img, int* w, int* h, enum ImageType* type)
+DLL_EXPORT void* __stdcall SlagInstantiate(const char* moduleName, const char* InstanceName, const char** out_text, unsigned char** out_img, int* w, int* h, enum ImageType* type)
 {
 	SlagFunction_t function = NULL;
 
@@ -51,16 +53,16 @@ DLL_EXPORT void* SlagInstantiate(const char* moduleName, const char* InstanceNam
 	return function;
 }
 
-DLL_EXPORT void** SlagCompute( void* module, void** input, int inputPortNumber, int* outputPortNumber)
+DLL_EXPORT void** __stdcall SlagCompute(void* module, void** input, int inputPortNumber, int* outputPortNumber)
 {
 	return ((SlagFunction_t)module)(input, inputPortNumber, outputPortNumber);
 }
 
-DLL_EXPORT void SlagDestroyMessage( void* message)
+DLL_EXPORT void __stdcall SlagDestroyMessage(void* message)
 {
 	free(message);
 }
 
-DLL_EXPORT void SlagDestroyModule( void* module)
+DLL_EXPORT void __stdcall SlagDestroyModule(void* module)
 {
 }

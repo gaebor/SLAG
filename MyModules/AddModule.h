@@ -6,7 +6,7 @@
 class IntMessage : public ::MyMessage
 {
 public:
-	IntMessage();
+	IntMessage(int x = 0);
 	virtual ~IntMessage();
 	int val;
 };

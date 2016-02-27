@@ -37,8 +37,8 @@ MyMessage** AddModule::Compute( MyMessage** input, int inputPortNumber, int* out
 	}
 }
 
-IntMessage::IntMessage()
-	: val(0)
+IntMessage::IntMessage(int x)
+	: val(x)
 {
 }
 

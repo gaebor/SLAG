@@ -45,6 +45,6 @@ public:
 	unsigned char** outputPicture;
 	int* outputPictureWidth;
 	int* outputPictureHeight;
-	ImageType* imageType;
+	ImageType imageType;
 };
 

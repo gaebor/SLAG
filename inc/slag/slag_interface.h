@@ -2,9 +2,11 @@
 #define INCLUDE_SLAG_INTERFACE_H
 
 #ifdef __GNUC__
-#define DLL_EXPORT __attribute__ ((visibility ("default")))
+#	define DLL_EXPORT __attribute__ ((visibility ("default")))
 #elif defined _MSC_VER
-#define DLL_EXPORT __declspec(dllexport)
+#	define DLL_EXPORT __declspec(dllexport)
+#else
+#	define DLL_EXPORT 
 #endif
 
 #ifdef __cplusplus
@@ -16,7 +18,8 @@ enum ImageType
 	GREY,
 	RGB,
 	BGR,
-	RGBA
+	RGBA,
+	BGRA
 };
 
 //mandatory
@@ -44,12 +47,12 @@ enum ImageType
 		Set to 0 if you don't have any image to show!
 	@return pointer to whatever you call a module
 */
-typedef void* (*SlagInstantiate_t)(
+typedef void* (__stdcall *SlagInstantiate_t)(
 	const char* moduleName,
 	const char* InstanceName,
 	const char** out_text,
 	unsigned char** out_img,
-	int* w, int* h, enum ImageType* imageType);
+	int* w, int* h, enum ImageType imageType);
 
 //! SLAG calls this if a message is useless anymore
 /*!
@@ -60,21 +63,22 @@ typedef void* (*SlagInstantiate_t)(
 	@param message pointer to a message, which was allocated by some of your modules.
 		You should know how to delete it!
 */
-typedef void (*SlagDestroyMessage_t)( void* message);
+typedef void(__stdcall *SlagDestroyMessage_t)(void* message);
 
 //! SLAG calls this after the graph has been finished
 /*!
 	Same memory management issues apply like SlagDestroyMessage
 	@param module pointer to a module. You should delete it however you like!
 */
-typedef void (*SlagDestroyModule_t)( void* module);
+typedef void(__stdcall *SlagDestroyModule_t)(void* module);
 
 //! the core of SLAG
 /*!
 
 */
-typedef void** (*SlagCompute_t)( void* module, void** input, int inputPortNumber, int* outputPortNumber);
+typedef void** (__stdcall *SlagCompute_t)(void* module, void** input, int inputPortNumber, int* outputPortNumber);
 
+//! auxiliary
 typedef void** (*SlagFunction_t)(void** input, int inputPortNumber, int* outputPortNumber);
 
 //optional
@@ -88,13 +92,13 @@ typedef void** (*SlagFunction_t)(void** input, int inputPortNumber, int* outputP
 		If you want to keep any of these settings later, you have to copy it to your heap.
 	@return 0 on success, otherwise initialization is considered to be failed and the graph doesn't even start
 */
-typedef int (*SlagInitialize_t)(void* module, int settingsc, const char** settingsv);
+typedef  int(__stdcall *SlagInitialize_t)(void* module, int settingsc, const char** settingsv);
 
 //!
-typedef void* (*SlagSerialize_t)(void* message, int* buffersize);
+typedef void* (__stdcall *SlagSerialize_t)(void* message, int* buffersize);
 
 //!
-typedef int (*SlagDeserialize_t)(void* message, void* buffer);
+typedef int(__stdcall *SlagDeserialize_t)(void* message, void* buffer);
 
 #define SETTINGS_MAX_LENGTH 1024
 

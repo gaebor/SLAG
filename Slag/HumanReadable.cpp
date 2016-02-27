@@ -1,9 +1,9 @@
 #include "HumanReadable.h"
 
-#ifdef _cplusplus
+#ifdef __cplusplus
 extern "C" 
 {
-#endif // _cplusplus
+#endif // __cplusplus
 
 #include <stdio.h>
 #include <math.h>
@@ -60,7 +60,7 @@ int print_humanreadable_gibi( char* result, int bufferSize, double num, const ch
 	return sprintf_s(result, bufferSize, "%.4f%s%s", num, "Yi", suffix);
 }
 
-#ifdef _cplusplus
+#ifdef __cplusplus
 }
 
-#endif // _cplusplus
+#endif // __cplusplus

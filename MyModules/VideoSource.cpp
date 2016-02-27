@@ -1,5 +1,7 @@
 #include "VideoSource.h"
 
+#include "opencv2\imgproc\imgproc.hpp"
+
 Frame::Frame(void)
 {
 }
@@ -20,7 +22,6 @@ VideoSource::~VideoSource(void)
 
 bool VideoSource::Initialize( int settingsc, const char* settingsv[] )
 {
-	auto x = settingsv[0];
 	for (int i = 0; i < settingsc; ++i)
 	{
 		if (0 == strcmp("-d", settingsv[i]))
@@ -57,10 +58,11 @@ MyMessage** VideoSource::Compute( MyMessage** input, int inputPortNumber, int* o
 		*outputPortNumber =	0;
 		return nullptr;
 	}
-	
+	//TODO color conversion should depend on MyModule::imageType
+	cv::cvtColor(output->image, output->image, cv::COLOR_RGB2RGBA);
+
 	picture = output->image;
 
-	*imageType = ImageType::BGR;
 	*outputPictureWidth = picture.cols;
 	*outputPictureHeight = picture.rows;
 	*outputPicture = picture.data;

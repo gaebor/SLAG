@@ -1,0 +1,6 @@
+EXPORTS
+   SlagInstantiate
+   SlagDestroyMessage
+   SlagDestroyModule
+   SlagCompute
+   SlagInitialize

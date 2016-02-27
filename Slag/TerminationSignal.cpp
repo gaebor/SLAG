@@ -1,6 +1,7 @@
 #include "OS_dependent.h"
 
 #include <windows.h>
+#include "Timer.h"
 
 static bool* run;
 static double startTime;

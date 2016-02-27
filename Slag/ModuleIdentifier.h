@@ -1,4 +1,6 @@
-#pragma once
+#ifndef INCLUDE_MODULE_IDENTIFIER_H
+#define INCLUDE_MODULE_IDENTIFIER_H
+
 #include <string>
 #include <sstream>
 
@@ -30,3 +32,4 @@ public:
 	operator std::string ()const;
 };
 
+#endif //INCLUDE_MODULE_IDENTIFIER_H

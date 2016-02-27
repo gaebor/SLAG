@@ -57,6 +57,9 @@
     <ClCompile Include="LoadLibrary.cpp">
       <Filter>OS_dependent</Filter>
     </ClCompile>
+    <ClCompile Include="ConfigReader.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Factory.h">
@@ -82,6 +85,12 @@
     </ClInclude>
     <ClInclude Include="OS_dependent.h">
       <Filter>OS_dependent</Filter>
+    </ClInclude>
+    <ClInclude Include="Timer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ConfigReader.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
