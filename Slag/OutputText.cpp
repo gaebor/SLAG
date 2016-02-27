@@ -7,9 +7,10 @@
 #include <iostream>
 #include <algorithm>
 
-#include "HumanReadable.h"
-
 #include "Poco/Thread.h"
+
+#include "HumanReadable.h"
+#include "ModuleIdentifier.h"
 
 struct ModuleTextualData
 {

@@ -8,22 +8,28 @@ extern "C"
 #include <stdio.h>
 #include <math.h>
 
+#ifdef _MSC_VER
+# define my_sprintf sprintf_s
+#elif defined __GNUC__
+# define my_sprintf snprintf
+#endif
+
 int print_humanreadable_time( char* result, int bufferSize, double num, const char* suffix /*= ""*/ )
 {
 	if (num < 1e-6)
-		return sprintf_s(result, bufferSize, "%7.3f%s%s",num*1e9, " ns", suffix);
+		return my_sprintf(result, bufferSize, "%7.3f%s%s", num*1e9, " ns", suffix);
 	else if (num < 1e-3)
-		return sprintf_s(result, bufferSize, "%7.3f%s%s",num*1e6, " us", suffix);
+		return my_sprintf(result, bufferSize, "%7.3f%s%s", num*1e6, " us", suffix);
 	else if (num < 1)
-		return sprintf_s(result, bufferSize, "%7.3f%s%s",num*1e3, " ms", suffix);
+		return my_sprintf(result, bufferSize, "%7.3f%s%s", num*1e3, " ms", suffix);
 	else if (num < 60)
-		return sprintf_s(result, bufferSize, "%7.3f%s%s",num, "sec", suffix);
+		return my_sprintf(result, bufferSize, "%7.3f%s%s", num, "sec", suffix);
 	else if (num < 3600)
-		return sprintf_s(result, bufferSize, "%7.3f%s%s",num/60, "min", suffix);
+		return my_sprintf(result, bufferSize, "%7.3f%s%s", num / 60, "min", suffix);
 	else if (num < 3600*24)
-		return sprintf_s(result, bufferSize, "%7.3f%s%s",num/3600, "  h", suffix);
+		return my_sprintf(result, bufferSize, "%7.3f%s%s", num / 3600, "  h", suffix);
 	else
-		return sprintf_s(result, bufferSize, "%.3f%s%s",num/(3600*24), "day", suffix);
+		return my_sprintf(result, bufferSize, "%.3f%s%s", num / (3600 * 24), "day", suffix);
 }
 
 int print_humanreadable_giga( char* result, int bufferSize, double num, const char* suffix /*= ""*/ )
@@ -35,12 +41,12 @@ int print_humanreadable_giga( char* result, int bufferSize, double num, const ch
 	{
 		if (fabs(num) < 1000.0)
 		{
-			return sprintf_s(result, bufferSize, "%7.3g%s%s",num, *unit, suffix);
+			return my_sprintf(result, bufferSize, "%7.3g%s%s", num, *unit, suffix);
 		}
 		else
 			num /= 1000;
 	}
-	return sprintf_s(result, bufferSize, "%.3g%s%s", num, "Y", suffix);
+	return my_sprintf(result, bufferSize, "%.3g%s%s", num, "Y", suffix);
 }
 
 int print_humanreadable_gibi( char* result, int bufferSize, double num, const char* suffix /*= ""*/ )
@@ -52,12 +58,12 @@ int print_humanreadable_gibi( char* result, int bufferSize, double num, const ch
 	{
 		if (fabs(num) < 1024.0)
 		{
-			return sprintf_s(result, bufferSize, "%8.4f%s%s",num, *unit, suffix);
+			return my_sprintf(result, bufferSize, "%8.4f%s%s", num, *unit, suffix);
 		}
 		else
 			num /= 1024;
 	}
-	return sprintf_s(result, bufferSize, "%.4f%s%s", num, "Yi", suffix);
+	return my_sprintf(result, bufferSize, "%.4f%s%s", num, "Yi", suffix);
 }
 
 #ifdef __cplusplus

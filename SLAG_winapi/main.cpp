@@ -1,5 +1,6 @@
+#include <windows.h>
 
-int main(int argc, char* argv[])
+int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine,int nCmdShow)
 {
 	return 0;
 }

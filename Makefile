@@ -13,8 +13,8 @@ dir:
 test: dir AsyncQueueTest/AsyncQueueTest.cpp
 	$(CC) AsyncQueueTest/AsyncQueueTest.cpp $(CFLAGS) -I"AsyncQueueTest/" -o build/AsyncQueueTest
 
-slag: dir Slag/*.cpp
-	$(CC) Slag/*.cpp $(CFLAGS) -I"Slag" -I"inc" -o build/Slag
+slag: dir Slag/*.cpp Slag/UNIX/*.cpp
+	$(CC) Slag/*.cpp Slag/UNIX/*.cpp $(CFLAGS) -I"inc" -I"Slag" -o build/Slag
 
 cmodules: dir CModules/CModules.c
 	gcc CModules/CModules.c -I"inc" -fPIC -shared -o build/CModules.so

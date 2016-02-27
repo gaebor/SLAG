@@ -41,6 +41,10 @@ Factory::Factory()
 			}
 		}
 	}
+	for (auto l : pModuleFunctions)
+	{
+		std::cout << l.first << std::endl;
+	}
 }
 
 Factory::ErrorCode Factory::InstantiateModule(ModuleWrapper& moduleWrapper)const

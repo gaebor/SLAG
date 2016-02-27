@@ -19,7 +19,7 @@
     <Filter Include="Interface">
       <UniqueIdentifier>{fd02416a-676e-4267-a9cb-242f47c88b3c}</UniqueIdentifier>
     </Filter>
-    <Filter Include="OS_dependent">
+    <Filter Include="WIN">
       <UniqueIdentifier>{b53b3151-a4b1-4a49-961e-0fbe01a6f431}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
@@ -42,23 +42,23 @@
     <ClCompile Include="InternalTypes.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Imshow.cpp">
-      <Filter>OS_dependent</Filter>
-    </ClCompile>
-    <ClCompile Include="Timer.cpp">
-      <Filter>OS_dependent</Filter>
-    </ClCompile>
-    <ClCompile Include="OutputText.cpp">
-      <Filter>OS_dependent</Filter>
-    </ClCompile>
-    <ClCompile Include="TerminationSignal.cpp">
-      <Filter>OS_dependent</Filter>
-    </ClCompile>
-    <ClCompile Include="LoadLibrary.cpp">
-      <Filter>OS_dependent</Filter>
-    </ClCompile>
     <ClCompile Include="ConfigReader.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Timer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="OutputText.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="WIN\Imshow.cpp">
+      <Filter>WIN</Filter>
+    </ClCompile>
+    <ClCompile Include="WIN\LoadLibrary.cpp">
+      <Filter>WIN</Filter>
+    </ClCompile>
+    <ClCompile Include="WIN\TerminationSignal.cpp">
+      <Filter>WIN</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -83,13 +83,13 @@
     <ClInclude Include="..\inc\slag\slag_interface.h">
       <Filter>Interface</Filter>
     </ClInclude>
-    <ClInclude Include="OS_dependent.h">
-      <Filter>OS_dependent</Filter>
-    </ClInclude>
     <ClInclude Include="Timer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="ConfigReader.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="OS_dependent.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

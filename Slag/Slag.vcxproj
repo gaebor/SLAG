@@ -170,15 +170,15 @@
     <ClCompile Include="ConfigReader.cpp" />
     <ClCompile Include="Factory.cpp" />
     <ClCompile Include="HumanReadable.cpp" />
-    <ClCompile Include="Imshow.cpp" />
     <ClCompile Include="InternalTypes.cpp" />
-    <ClCompile Include="LoadLibrary.cpp" />
     <ClCompile Include="ModuleIdentifier.cpp" />
     <ClCompile Include="ModuleWrapper.cpp" />
     <ClCompile Include="OutputText.cpp" />
     <ClCompile Include="Slag.cpp" />
-    <ClCompile Include="TerminationSignal.cpp" />
     <ClCompile Include="Timer.cpp" />
+    <ClCompile Include="WIN\Imshow.cpp" />
+    <ClCompile Include="WIN\LoadLibrary.cpp" />
+    <ClCompile Include="WIN\TerminationSignal.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\inc\slag\slag_interface.h" />

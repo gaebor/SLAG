@@ -3,8 +3,10 @@
 
 #include <string>
 #include <vector>
+#include <map>
 
 #include "slag/slag_interface.h"
+#include "ModuleIdentifier.h"
 
 //!initializes termination events
 /*!
