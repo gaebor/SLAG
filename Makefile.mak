@@ -20,7 +20,7 @@ Slag/WIN/Imshow.obj\
 Slag/WIN/LoadLibrary.obj\
 Slag/WIN/TerminationSignal.obj
 
-all: main cmodules mymodules doc
+all: test cmodules mymodules main
 
 doc: doxy\config
 	doxy\doxygen doxy\config
@@ -40,7 +40,7 @@ main: $(SOURCES)
 cmodules: CModules\CModules.c
 	cl CModules\CModules.c $(INTERFACE) /Fo:$(OUT_DIR)\CModules.obj /TC /MT /W3 /Ox /link /DLL /OUT:$(OUT_DIR)\CModules.dll /DEF:CModules\def.def
 mymodules:
-
+	
 test: AsyncQueueTest\AsyncQueueTest.cpp
 	cl AsyncQueueTest\AsyncQueueTest.cpp /Fo:$(OUT_DIR)\AsyncQueueTest.obj $(CL_FLAGS) /OUT:$(OUT_DIR)\AsyncQueueTest.exe
 clean:
