@@ -3,6 +3,7 @@
 
 #ifdef __GNUC__
 #	define DLL_EXPORT __attribute__ ((visibility ("default")))
+#	define __stdcall 
 #elif defined _MSC_VER
 #	define DLL_EXPORT __declspec(dllexport)
 #else

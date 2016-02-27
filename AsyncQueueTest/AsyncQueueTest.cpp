@@ -1,6 +1,8 @@
 #include <iostream>
+#include <string.h>
+#include <stdio.h>
 
-#include "..\Slag\AsyncQueue.h"
+#include "../Slag/AsyncQueue.h"
 #include "Poco/Thread.h"
 #include "Poco/Clock.h"
 #include <thread>
@@ -65,13 +67,13 @@ int main(int argc, char* argv[])
 		if (std::string(*argv) == "-n")
 			n = (1ull << atoi(*++argv));
 		else if (std::string(*argv) == "-s")
-			sleep_constant = _atoi64(*++argv);
+			sleep_constant = atoi(*++argv);
 		else if (std::string(*argv) == "-f")
 			force_halt = true;
 		else if (std::string(*argv) == "-r")
 			run = atoi(*++argv);
 		else if (std::string(*argv) == "-l")
-			limit = _atoi64(*++argv);
+			limit = atoi(*++argv);
 		else if (std::string(*argv) == "-b")
 			behavior = HighWaterQueue::LimitBehavior(atoi(*++argv));
 	}

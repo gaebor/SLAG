@@ -1,7 +1,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "slag\slag_interface.h"
+#include "slag/slag_interface.h"
 
 void** Add(void** input, int inputPortNumber, int* outputPortNumber)
 {
@@ -50,7 +50,7 @@ DLL_EXPORT void* __stdcall SlagInstantiate(const char* moduleName, const char* I
 	else if (0 == strcmp("MUL", moduleName))
 		function = Mul;
 
-	return function;
+	return (void*)function;
 }
 
 DLL_EXPORT void** __stdcall SlagCompute(void* module, void** input, int inputPortNumber, int* outputPortNumber)
