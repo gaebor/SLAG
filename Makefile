@@ -1,29 +1,43 @@
-CPP=g++
-CC=gcc
-OPENCVLIB=-lopencv_core -lopencv_imgproc
-POCOLIB=-lPocoFoundation -lPocoUtil
-CPPFLAGS=-O3 -Wpedantic -std=c++11 -ldl -lpthread
-CFLAGS=-O3 -Wpedantic
+OPENCVLIB=-lopencv_core -lopencv_imgproc -lopencv_highgui
+CPPFLAGS=-O3 -Wpedantic -std=c++11 -Iinc -pthread
+CFLAGS=-O3 -Wpedantic -Iinc
 SHARED=-fPIC -shared
+ASYNCQUEUE_DIR=../AsyncQueue
+OUT_DIR=bin
 
-all: test cmodules mymodules slag
+SLAG_SRC=Slag/ConfigReader.cpp\
+Slag/Factory.cpp\
+Slag/HumanReadable.cpp\
+Slag/InternalTypes.cpp\
+Slag/ModuleIdentifier.cpp\
+Slag/ModuleWrapper.cpp\
+Slag/OutputText.cpp\
+Slag/Slag.cpp\
+Slag/UNIX/Imshow.cpp\
+Slag/UNIX/LoadLibrary.cpp\
+Slag/UNIX/TerminationSignal.cpp
+
+SLAG_OBJ=$(SLAG_SRC:.cpp=.o)
+
+all: cmodules mymodules slag
 
 doc: doxy/config
 	doxygen doxy/config 
 
-dir: 
-	mkdir -p build
+dir:
+	mkdir -p $(OUT_DIR)
 
-test: dir AsyncQueueTest/AsyncQueueTest.cpp
-	$(CPP) AsyncQueueTest/AsyncQueueTest.cpp $(CPPFLAGS) $(POCOLIB) -o build/AsyncQueueTest
+Slag/%.o:Slag/%.cpp
+	g++ -c $(CPPFLAGS) -I$(ASYNCQUEUE_DIR)/inc $< -o $@
 
-slag: dir Slag/*.cpp Slag/UNIX/*.cpp
-	$(CPP) Slag/*.cpp Slag/UNIX/*.cpp $(CPPFLAGS) $(POCOLIB) -I"inc" -I"Slag" -o build/Slag
+slag: dir $(SLAG_OBJ)
+	ld $(SLAG_OBJ) -L$(ASYNCQUEUE_DIR)/bin -lasyncqueue -ldl -lpthread -o $(OUT_DIR)/Slag
 
 cmodules: dir CModules/CModules.c
-	$(CC) CModules/CModules.c -I"inc" $(SHARED) -o build/CModules.so
+	gcc CModules/CModules.c $(CFLAGS) $(SHARED) -o $(OUT_DIR)/CModules.so
 
 mymodules: dir MyModules/*.cpp
-	$(CPP) MyModules/*.cpp $(CPPFLAGS) -I"inc" -I"MyModules" $(OPENCVLIB) $(SHARED) -o build/MyModules.so
+	g++ MyModules/*.cpp $(CPPFLAGS) $(OPENCVLIB) $(SHARED) -o $(OUT_DIR)/MyModules.so
+
 clean:
-	rm -R -f build/
+	rm -R -f $(OUT_DIR)/ Slag/*.o Slag/UNIX/*.o

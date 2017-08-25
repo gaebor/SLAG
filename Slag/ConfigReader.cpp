@@ -1,8 +1,5 @@
 #include "ConfigReader.h"
 
-// #include <windows.h>
-// #include <shellapi.h>
-
 #include <fstream>
 #include <iostream>
 

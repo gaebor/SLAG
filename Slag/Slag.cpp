@@ -11,7 +11,7 @@
 #include "ConfigReader.h"
 #include "Factory.h"
 #include "ModuleIdentifier.h"
-#include "AsyncQueue.h"
+#include "aq/AsyncQueue.h"
 #include "ModuleWrapper.h"
 #include "HumanReadable.h"
 #include "OS_dependent.h"
@@ -43,8 +43,8 @@ int main(int argc, char* argv[])
 		//graph settings
 		for (auto l : cfg.GetSection("graph"))
 		{
-			const auto key = l.substr(0U,l.find('='));
-			const auto value = l.substr(l.find('=')+1);
+			const auto key = l.substr(0, l.find('='));
+			const auto value = l.substr(l.find('=') + 1);
 
 			if (key == "QueueBehavior")
 			{

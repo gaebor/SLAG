@@ -1,12 +1,13 @@
 #include "..\OS_dependent.h"
 
 #include <windows.h>
-#include "..\Timer.h"
+
+#include "aq/Clock.h"
 
 static bool* run;
 static double startTime;
 static double timeout;
-static Timer timer;
+static aq::Clock timer;
 
 BOOL WINAPI consoleHandler(DWORD signal) {
 	switch (signal)

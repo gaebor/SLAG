@@ -247,7 +247,9 @@ WindowWrapper::WindowWrapper(const std::string& name)
 				if (!_hwnd)
 				{
 					auto error = GetLastError();
-					MessageBox(NULL, "CreateWindow Failed!", "Error!", MB_ICONEXCLAMATION | MB_OK);
+					char error_str[20];
+					sprintf_s(error_str, "Error %d!", error);
+					MessageBox(NULL, "CreateWindow Failed!", error_str, MB_ICONEXCLAMATION | MB_OK);
 					break;
 				}
 

@@ -45,9 +45,9 @@ DLL_EXPORT void* __stdcall SlagInstantiate(const char* moduleName, const char* I
 {
 	SlagFunction_t function = NULL;
 
-	if (0 == strcmp("ADD", moduleName))
+	if (0 == strcmp("Add", moduleName))
 		function = Add;
-	else if (0 == strcmp("MUL", moduleName))
+	else if (0 == strcmp("Mul", moduleName))
 		function = Mul;
 
 	return (void*)function;

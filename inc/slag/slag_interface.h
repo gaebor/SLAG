@@ -95,12 +95,6 @@ typedef void** (*SlagFunction_t)(void** input, int inputPortNumber, int* outputP
 */
 typedef  int(__stdcall *SlagInitialize_t)(void* module, int settingsc, const char** settingsv);
 
-//!
-typedef void* (__stdcall *SlagSerialize_t)(void* message, int* buffersize);
-
-//!
-typedef int(__stdcall *SlagDeserialize_t)(void* message, void* buffer);
-
 #define SETTINGS_MAX_LENGTH 1024
 
 #ifdef __cplusplus

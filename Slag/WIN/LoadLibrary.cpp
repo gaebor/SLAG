@@ -29,13 +29,13 @@ std::vector<std::string> enlist_libraries()
 	WIN32_FIND_DATA FindFileData;
 	HANDLE hFind;
 
-	hFind = FindFirstFile("*.dll", &FindFileData);
+	hFind = FindFirstFileA("*.dll", &FindFileData);
 
 	if (hFind != INVALID_HANDLE_VALUE)
 	{
 		do{
 			result.emplace_back(FindFileData.cFileName);
-		}while (FindNextFile(hFind, &FindFileData));
+		}while (FindNextFileA(hFind, &FindFileData));
 		FindClose(hFind);
 	}
 
@@ -44,7 +44,7 @@ std::vector<std::string> enlist_libraries()
 
 std::string get_file_name(const std::string& file_name)
 {
-	return std::string(PathFindFileName(file_name.c_str()), PathFindExtension(file_name.c_str()));
+	return std::string(PathFindFileNameA(file_name.c_str()), PathFindExtensionA(file_name.c_str()));
 }
 
 #elif defined __GNUC__

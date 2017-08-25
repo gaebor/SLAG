@@ -4,7 +4,7 @@
 #include <algorithm>
 
 #include "Factory.h"
-#include "Timer.h"
+#include "aq/Clock.h"
 #include "OS_dependent.h"
 
 ModuleWrapper::~ModuleWrapper(void)
@@ -58,7 +58,7 @@ void ModuleWrapper::ThreadProcedure()
 	//Dequeued input messages which haven't been Enqueued to the output yet
 	std::vector<ManagedMessage> receivedMessages;
 	
-	Timer timer;
+	aq::Clock timer;
 	double prevTime = 0.0, diffTime = 0.0, computeTime = 0.0;
 	
 	while (*do_run) //a terminating signal leaves every message in the queue and quits the loop

@@ -8,8 +8,6 @@
 #include "slag/slag_interface.h"
 #include "ModuleIdentifier.h"
 
-#include "Poco/Util/AbstractConfiguration.h"
-
 class ModuleWrapper;
 
 class Factory
@@ -39,10 +37,7 @@ public:
 		SlagInitialize_t initialize;
 	};
 
-	static std::vector<std::string> ReadSettings(const Poco::Util::AbstractConfiguration* settingsNode);
-
 private:
-	//static const std::string extension;
 	std::map<std::string, Functions> pModuleFunctions;
 	std::vector<void*> module_dll_handles;
 };

@@ -1,11 +1,11 @@
 #include "../OS_dependent.h"
-#include "../Timer.h"
-#include "Poco/Thread.h"
+#include "aq/Clock.h"
+#include <thread>
 
 static bool* run;
 static double startTime;
 static double timeout;
-static Timer timer;
+static aq::Clock timer;
 
 void init_termination_signal(bool* do_run, double hardResetTimeout)
 {
@@ -22,6 +22,6 @@ void wait_termination_signal()
 	{
 		if ( timeout > 0 && startTime + timeout <= timer.Tock())
 			*run = false;
-		Poco::Thread::sleep(1);
+		std::this_thread::sleep_for(std::chrono::milliseconds(1));
 	}
 }

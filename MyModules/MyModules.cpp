@@ -32,9 +32,9 @@ extern "C" {
 //! this function instantiates your modules
 DLL_EXPORT void* __stdcall SlagInstantiate(const char* name, const char* instance, const char** out_text, unsigned char** out_img, int* w, int* h, enum ImageType type)
 {
-	std::string nameStr = name;
+	const std::string nameStr = name;
 	MyModule* result = nullptr;
-	if (nameStr == "AddModule")
+	if (nameStr == "Add")
 	{
 		result = new AddModule();
 	}else if (nameStr == "VideoSource")

@@ -5,10 +5,9 @@
 #include <map>
 
 #include "slag/slag_interface.h"
-#include "AsyncQueue.h"
+#include "aq/AsyncQueue.h"
 #include "ModuleIdentifier.h"
 #include "InternalTypes.h"
-#include "Poco/Util/AbstractConfiguration.h"
 
 class Factory;
 

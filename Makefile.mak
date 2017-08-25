@@ -1,13 +1,21 @@
-POCODIR=E:\PROGRAMOK\POCO
+###############
+# dependecies #
+###############
+ASYNCQUEUE_DIR=..\AsyncQueue
 
-POCO_INC=/I"$(POCODIR)\Foundation\include" /I"$(POCODIR)\Util\include"
-# Win32
-POCO_LIBPATH=$(POCODIR)\lib
+OPENCV_DIR=E:\PROGRAMOK\opencv\build
+OPENCV_VERSION=$(OPENCV_DIR)\x64\vc12
+###############
+
+WINAPI_LIB=shlwapi.lib gdi32.lib user32.lib
+ 
 OUT_DIR=bin
 
-CL_FLAGS=/MT /W3 /EHsc /Ox $(POCO_INC) /link /LIBPATH:"$(POCO_LIBPATH)"
+CL_FLAGS=/c /MD /W4 /O2 /Ot /Qpar /GL /DNDEBUG /Iinc
+CPP_FLAGS=/EHsc $(CL_FLAGS)
+C_FLAGS=/TC $(CL_FLAGS)
 
-SOURCES=Slag/ConfigReader.cpp\
+SLAG_SRC=Slag/ConfigReader.cpp\
 Slag/Factory.cpp\
 Slag/HumanReadable.cpp\
 Slag/InternalTypes.cpp\
@@ -15,33 +23,39 @@ Slag/ModuleIdentifier.cpp\
 Slag/ModuleWrapper.cpp\
 Slag/OutputText.cpp\
 Slag/Slag.cpp\
-Slag/Timer.cpp\
-Slag/WIN/Imshow.obj\
-Slag/WIN/LoadLibrary.obj\
-Slag/WIN/TerminationSignal.obj
+Slag/WIN/Imshow.cpp\
+Slag/WIN/LoadLibrary.cpp\
+Slag/WIN/TerminationSignal.cpp
 
-all: test cmodules mymodules main
+SLAG_OBJ=$(SLAG_SRC:cpp=obj)
+
+all: cmodules mymodules slag
 
 doc: doxy\config
 	doxy\doxygen doxy\config
 
-INTERFACE=/I"inc"
-WINAPI_LIB=shlwapi.lib
-
 {Slag}.cpp{Slag}.obj::
-	cl $< $(INTERFACE) $(CL_FLAGS) -Fd:build\
+	cl $(CPP_FLAGS) /I"$(ASYNCQUEUE_DIR)\inc" /Fo"Slag/" $<
 
 {Slag\WIN}.cpp{Slag\WIN}.obj::
-	cl $< $(INTERFACE) $(CL_FLAGS)
+	cl $(CPP_FLAGS) /I"$(ASYNCQUEUE_DIR)\inc" /Fo"Slag/WIN/" $<
 
-main: $(SOURCES)
-	link $(SOURCES) $(WINAPI_LIB) /OUT:$(OUT_DIR)\SLAG.exe
+slag: $(SLAG_OBJ)
+	link $(WINAPI_LIB) "$(ASYNCQUEUE_DIR)\bin\asyncqueue.lib" $(SLAG_OBJ) /OUT:$(OUT_DIR)\SLAG.exe
 
 cmodules: CModules\CModules.c
-	cl CModules\CModules.c $(INTERFACE) /Fo:$(OUT_DIR)\CModules.obj /TC /MT /W3 /Ox /link /DLL /OUT:$(OUT_DIR)\CModules.dll /DEF:CModules\def.def
-mymodules:
-	
-test: AsyncQueueTest\AsyncQueueTest.cpp
-	cl AsyncQueueTest\AsyncQueueTest.cpp /Fo:$(OUT_DIR)\AsyncQueueTest.obj $(CL_FLAGS) /OUT:$(OUT_DIR)\AsyncQueueTest.exe
+	cl CModules\CModules.c /Fo"CModules/" $(C_FLAGS) /link /DLL /OUT:$(OUT_DIR)\CModules.dll /DEF:CModules\def.def
+
+OPENCV_LIBS=opencv_core248.lib opencv_highgui248.lib opencv_imgproc248.lib
+
+{MyModules}.cpp{MyModules}.obj::
+	cl $(CPP_FLAGS) /Fo"MyModules/" /I"$(OPENCV_DIR)\include" $<
+
+mymodules: MyModules\*.obj
+	link /LIBPATH:"$(OPENCV_VERSION)\lib" $(OPENCV_LIBS) $** /DLL /OUT:$(OUT_DIR)\MyModules.dll /DEF:MyModules\def.def
+	copy /Y "$(OPENCV_VERSION)\bin\opencv_core248.dll" $(OUT_DIR)
+	copy /Y "$(OPENCV_VERSION)\bin\opencv_highgui248.dll" $(OUT_DIR)
+	copy /Y "$(OPENCV_VERSION)\bin\opencv_imgproc248.dll" $(OUT_DIR)
+
 clean:
-	del bin\*.exe bin\*.obj bin\*.exp bin\*.lib bin\*.dll
+	del /Q bin\*.* Slag\*.obj Slag\WIN\*.obj CModules\*.obj MyModules\*.obj

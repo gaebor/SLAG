@@ -13,9 +13,6 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
-    <Filter Include="AsyncRoutines">
-      <UniqueIdentifier>{5fa7e399-0795-42d7-9dbd-deba864d8ae3}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Interface">
       <UniqueIdentifier>{fd02416a-676e-4267-a9cb-242f47c88b3c}</UniqueIdentifier>
     </Filter>
@@ -45,9 +42,6 @@
     <ClCompile Include="ConfigReader.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Timer.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="OutputText.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -71,9 +65,6 @@
     <ClInclude Include="ModuleIdentifier.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="AsyncQueue.h">
-      <Filter>AsyncRoutines</Filter>
-    </ClInclude>
     <ClInclude Include="HumanReadable.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -82,9 +73,6 @@
     </ClInclude>
     <ClInclude Include="..\inc\slag\slag_interface.h">
       <Filter>Interface</Filter>
-    </ClInclude>
-    <ClInclude Include="Timer.h">
-      <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="ConfigReader.h">
       <Filter>Header Files</Filter>

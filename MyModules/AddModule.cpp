@@ -44,5 +44,4 @@ IntMessage::IntMessage(int x)
 
 IntMessage::~IntMessage()
 {
-	printf("");
 }

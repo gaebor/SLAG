@@ -123,34 +123,3 @@ Factory::~Factory()
 	for (auto hndl : module_dll_handles)
 		close_library(hndl);
 }
-
-std::vector<std::string> Factory::ReadSettings(const Poco::Util::AbstractConfiguration* settingsNode)
-{
-	std::vector<std::string> settings;
-	if (settingsNode)
-	{
-		Poco::Util::AbstractConfiguration::Keys keys;
-		settingsNode->keys(keys);
-		for (auto k : keys)
-		{
-			settings.push_back(k);
-			settings.push_back(settingsNode->getString(k));
-		}
-	}
-	//if (settingsNode.isString())
-	//{
-	//	settings.push_back(settingsNode);
-	//}else if (settingsNode.isSeq())
-	//{
-	//	for (auto settingNode : settingsNode)
-	//		settings.push_back(settingNode);
-	//}else if(settingsNode.isMap())
-	//{
-	//	for (auto settingNode : settingsNode)
-	//	{
-	//		settings.push_back(settingNode.name());
-	//		settings.push_back(settingNode);
-	//	}
-	//}
-	return settings;
-}

@@ -8,8 +8,6 @@
 #include <sstream>
 #include <algorithm>
 
-#include "Poco/Thread.h"
-
 #include "HumanReadable.h"
 #include "ModuleIdentifier.h"
 
@@ -97,7 +95,7 @@ static std::thread _textThread([]()
 	};
 
 	while (!started && run)
-		Poco::Thread::sleep(_speed);
+		std::this_thread::sleep_for(std::chrono::milliseconds(_speed));
 
 	while (run)
 	{
@@ -105,7 +103,7 @@ static std::thread _textThread([]()
 		AutoLock lock(_mutex);
 		internal_func();
 		}
-		Poco::Thread::sleep(_speed);
+		std::this_thread::sleep_for(std::chrono::milliseconds(_speed));
 	}
 	if (started)
 		internal_func();
