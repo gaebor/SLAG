@@ -3,7 +3,6 @@
 #include <vector>
 #include <string>
 
-#if defined _MSC_VER
 #include <windows.h>
 #include <Shlwapi.h>
 
@@ -29,7 +28,14 @@ std::vector<std::string> enlist_libraries()
 	WIN32_FIND_DATA FindFileData;
 	HANDLE hFind;
 
-	hFind = FindFirstFileA("*.dll", &FindFileData);
+	char exec_name[256];
+	GetModuleFileNameA(NULL, exec_name, 249);
+	if (GetLastError() == ERROR_SUCCESS)
+		snprintf(strrchr(exec_name, '\\'), 7, "\\*.dll");
+	else
+		snprintf(exec_name, 255, "*.dll");
+
+	hFind = FindFirstFileA(exec_name, &FindFileData);
 
 	if (hFind != INVALID_HANDLE_VALUE)
 	{
@@ -46,31 +52,3 @@ std::string get_file_name(const std::string& file_name)
 {
 	return std::string(PathFindFileNameA(file_name.c_str()), PathFindExtensionA(file_name.c_str()));
 }
-
-#elif defined __GNUC__
-
-#include <dlfcn.h>
-
-void* load_library(const char* file_name)
-{
-	return dlopen(file_name, RTLD_LAZY);
-}
-
-bool close_library( void* library )
-{
-	return dlclose(library) == 0;
-}
-
-void* get_symbol_from_library(void* library, const char* symbol_name)
-{
-	char* error;
-	auto result = dlsym(library, symbol_name);
-	if ((error = dlerror()) != NULL)
-	{
-		fputs(error, stderr);
-		return nullptr;
-	}else
-		return result;
-}
-
-#endif

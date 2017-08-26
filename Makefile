@@ -31,7 +31,7 @@ Slag/%.o:Slag/%.cpp
 	g++ -c $(CPPFLAGS) -I$(ASYNCQUEUE_DIR)/inc $< -o $@
 
 slag: dir $(SLAG_OBJ)
-	ld $(SLAG_OBJ) -L$(ASYNCQUEUE_DIR)/bin -lasyncqueue -ldl -lpthread -o $(OUT_DIR)/Slag
+	g++ $(CPPFLAGS) $(SLAG_OBJ) -L$(ASYNCQUEUE_DIR)/bin -lasyncqueue -ldl -o $(OUT_DIR)/Slag
 
 cmodules: dir CModules/CModules.c
 	gcc CModules/CModules.c $(CFLAGS) $(SHARED) -o $(OUT_DIR)/CModules.so

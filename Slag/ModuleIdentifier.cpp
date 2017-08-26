@@ -1,5 +1,6 @@
 #include "ModuleIdentifier.h"
 
+#include <sstream>
 
 ModuleIdentifier::ModuleIdentifier( const std::string& n, const std::string& i /*= ""*/, const std::string& d /*= ""*/ )
 {

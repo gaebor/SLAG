@@ -11,12 +11,12 @@ Factory::Factory()
 
 	auto files = enlist_libraries();
 
-	for (const auto& library : files)
+	for (const auto& filename : files)
 	{
-		const std::string filename = get_file_name(library);
-		std::cout << "Library \"" << filename << "\" ... "; std::cout.flush();
+		const std::string library_name = get_file_name(filename);
+		std::cout << "Library \"" << library_name << "\" ... "; std::cout.flush();
 
-		hndl = load_library(library.c_str());
+		hndl = load_library(filename.c_str());
 		if (hndl != nullptr)
 		{
 			auto instantiate = (SlagInstantiate_t)get_symbol_from_library(hndl, "SlagInstantiate");
@@ -28,7 +28,7 @@ Factory::Factory()
 			if (instantiate != NULL && deleteMsg != NULL && deleteModule != NULL && compute != NULL)
 			{
 				std::cout << "loaded" << std::endl;								
-				auto& f = pModuleFunctions[filename];
+				auto& f = pModuleFunctions[library_name];
 
 				f.instantiate = instantiate;
 				f.compute = compute;

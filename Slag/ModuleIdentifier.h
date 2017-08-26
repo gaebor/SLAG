@@ -2,7 +2,6 @@
 #define INCLUDE_MODULE_IDENTIFIER_H
 
 #include <string>
-#include <sstream>
 
 struct ModuleIdentifier
 {

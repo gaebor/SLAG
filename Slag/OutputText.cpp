@@ -51,15 +51,15 @@ static inline int round_int( double x )
 static std::thread _textThread([]()
 {
 	std::string nameTag = "  module  ";
-	nameOffset = nameTag.size();
+	nameOffset = (int)nameTag.size();
 
 	auto internal_func = [&]()
 	{
-#if defined _MSC_VER
-		system("cls");
-#elif defined __GNUC__
-		system("clear");
-#endif
+//#if defined _MSC_VER
+//		system("cls");
+//#elif defined __GNUC__
+//		system("clear");
+//#endif
 		
 		printf("%-*s", nameOffset, nameTag.c_str());
 		printf("|  speed   | overhead | text output\n");
@@ -86,7 +86,7 @@ static std::thread _textThread([]()
 
 			for (auto& q : m.second.bufferSizes)
 			{
-				print_humanreadable_giga(line, 1024, q.second);
+				print_humanreadable_giga(line, 1024, (double)q.second);
 				printf("%*s|> %d\n", nameOffset, line, q.first);
 			}
 			
@@ -130,7 +130,7 @@ void handle_output_text( const std::string& module_name_and_instance, const char
 	AutoLock lock(_mutex);
 	auto& data = _texts[module_name_and_instance];
 	data.output = text;
-	nameOffset =  std::max<int>(module_name_and_instance.size(), nameOffset);
+	nameOffset =  std::max((int)module_name_and_instance.size(), nameOffset);
 }
 
 void handle_statistics( const std::string& module_name_and_instance, double cycle, double load, double wait, const std::map<PortNumber, size_t>& buffer_sizes)
@@ -141,6 +141,6 @@ void handle_statistics( const std::string& module_name_and_instance, double cycl
 	data.cycle_time = cycle;
 	data.compute_time = load;
 	data.wait_time = wait;
-	nameOffset =  std::max<int>(module_name_and_instance.size(), nameOffset);
+	nameOffset =  std::max((int)module_name_and_instance.size(), nameOffset);
 	data.bufferSizes.assign(buffer_sizes.begin(), buffer_sizes.end());
 }

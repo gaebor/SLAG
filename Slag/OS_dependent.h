@@ -74,7 +74,7 @@ void* get_symbol_from_library(void* library, const char* symbol_name);
 
 //!list files like *.dll or *.so
 /*!
-	/todo give a search path
+	it searches the directory of the executable
 */
 std::vector<std::string> enlist_libraries();
 
