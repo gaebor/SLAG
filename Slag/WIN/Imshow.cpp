@@ -10,6 +10,8 @@
 #include <thread>
 #include <memory>
 
+#include <fstream>
+
 #include "slag/slag_interface.h"
 
 #define SLAG_WINDOW_CLASS_NAME "SlagImshow"
@@ -219,6 +221,16 @@ WindowWrapper::WindowWrapper(const std::string& name)
 	}
 	if (self->_hwnd)
 	{
+		RECT rect;
+		if (GetWindowRect(self->_hwnd, &rect))
+		{
+			std::ofstream ofs(self->_name + ".pos");
+			if (ofs)
+			{
+				ofs << rect.top << " " << rect.left;
+			}
+		}
+
 		if (!DestroyWindow(self->_hwnd))
 			MessageBox(NULL, "DestroyWindow Failed!", "Error!", MB_ICONEXCLAMATION | MB_OK);
 		self->_hwnd = NULL;
@@ -229,6 +241,13 @@ WindowWrapper::WindowWrapper(const std::string& name)
 
 void WindowWrapper::Init()
 {
+	std::ifstream ifs(_name + ".pos");
+	int top_corner = 0, left_corner = 0;
+	if (ifs)
+	{
+		ifs >> top_corner >> left_corner;
+	}
+
 	_hwnd = CreateWindowEx(
 		0,
 		SLAG_WINDOW_CLASS_NAME,
@@ -246,6 +265,11 @@ void WindowWrapper::Init()
 		return;
 	}
 	ShowWindow(_hwnd, SW_SHOWNORMAL);
+
+	SetWindowPos(_hwnd, HWND_NOTOPMOST, left_corner, top_corner,
+		actual_width, actual_height,
+		SWP_NOACTIVATE | SWP_NOSIZE | SWP_NOREPOSITION | SWP_NOZORDER
+	);
 }
 
 WindowWrapper::~WindowWrapper()
