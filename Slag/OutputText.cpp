@@ -11,17 +11,11 @@
 #include "HumanReadable.h"
 #include "ModuleIdentifier.h"
 
-std::vector<std::string> split_to_argv(const std::string& line)
-{
-	std::istringstream iss(line);
-	std::vector<std::string> result;
-	std::string arg;
-	while (iss >> arg)
-	{
-		result.push_back(arg);
-	}
-	return result;
-}
+#ifdef _MSC_VER
+#	include <windows.h>
+
+#	undef max
+#endif
 
 struct ModuleTextualData
 {
@@ -52,14 +46,25 @@ static std::thread _textThread([]()
 {
 	std::string nameTag = "  module  ";
 	nameOffset = (int)nameTag.size();
+	short cursor = 0;
+	short cursor_end;
+
+#if defined _MSC_VER
+	static auto const hCon = GetStdHandle(STD_OUTPUT_HANDLE);
+#endif
 
 	auto internal_func = [&]()
 	{
-//#if defined _MSC_VER
-//		system("cls");
-//#elif defined __GNUC__
-//		system("clear");
-//#endif
+#if defined _MSC_VER
+		CONSOLE_SCREEN_BUFFER_INFO cinfo;
+		if (GetConsoleScreenBufferInfo(hCon, &cinfo))
+		{
+			cursor = cinfo.dwCursorPosition.Y;
+			cursor_end = cursor;
+		}
+#elif defined __GNUC__
+		system("clear");
+#endif
 		
 		printf("%-*s", nameOffset, nameTag.c_str());
 		printf("|  speed   | overhead | text output\n");
@@ -75,9 +80,9 @@ static std::thread _textThread([]()
 			const int wait = round_int(10 * m.second.wait_time / m.second.cycle_time);
 			printf("%-*s|%s|", nameOffset, m.first.c_str(), line);
 			for (int i = load + wait; i < 10; ++i)
-				putchar('+');
+				putchar('o');
 			for (int i = 0; i < wait; ++i)
-				putchar('-');
+				putchar('w');
 			for (int i = 0; i < load; ++i)
 				putchar(' ');
 			
@@ -92,8 +97,17 @@ static std::thread _textThread([]()
 			
 			for (int i = 0; i < nameOffset; ++i)
 				putchar('-');
-			printf("+----------+----------+-\n");
+			printf("+----------+----------+-\n\n");
 		}
+#if defined _MSC_VER
+		if (GetConsoleScreenBufferInfo(hCon, &cinfo))
+			cursor_end = cinfo.dwCursorPosition.Y;
+		
+		COORD coord;
+		coord.X = 0;
+		coord.Y = cursor;
+		SetConsoleCursorPosition(hCon, coord);
+#endif
 	};
 
 	// waits until anything happens, or the run has completed even before printing anything out
@@ -110,6 +124,13 @@ static std::thread _textThread([]()
 	}
 	if (started)
 		internal_func();
+#ifdef _MSC_VER
+	COORD coord;
+	coord.X = 0;
+	coord.Y = cursor_end;
+	SetConsoleCursorPosition(hCon, coord);
+#endif // _MSC_VER
+
 });
 
 void terminate_output_text()
@@ -127,10 +148,13 @@ void set_output_text_speed( int millisec_to_wait )
 void handle_output_text( const std::string& module_name_and_instance, const char* text )
 {
 	static const bool start = (started = true);
-	AutoLock lock(_mutex);
-	auto& data = _texts[module_name_and_instance];
-	data.output = text;
-	nameOffset =  std::max((int)module_name_and_instance.size(), nameOffset);
+	if (text)
+	{
+		AutoLock lock(_mutex);
+		auto& data = _texts[module_name_and_instance];
+		data.output = text;
+		nameOffset = std::max((int)module_name_and_instance.size(), nameOffset);
+	}
 }
 
 void handle_statistics( const std::string& module_name_and_instance, double cycle, double load, double wait, const std::map<PortNumber, size_t>& buffer_sizes)

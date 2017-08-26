@@ -46,6 +46,7 @@ MYMODULES_SRC=MyModules/AbstractInterface.cpp\
     MyModules/AddModule.cpp\
     MyModules/KeyReader.cpp\
     MyModules/MyModules.cpp\
+    MyModules/ImageProcessor.cpp\
     MyModules/VideoSource.cpp
 
 MYMODULES_OBJ=$(MYMODULES_SRC:.cpp=.o)

@@ -68,6 +68,6 @@ MyMessage** VideoSource::Compute( MyMessage** input, int inputPortNumber, int* o
 	*outputPicture = picture.data;
 
 	output_array.assign(1,output);
-	*outputPortNumber = output_array.size();
+	*outputPortNumber = (int)output_array.size();
 	return output_array.data();
 }

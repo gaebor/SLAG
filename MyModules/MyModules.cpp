@@ -8,22 +8,7 @@
 #include "VideoSource.h"
 #include "ReadModule.h"
 #include "KeyReader.h"
-
-//BOOL APIENTRY DllMain( HMODULE hModule,
-//                       DWORD  ul_reason_for_call,
-//                       LPVOID lpReserved
-//					 )
-//{
-//	switch (ul_reason_for_call)
-//	{
-//	case DLL_PROCESS_ATTACH:
-//	case DLL_THREAD_ATTACH:
-//	case DLL_THREAD_DETACH:
-//	case DLL_PROCESS_DETACH:
-//		break;
-//	}
-//	return TRUE;
-//}
+#include "ImageProcessor.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -43,6 +28,8 @@ DLL_EXPORT void* __stdcall SlagInstantiate(const char* name, const char* instanc
 		result = new ReadModule<int>();
 	else if (nameStr == "KeyReader")
 		result = new KeyReader();
+	else if (nameStr == "ImageProcessor")
+		result = new ImageProcessor();
 
 	if (result)
 	{

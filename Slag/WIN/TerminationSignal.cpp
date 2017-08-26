@@ -48,3 +48,17 @@ void wait_termination_signal()
 		Sleep(1);
 	}
 }
+
+std::vector<std::string> split_to_argv(const std::string& line)
+{
+	std::vector<std::string> argv;
+	std::wstring wstr(line.begin(), line.end());
+	int size;
+	auto result = CommandLineToArgvW(wstr.c_str(), &size);
+	if (result)
+	{
+		for (int i = 0; i < size; ++i)
+			argv.emplace_back(result[i], result[i] + wcslen(result[i]));
+	}
+	return argv;
+}

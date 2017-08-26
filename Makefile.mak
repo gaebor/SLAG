@@ -10,7 +10,7 @@ OPENCV_VERSION=2413
 
 ASYNCQUEUE_LIB=$(ASYNCQUEUE_DIR)\bin\asyncqueue.lib
 
-WINAPI_LIB=shlwapi.lib gdi32.lib user32.lib
+WINAPI_LIB=shlwapi.lib gdi32.lib user32.lib shell32.lib
  
 OUT_DIR=bin
 
@@ -39,7 +39,8 @@ MYMODULES_SRC=MyModules/AbstractInterface.cpp\
     MyModules/AddModule.cpp\
     MyModules/KeyReader.cpp\
     MyModules/MyModules.cpp\
-    MyModules/VideoSource.cpp
+    MyModules/VideoSource.cpp\
+    MyModules/ImageProcessor.cpp
 
 MYMODULES_OBJ=$(MYMODULES_SRC:.cpp=.obj)
 

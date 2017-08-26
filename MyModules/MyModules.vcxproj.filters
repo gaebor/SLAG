@@ -52,5 +52,11 @@
     <None Include="def.def">
       <Filter>Source Files</Filter>
     </None>
+    <None Include="ImageProcessor.h">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="ImageProcessor.cpp">
+      <Filter>Source Files</Filter>
+    </None>
   </ItemGroup>
 </Project>
