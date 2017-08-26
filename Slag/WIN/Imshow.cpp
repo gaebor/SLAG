@@ -275,35 +275,37 @@ void WindowWrapper::Init()
 WindowWrapper::~WindowWrapper()
 {
 	_run = false;
+	PostMessage(_hwnd, WM_NOTIFY, 0, 0);
 	_thread.join();
 }
 
 void handle_output_image( const std::string& module_name_and_instance, int w, int h, ImageType type, const unsigned char* data )
 {
-	_mutex.lock();
-	auto it = _images.begin();
-	for (; it != _images.end(); it = (it->_run ? ++it : _images.erase(it)))
-	{
-		// Purge windows that are not running
-	}
-	it = std::find_if(_images.begin(), _images.end(), NameFinder(module_name_and_instance));
-	if (it == _images.end())
-	{
-		_images.emplace_back(module_name_and_instance.c_str()); // starts WndProc
-		it = _images.end();
-		--it;
-	}
+	std::ptrdiff_t picture_size = w * h * GetByteDepth(type);
 
-	AutoLock imageLock(it->_mutex);
-	_mutex.unlock();
-
-	size_t picure_size;
-	if (data && w > 0 && h > 0 && (picure_size = w * h * GetByteDepth(type)) > 0)
+	if (data && w > 0 && h > 0 && picture_size > 0)
 	{
+		_mutex.lock();
+		auto it = _images.begin();
+		for (; it != _images.end(); it = (it->_run ? ++it : _images.erase(it)))
+		{
+			// Purge windows that are not running
+		}
+		it = std::find_if(_images.begin(), _images.end(), NameFinder(module_name_and_instance));
+		if (it == _images.end())
+		{
+			_images.emplace_back(module_name_and_instance.c_str()); // starts WndProc
+			it = _images.end();
+			--it;
+		}
+
+		AutoLock imageLock(it->_mutex);
+		_mutex.unlock();
+
 		it->_image.w = w;
 		it->_image.h = h;
 		it->_image.type = type;
-		it->_image.data.assign(data, data + picure_size);
+		it->_image.data.assign(data, data + picture_size);
 
 		if (it->_hwnd)
 			InvalidateRect(it->_hwnd, 0, 0);
