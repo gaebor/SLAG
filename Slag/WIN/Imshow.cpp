@@ -41,7 +41,6 @@ public:
 	ImageContainer _image;
 	const std::string _name;
 	HWND _hwnd;
-	bool _validity;
 	std::mutex _mutex;
 private:
 	std::thread _thread;
@@ -176,7 +175,7 @@ LRESULT CALLBACK SlagWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		if (it == _images.end())
 			MessageBox(NULL, "wanted to delete a non-existent window!", "Error!", MB_ICONEXCLAMATION | MB_OK);
 		else
-			_images.erase(it);
+			it->_run = false;
 		}break;
 	case WM_PAINT:
 		{
@@ -184,6 +183,7 @@ LRESULT CALLBACK SlagWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			auto it = std::find_if(_images.begin(), _images.end(), HwndFinder(hwnd));
 			if (it != _images.end())
 			{
+				AutoLock imageLock(it->_mutex);
 				_mutex.unlock();
 
 				//cv::Mat converted;
@@ -192,9 +192,9 @@ LRESULT CALLBACK SlagWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 				//	cv::cvtColor(header, converted, GetCvConversion(it->_image.type));
 				//else
 				//	converted = header;
-
+				
 				PAINTSTRUCT ps;
-				HDC hdc = BeginPaint(it->_hwnd, &ps);
+				HDC hdc = BeginPaint(hwnd, &ps);
 
 				HDC hdcBuffer = CreateCompatibleDC(hdc);
 
@@ -208,8 +208,7 @@ LRESULT CALLBACK SlagWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 				DeleteObject(hbm);
 				DeleteDC(hdcBuffer);
 
-				EndPaint(it->_hwnd, &ps);
-
+				EndPaint(hwnd, &ps);
 			}else
 			{
 				_mutex.unlock();
@@ -225,26 +224,28 @@ LRESULT CALLBACK SlagWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 }
 
 WindowWrapper::WindowWrapper(const std::string& name)
-	: _name(name), _validity(false), _hwnd(NULL), _run(true), _thread(
-	[&]()
+	: _name(name), _hwnd(NULL), _run(true), _thread(
+	[](WindowWrapper* self)
 {
 	MSG Msg;
+	BOOL result = 1;
 
-	while (_run)
+	while (self->_run && result > 0)
 	{
+		if (self->_hwnd == NULL)
 		{
-			AutoLock lock(_mutex);
-			if (_hwnd == NULL && _image.w > 0 && _image.h > 0)
+			// AutoLock lock(_mutex);
+			if (self->_hwnd == NULL && self->_image.w > 0 && self->_image.h > 0)
 			{
-				_hwnd = CreateWindowEx(
+				self->_hwnd = CreateWindowEx(
 					0,
 					SLAG_WINDOW_CLASS_NAME,
-					_name.c_str(),
+					self->_name.c_str(),
 					WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU,
-					CW_USEDEFAULT, CW_USEDEFAULT, _image.w, _image.h,
+					CW_USEDEFAULT, CW_USEDEFAULT, self->_image.w, self->_image.h,
 					NULL, NULL, _hInstance, NULL);
 
-				if (!_hwnd)
+				if (! (self->_hwnd))
 				{
 					auto error = GetLastError();
 					char error_str[20];
@@ -253,32 +254,26 @@ WindowWrapper::WindowWrapper(const std::string& name)
 					break;
 				}
 
-				ShowWindow(_hwnd, SW_SHOWNORMAL);
-				UpdateWindow(_hwnd);
-				_validity = true;
+				ShowWindow(self->_hwnd, SW_SHOWNORMAL);
+				UpdateWindow(self->_hwnd);
 			}
-			if (_hwnd != NULL && !_validity)
-			{
-				InvalidateRect(_hwnd, NULL, FALSE);
-				_validity = true;
-			}
-		}
-		if (_hwnd != NULL)
+		}else
 		{
-			const auto result = GetMessage(&Msg, _hwnd, 0, 0);
-			if (result >= 0)
+			result = GetMessage(&Msg, self->_hwnd, 0, 0);
+			if (result > 0)
 			{
-				AutoLock lock(_mutex);
 				TranslateMessage(&Msg);
 				DispatchMessage(&Msg);
 			}
 		}
 	}
-	if (_hwnd)
-		if (!DestroyWindow(_hwnd))
+	if (self->_hwnd)
+	{
+		if (!DestroyWindow(self->_hwnd))
 			MessageBox(NULL, "DestroyWindow Failed!", "Error!", MB_ICONEXCLAMATION | MB_OK);
-}
-	)
+		self->_hwnd = NULL;
+	}
+}, this)
 {
 }
 
@@ -291,7 +286,12 @@ WindowWrapper::~WindowWrapper()
 void handle_output_image( const std::string& module_name_and_instance, int w, int h, ImageType type, const unsigned char* data )
 {
 	_mutex.lock();
-	auto it = std::find_if(_images.begin(), _images.end(), NameFinder(module_name_and_instance));
+	auto it = _images.begin();
+	for (; it != _images.end(); it = (it->_run ? ++it : _images.erase(it)))
+	{
+		// Purge windows that are not running
+	}
+	it = std::find_if(_images.begin(), _images.end(), NameFinder(module_name_and_instance));
 	if (it == _images.end())
 	{
 		_images.emplace_back(module_name_and_instance.c_str());
@@ -303,18 +303,19 @@ void handle_output_image( const std::string& module_name_and_instance, int w, in
 	_mutex.unlock();
 
 	size_t picure_size;
-	if (w > 0 && h > 0 && (picure_size = w * h * GetByteDepth(type)) > 0)
+	if (data && w > 0 && h > 0 && (picure_size = w * h * GetByteDepth(type)) > 0)
 	{
 		it->_image.w = w;
 		it->_image.h = h;
 		it->_image.type = type;
 		it->_image.data.assign(data, data + picure_size);
 
-		it->_validity = false;
+		if (it->_hwnd);
+			InvalidateRect(it->_hwnd, 0, 0);
 	}
 }
 
 void terminate_output_image()
 {
-	//_images.clear();
+	_images.clear();
 }
