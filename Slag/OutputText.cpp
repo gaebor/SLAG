@@ -80,9 +80,9 @@ static std::thread _textThread([]()
 			const int wait = round_int(10 * m.second.wait_time / m.second.cycle_time);
 			printf("%-*s|%s|", nameOffset, m.first.c_str(), line);
 			for (int i = load + wait; i < 10; ++i)
-				putchar('o');
+				putchar('+');
 			for (int i = 0; i < wait; ++i)
-				putchar('w');
+				putchar('-');
 			for (int i = 0; i < load; ++i)
 				putchar(' ');
 			
@@ -97,8 +97,9 @@ static std::thread _textThread([]()
 			
 			for (int i = 0; i < nameOffset; ++i)
 				putchar('-');
-			printf("+----------+----------+-\n\n");
+			printf("+----------+----------+-\n");
 		}
+		printf("\n");
 #if defined _MSC_VER
 		if (GetConsoleScreenBufferInfo(hCon, &cinfo))
 			cursor_end = cinfo.dwCursorPosition.Y;
