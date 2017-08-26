@@ -48,7 +48,7 @@ protected:
 	SlagInitialize_t initialize;
 	SlagDestroyModule_t deleteModule;
 	SlagDestroyMessage_t deleteMsg;
-private:
+public:
 	ModuleWrapper(const ModuleWrapper& other);
 };
 
