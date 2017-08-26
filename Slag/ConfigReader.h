@@ -8,7 +8,7 @@
 class ConfigReader
 {
 public:
-	ConfigReader(const std::string& filename);
+	ConfigReader(std::ifstream& f);
 	~ConfigReader();
 	const std::vector<std::string>& GetSection(const std::string& section);
 

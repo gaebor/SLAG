@@ -38,7 +38,13 @@ int main(int argc, char* argv[])
 	}
 	try{
 
-		ConfigReader cfg(argv[1]);
+		std::ifstream f(argv[1]);
+		if (!f.good())
+		{
+			std::cerr << "Cannot read " << argv[1] << "\"!" << std::endl;
+			goto halt;
+		}
+		ConfigReader cfg(f);
 		
 		//graph settings
 		for (auto l : cfg.GetSection("graph"))
@@ -87,7 +93,7 @@ int main(int argc, char* argv[])
 		{
 			auto arguments = split_to_argv(moduleStr);
 			
-			const std::string moduleName = arguments[0];
+			std::string moduleName = arguments[0];
 			if (moduleName.empty())
 			{
 				std::cerr << "module should have a non-empty \"Name\"!" << std::endl;
@@ -96,45 +102,53 @@ int main(int argc, char* argv[])
 			arguments.erase(arguments.begin());
 
 			auto insert_result = modules.emplace(moduleName.c_str(), &run);
-			auto& moduleId = insert_result.first->first;
+			auto& moduleWrapper = insert_result.first->second;
+			auto& moduleId = moduleWrapper.identifier;
+			moduleId.assign(moduleName.c_str());
+			moduleName = moduleId;
+
+			std::cout << "Module \"" << moduleName << "\" ... "; std::cout.flush();
 
 			if (!insert_result.second)
 			{
-				std::cerr << "Module \"" << (std::string)moduleId << "\" appears more than one in the graph. Please give it a distinctive name or instance ID!" << std::endl;
+				std::cout<< "appears more than once in the graph. Please give it a distinctive name or instance ID!" << std::endl;
 				goto halt;
 			}
-			auto& moduleWrapper = insert_result.first->second;
-			moduleWrapper.identifier = moduleId;
+
 			auto result = factory.InstantiateModule(moduleWrapper);
+			moduleName = moduleId;
 
 			switch (result)
 			{
 			case Factory::Duplicate:
-				std::cerr << "More than one library can instantiate module \"" << (std::string)(moduleId) << "\", the one in \"" << moduleId.library << "\" will be used!" << std::endl;
+				std::cout << "can be instantiated by more than one library, the one in \"" << moduleId.library << "\" will be used ... ";
 			case Factory::Success:
 			{
-				moduleWrapper.global_settings_c = global_settings.size();
+				moduleWrapper.global_settings_c = (int)global_settings.size();
 				moduleWrapper.global_settings_v = global_settings_v.data();
+
+				std::cout << "instantiated ... "; std::cout.flush();
 
 				if (!moduleWrapper.Initialize(arguments))
 				{
-					std::cerr << "Module \"" << (std::string)moduleId << "\" cannot be initialized!" << std::endl;
+					std::cout << "cannot be initialized!" << std::endl;
 					goto halt;
-				}
+				}else
+					std::cout << "initialized" << std::endl;
 			}break;
 			case Factory::NoSuchLibrary:
 			{
-				std::cerr << "No library \"" << moduleId.library << "\" to instantiate Module \"" << (std::string)moduleId << "\"!" << std::endl;
+				std::cout << "cannot be instantiated because there is no library \"" << moduleId.library << "\"!" << std::endl;
 				goto halt;
 			}break;
 			case Factory::CannotInstantiateByLibrary:
 			{
-				std::cerr << "The library \"" << moduleId.library << "\" cannot instantiate Module \"" << (std::string)moduleId << "\"!" << std::endl;
+				std::cout << "cannot be instantiated by the library \"" << moduleId.library << "\"!" << std::endl;
 				goto halt;
 			}break;
 			case Factory::CannotInstantiate:
 			{
-				std::cerr << "Module \"" << (std::string)moduleId << "\" cannot be instantiated!" << std::endl;
+				std::cout << "cannot be instantiated!" << std::endl;
 				goto halt;
 			}break;
 			}

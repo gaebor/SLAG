@@ -43,7 +43,7 @@ bool ModuleWrapper::Initialize(const std::vector<std::string> settings)
 			settings_array.push_back(setting.c_str());
 
 		//Initialize
-		return initialize(_module, settings_array.size(), settings_array.data()) == 0;
+		return initialize(_module, (int)settings_array.size(), settings_array.data()) == 0;
 		// module settings are lost after the module initialize!
 		//TODO global settings
 	}
@@ -58,11 +58,13 @@ void ModuleWrapper::ThreadProcedure()
 	//Dequeued input messages which haven't been Enqueued to the output yet
 	std::vector<ManagedMessage> receivedMessages;
 	
-	aq::Clock timer;
-	double prevTime = 0.0, diffTime = 0.0, computeTime = 0.0;
-	
+	aq::Clock timer_cycle, timer;
+	double cycle_time = 1.0, compute_time = 0.0, wait_time = 0.0;
+	PortNumber outputNumber;
+
 	while (*do_run) //a terminating signal leaves every message in the queue and quits the loop
 	{
+		timer.Tick();
 		//manage input data
 		for (auto& q : inputQueues)
 		{
@@ -70,18 +72,21 @@ void ModuleWrapper::ThreadProcedure()
 			ManagedMessage input;
 
 			if (!q.second->DeQueue(input))
+			{
+				wait_time = timer.Tock();
+				compute_time = 0.0;
+				cycle_time = timer_cycle.Tock();
 				goto halt;
+			}
 
 			inputMessages[q.first] = input.get();
 			receivedMessages.push_back(input);
 		}
+		wait_time = timer.Tock();
 		
-		PortNumber outputNumber;
-		diffTime = timer.Tock();
 		timer.Tick();
-		outputMessages_raw = compute(_module, inputMessages.data(), inputMessages.size(), &outputNumber);
-		computeTime = prevTime;
-		prevTime = timer.Tock();
+		outputMessages_raw = compute(_module, inputMessages.data(), (int)inputMessages.size(), &outputNumber);
+		compute_time = timer.Tock();
 
 		for (const auto& q : inputQueues)
 		{
@@ -91,6 +96,8 @@ void ModuleWrapper::ThreadProcedure()
 		//manage output data
 		if (outputMessages_raw == nullptr)
 		{
+			compute_time = timer.Tock();
+			cycle_time = timer_cycle.Tock();
 			goto halt;
 		}
 
@@ -120,11 +127,13 @@ void ModuleWrapper::ThreadProcedure()
 		}
 		receivedMessages.clear();
 
-		handle_statistics(printableName, diffTime, computeTime, bufferSize);
+		cycle_time = timer_cycle.Tock();
+		timer_cycle.Tick();
+
+		handle_statistics(printableName, cycle_time, compute_time, wait_time, bufferSize);
 		if (output_text_raw != nullptr)
 			handle_output_text(printableName, output_text_raw);
 
-		size_t picure_size = 0;
 		if (output_image_raw != nullptr)
 		{
 			handle_output_image(printableName, output_image_width, output_image_height, imageType, output_image_raw);
@@ -132,8 +141,7 @@ void ModuleWrapper::ThreadProcedure()
 
 	}
 halt:
-	diffTime = timer.Tock();
-	handle_statistics(printableName, diffTime, computeTime, bufferSize);
+	handle_statistics(printableName, cycle_time, compute_time, wait_time, bufferSize);
 
 	if (*do_run) //in this case soft terminate
 		for (auto& qs : outputQueues)

@@ -47,14 +47,17 @@ void terminate_output_text();
 	Textual output should be readable for a human, so you don't want to update it at 60fps or so.
 	You can neglect this if you think otherwise, although additional overhead is expected due to thread locks.
 */
-void set_output_text_speed(int milisec_to_wait);
+void set_output_text_speed(int millisec_to_wait);
 
 //! textual visualization speed can be set
 /*!
 Textual output should be readable for a human, so you don't want to update it at 60fps or so.
 You can neglect this if you think otherwise, although additional overhead is expected due to thread locks.
+@param cycle the time of one evaluation cycle
+@param load the time of the module compute function
+@param wait the time needed to wait its inputs
 */
-void handle_statistics(const std::string& module_name_and_instance, double speed, double computeSpeed, const std::map<PortNumber, size_t>& buffer_sizes);
+void handle_statistics(const std::string& module_name_and_instance, double cycle, double load, double wait, const std::map<PortNumber, size_t>& buffer_sizes);
 
 ImageType get_image_type(void);
 void handle_output_image(const std::string& module_name_and_instance, int w, int h, ImageType type, const unsigned char* data);

@@ -13,6 +13,9 @@ Factory::Factory()
 
 	for (const auto& library : files)
 	{
+		const std::string filename = get_file_name(library);
+		std::cout << "Library \"" << filename << "\" ... "; std::cout.flush();
+
 		hndl = load_library(library.c_str());
 		if (hndl != nullptr)
 		{
@@ -24,8 +27,9 @@ Factory::Factory()
 
 			if (instantiate != NULL && deleteMsg != NULL && deleteModule != NULL && compute != NULL)
 			{
-				// cut the extension off
-				auto& f = pModuleFunctions[get_file_name(library)];
+				std::cout << "loaded" << std::endl;								
+				auto& f = pModuleFunctions[filename];
+
 				f.instantiate = instantiate;
 				f.compute = compute;
 				f.deleteModule = deleteModule;
@@ -37,13 +41,12 @@ Factory::Factory()
 			}else
 			{
 				//none of my business
+				std::cout << "does not have a SLAG interface" << std::endl;
 				close_library(hndl);
 			}
 		}
-	}
-	for (auto l : pModuleFunctions)
-	{
-		std::cout << l.first << std::endl;
+		else
+			std::cout << "cannot be opened" << std::endl;
 	}
 }
 

@@ -49,9 +49,8 @@ static std::string GetSectionName(const std::string& str)
 		return "";
 }
 
-ConfigReader::ConfigReader(const std::string& filename)
+ConfigReader::ConfigReader(std::ifstream& f)
 {
-	std::ifstream f(filename);
 	std::string line;
 
 	if (f.good())

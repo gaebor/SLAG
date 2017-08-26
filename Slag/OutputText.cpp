@@ -26,11 +26,11 @@ std::vector<std::string> split_to_argv(const std::string& line)
 struct ModuleTextualData
 {
 	ModuleTextualData()
-		: output(), speed(0.0), computeSpeed(0.0)
+		: output(), cycle_time(0.0), compute_time(0.0), wait_time(0.0)
 	{
 	}
 	std::string output;
-	double speed, computeSpeed;
+	double cycle_time, compute_time, wait_time;
 	std::vector<std::pair<PortNumber, size_t>> bufferSizes;
 };
 
@@ -70,14 +70,17 @@ static std::thread _textThread([]()
 		for (const auto& m : _texts)
 		{
 			char line[1024];
-			print_humanreadable_time(line, 1024, m.second.speed);
-			const int load = round_int(10*(m.second.computeSpeed)/(m.second.speed));
-
+			print_humanreadable_time(line, 1024, m.second.cycle_time);
+			const int load = round_int(10 * m.second.compute_time / m.second.cycle_time);
+			const int wait = round_int(10 * m.second.wait_time / m.second.cycle_time);
 			printf("%-*s|%s|", nameOffset, m.first.c_str(), line);
-			for (int i = 0; i < 10-load; ++i)
-				putchar('=');
-			for (int i = 10-load; i < 10; ++i)
+			for (int i = load + wait; i < 10; ++i)
+				putchar('+');
+			for (int i = 0; i < wait; ++i)
+				putchar('-');
+			for (int i = 0; i < load; ++i)
 				putchar(' ');
+			
 			putchar('|');
 			std::cout << m.second.output << "\n";
 
@@ -91,9 +94,9 @@ static std::thread _textThread([]()
 				putchar('-');
 			printf("+----------+----------+-\n");
 		}
-		//FeedImshow();
 	};
 
+	// waits until anything happens, or the run has completed even before printing anything out
 	while (!started && run)
 		std::this_thread::sleep_for(std::chrono::milliseconds(_speed));
 
@@ -115,10 +118,10 @@ void terminate_output_text()
 	_textThread.join();
 }
 
-void set_output_text_speed( int milisec_to_wait )
+void set_output_text_speed( int millisec_to_wait )
 {
-	if (milisec_to_wait >= 0)
-		_speed = milisec_to_wait;
+	if (millisec_to_wait >= 0)
+		_speed = millisec_to_wait;
 }
 
 void handle_output_text( const std::string& module_name_and_instance, const char* text )
@@ -130,13 +133,14 @@ void handle_output_text( const std::string& module_name_and_instance, const char
 	nameOffset =  std::max<int>(module_name_and_instance.size(), nameOffset);
 }
 
-void handle_statistics( const std::string& module_name_and_instance, double speed, double computeSpeed, const std::map<PortNumber, size_t>& buffer_sizes)
+void handle_statistics( const std::string& module_name_and_instance, double cycle, double load, double wait, const std::map<PortNumber, size_t>& buffer_sizes)
 {
 	static const bool start = (started = true);
 	AutoLock lock(_mutex);
 	auto& data = _texts[module_name_and_instance];
-	data.speed = speed;
-	data.computeSpeed = computeSpeed;
+	data.cycle_time = cycle;
+	data.compute_time = load;
+	data.wait_time = wait;
 	nameOffset =  std::max<int>(module_name_and_instance.size(), nameOffset);
 	data.bufferSizes.assign(buffer_sizes.begin(), buffer_sizes.end());
 }

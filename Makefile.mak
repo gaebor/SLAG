@@ -4,30 +4,41 @@
 ASYNCQUEUE_DIR=..\AsyncQueue
 
 OPENCV_DIR=E:\PROGRAMOK\opencv\build
-OPENCV_VERSION=$(OPENCV_DIR)\x64\vc12
+OPENCV_BIN=$(OPENCV_DIR)\x64\vc14
+OPENCV_VERSION=2413
 ###############
+
+PWD=%CD%
 
 WINAPI_LIB=shlwapi.lib gdi32.lib user32.lib
  
 OUT_DIR=bin
 
-CL_FLAGS=/c /MD /W4 /O2 /Ot /Qpar /GL /DNDEBUG /Iinc
-CPP_FLAGS=/EHsc $(CL_FLAGS)
+CL_FLAGS=/MD /W4 /O2 /Ot /Qpar /GL /DNDEBUG /Iinc
+CPP_FLAGS=/c /EHsc $(CL_FLAGS)
 C_FLAGS=/TC $(CL_FLAGS)
 
 SLAG_SRC=Slag/ConfigReader.cpp\
-Slag/Factory.cpp\
-Slag/HumanReadable.cpp\
-Slag/InternalTypes.cpp\
-Slag/ModuleIdentifier.cpp\
-Slag/ModuleWrapper.cpp\
-Slag/OutputText.cpp\
-Slag/Slag.cpp\
-Slag/WIN/Imshow.cpp\
-Slag/WIN/LoadLibrary.cpp\
-Slag/WIN/TerminationSignal.cpp
+    Slag/Factory.cpp\
+    Slag/HumanReadable.cpp\
+    Slag/InternalTypes.cpp\
+    Slag/ModuleIdentifier.cpp\
+    Slag/ModuleWrapper.cpp\
+    Slag/OutputText.cpp\
+    Slag/Slag.cpp\
+    Slag/WIN/Imshow.cpp\
+    Slag/WIN/LoadLibrary.cpp\
+    Slag/WIN/TerminationSignal.cpp
 
 SLAG_OBJ=$(SLAG_SRC:cpp=obj)
+
+MYMODULES_SRC=MyModules/AbstractInterface.cpp\
+    MyModules/AddModule.cpp\
+    MyModules/KeyReader.cpp\
+    MyModules/MyModules.cpp\
+    MyModules/VideoSource.cpp
+
+MYMODULES_OBJ=$(MYMODULES_SRC:.cpp=.obj)
 
 all: cmodules mymodules slag
 
@@ -46,16 +57,22 @@ slag: $(SLAG_OBJ)
 cmodules: CModules\CModules.c
 	cl CModules\CModules.c /Fo"CModules/" $(C_FLAGS) /link /DLL /OUT:$(OUT_DIR)\CModules.dll /DEF:CModules\def.def
 
-OPENCV_LIBS=opencv_core248.lib opencv_highgui248.lib opencv_imgproc248.lib
+OPENCV_LIBS=opencv_core$(OPENCV_VERSION).lib\
+    opencv_highgui$(OPENCV_VERSION).lib\
+    opencv_imgproc$(OPENCV_VERSION).lib
+
+OPENCV_DLLS=$(OPENCV_LIBS:.lib=.dll)
 
 {MyModules}.cpp{MyModules}.obj::
 	cl $(CPP_FLAGS) /Fo"MyModules/" /I"$(OPENCV_DIR)\include" $<
 
-mymodules: MyModules\*.obj
-	link /LIBPATH:"$(OPENCV_VERSION)\lib" $(OPENCV_LIBS) $** /DLL /OUT:$(OUT_DIR)\MyModules.dll /DEF:MyModules\def.def
-	copy /Y "$(OPENCV_VERSION)\bin\opencv_core248.dll" $(OUT_DIR)
-	copy /Y "$(OPENCV_VERSION)\bin\opencv_highgui248.dll" $(OUT_DIR)
-	copy /Y "$(OPENCV_VERSION)\bin\opencv_imgproc248.dll" $(OUT_DIR)
+mymodules: $(MYMODULES_OBJ)
+	link /LIBPATH:"$(OPENCV_BIN)\lib" $(OPENCV_LIBS) $** /DLL /OUT:$(OUT_DIR)\MyModules.dll /DEF:MyModules\def.def
+    cd "$(OPENCV_BIN)\bin"
+    (
+    robocopy "$(OPENCV_BIN)\bin" "$(MAKEDIR)\$(OUT_DIR)" $(OPENCV_DLLS) > nul && (echo Success) || (echo )
+    )
+    cd "$(MAKEDIR)"
 
 clean:
 	del /Q bin\*.* Slag\*.obj Slag\WIN\*.obj CModules\*.obj MyModules\*.obj

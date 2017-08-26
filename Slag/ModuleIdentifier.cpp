@@ -54,7 +54,7 @@ ModuleIdentifier& ModuleIdentifier::assign( const char* id )
 	}else
 		dllSeparator = 0;
 
-	auto instanceSeparator = idStr.find('.');
+	auto instanceSeparator = idStr.find('.', dllSeparator);
 	if (instanceSeparator != idStr.rfind('.'))
 	{
 		//invalid syntax!

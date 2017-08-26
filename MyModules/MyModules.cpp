@@ -57,12 +57,12 @@ DLL_EXPORT void* __stdcall SlagInstantiate(const char* name, const char* instanc
 
 DLL_EXPORT void __stdcall SlagDestroyMessage(void* message)
 {
-	delete static_cast<MyMessage*>(message);
+	delete (MyMessage*)(message);
 }
 
 DLL_EXPORT void __stdcall SlagDestroyModule(void* module)
 {
-	delete static_cast<MyModule*>(module);
+	delete (MyModule*)(module);
 }
 
 DLL_EXPORT void** __stdcall SlagCompute(void* module, void** input, int inputPortNumber, int* outputPortNumber)
