@@ -37,11 +37,15 @@ public:
 	WindowWrapper(const std::string& name);
 	~WindowWrapper();
 
+	void Init();
+
 	bool _run;
 	ImageContainer _image;
 	const std::string _name;
 	HWND _hwnd;
 	std::mutex _mutex;
+	int actual_width;
+	int actual_height;
 private:
 	std::thread _thread;
 };
@@ -110,50 +114,12 @@ inline size_t GetByteDepth(ImageType t)
 	}
 }
 
-//inline int GetCvType(ImageType type)
-//{
-//	switch (type)
-//	{
-//	case RGB:
-//	case BGR:  return CV_8UC3;
-//	case RGBA: return CV_8UC4;
-//	case GREY:
-//	default:   return CV_8UC1;
-//	}
-//}
-//
-//inline int GetCvConversion(ImageType type)
-//{
-//	switch (bitdepth)
-//	{
-//	case 32:
-//		switch (type)
-//		{
-//		case RGB:  return cv::COLOR_RGB2BGRA;
-//		case BGR:  return cv::COLOR_BGR2BGRA;
-//		case BGRA:  return -1;
-//		case RGBA: return cv::COLOR_RGBA2BGRA;
-//		case GREY: 
-//		default:   return cv::COLOR_GRAY2BGRA;
-//		}
-//	case 24:
-//		switch (type)
-//		{
-//		case RGB:  return cv::COLOR_RGB2BGR;
-//		case BGR:  return -1;
-//		case RGBA: return cv::COLOR_RGBA2BGR;
-//		case BGRA: return cv::COLOR_BGRA2BGR;
-//		case GREY: 
-//		default:   return cv::COLOR_GRAY2BGR;
-//		}
-//	default: return -1;
-//	}
-//}
-
+//! wor windows, this is always the same
 ImageType get_image_type(void)
 {
 	return ImageType::RGBA;
 }
+
 LRESULT CALLBACK SlagWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
 	switch(msg)
@@ -186,29 +152,35 @@ LRESULT CALLBACK SlagWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 				AutoLock imageLock(it->_mutex);
 				_mutex.unlock();
 
-				//cv::Mat converted;
-				//cv::Mat header(it->_image.h, it->_image.w, GetCvType(it->_image.type), (void*)it->_image.data.data());
-				//if (GetCvConversion(it->_image.type) >= 0)
-				//	cv::cvtColor(header, converted, GetCvConversion(it->_image.type));
-				//else
-				//	converted = header;
-				
-				PAINTSTRUCT ps;
-				HDC hdc = BeginPaint(hwnd, &ps);
+				if (it->actual_width != it->_image.w || it->actual_height != it->_image.h)
+				{
+					SetWindowPos(hwnd, HWND_NOTOPMOST, 0, 0,
+						it->_image.w, it->_image.h,
+						SWP_NOACTIVATE | SWP_NOMOVE | SWP_NOREPOSITION | SWP_NOZORDER
+					);
 
-				HDC hdcBuffer = CreateCompatibleDC(hdc);
+					it->actual_width = it->_image.w;
+					it->actual_height = it->_image.h;
+				}
+				else
+				{
+					PAINTSTRUCT ps;
+					HDC hdc = BeginPaint(hwnd, &ps);
 
-				HBITMAP hbm = CreateBitmap(it->_image.w, it->_image.h, planes, bitdepth, it->_image.data.data());
+					HDC hdcBuffer = CreateCompatibleDC(hdc);
 
-				HBITMAP hbmOldBuffer = (HBITMAP)SelectObject(hdcBuffer, hbm);
+					HBITMAP hbm = CreateBitmap(it->_image.w, it->_image.h, planes, bitdepth, it->_image.data.data());
 
-				BitBlt(hdc, 0, 0, it->_image.w, it->_image.h, hdcBuffer, 0, 0, SRCCOPY);
+					HBITMAP hbmOldBuffer = (HBITMAP)SelectObject(hdcBuffer, hbm);
 
-				SelectObject(hdcBuffer, hbmOldBuffer);
-				DeleteObject(hbm);
-				DeleteDC(hdcBuffer);
+					BitBlt(hdc, 0, 0, it->_image.w, it->_image.h, hdcBuffer, 0, 0, SRCCOPY);
 
-				EndPaint(hwnd, &ps);
+					SelectObject(hdcBuffer, hbmOldBuffer);
+					DeleteObject(hbm);
+					DeleteDC(hdcBuffer);
+
+					EndPaint(hwnd, &ps);
+				}
 			}else
 			{
 				_mutex.unlock();
@@ -224,47 +196,25 @@ LRESULT CALLBACK SlagWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 }
 
 WindowWrapper::WindowWrapper(const std::string& name)
-	: _name(name), _hwnd(NULL), _run(true), _thread(
-	[](WindowWrapper* self)
+	: _name(name), _hwnd(NULL), _run(true), actual_height(1), actual_width(1),
+	_thread([](WindowWrapper* self)
 {
 	MSG Msg;
-	BOOL result = 1;
 
-	while (self->_run && result > 0)
+	while (self->_run)
 	{
 		if (self->_hwnd == NULL)
 		{
-			// AutoLock lock(_mutex);
-			if (self->_hwnd == NULL && self->_image.w > 0 && self->_image.h > 0)
-			{
-				self->_hwnd = CreateWindowEx(
-					0,
-					SLAG_WINDOW_CLASS_NAME,
-					self->_name.c_str(),
-					WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU,
-					CW_USEDEFAULT, CW_USEDEFAULT, self->_image.w, self->_image.h,
-					NULL, NULL, _hInstance, NULL);
-
-				if (! (self->_hwnd))
-				{
-					auto error = GetLastError();
-					char error_str[20];
-					sprintf_s(error_str, "Error %d!", error);
-					MessageBox(NULL, "CreateWindow Failed!", error_str, MB_ICONEXCLAMATION | MB_OK);
-					break;
-				}
-
-				ShowWindow(self->_hwnd, SW_SHOWNORMAL);
-				UpdateWindow(self->_hwnd);
-			}
+			self->Init();
 		}else
 		{
-			result = GetMessage(&Msg, self->_hwnd, 0, 0);
-			if (result > 0)
+			if (GetMessage(&Msg, self->_hwnd, 0, 0) > 0)
 			{
 				TranslateMessage(&Msg);
 				DispatchMessage(&Msg);
 			}
+			else
+				break;
 		}
 	}
 	if (self->_hwnd)
@@ -275,6 +225,27 @@ WindowWrapper::WindowWrapper(const std::string& name)
 	}
 }, this)
 {
+}
+
+void WindowWrapper::Init()
+{
+	_hwnd = CreateWindowEx(
+		0,
+		SLAG_WINDOW_CLASS_NAME,
+		_name.c_str(),
+		WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU,
+		CW_USEDEFAULT, CW_USEDEFAULT, actual_width, actual_height,
+		NULL, NULL, _hInstance, NULL);
+
+	if (!_hwnd)
+	{
+		auto error = GetLastError();
+		char error_str[20];
+		sprintf_s(error_str, "Error %d!", error);
+		MessageBox(NULL, "CreateWindow Failed!", error_str, MB_ICONEXCLAMATION | MB_OK);
+		return;
+	}
+	ShowWindow(_hwnd, SW_SHOWNORMAL);
 }
 
 WindowWrapper::~WindowWrapper()
@@ -294,7 +265,7 @@ void handle_output_image( const std::string& module_name_and_instance, int w, in
 	it = std::find_if(_images.begin(), _images.end(), NameFinder(module_name_and_instance));
 	if (it == _images.end())
 	{
-		_images.emplace_back(module_name_and_instance.c_str());
+		_images.emplace_back(module_name_and_instance.c_str()); // starts WndProc
 		it = _images.end();
 		--it;
 	}
@@ -310,7 +281,7 @@ void handle_output_image( const std::string& module_name_and_instance, int w, in
 		it->_image.type = type;
 		it->_image.data.assign(data, data + picure_size);
 
-		if (it->_hwnd);
+		if (it->_hwnd)
 			InvalidateRect(it->_hwnd, 0, 0);
 	}
 }
