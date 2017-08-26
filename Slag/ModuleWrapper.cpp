@@ -24,7 +24,7 @@ ModuleWrapper::ModuleWrapper(const bool* run)
 {
 }
 
-ModuleWrapper::ModuleWrapper( const ModuleWrapper& other )
+ModuleWrapper::ModuleWrapper( const ModuleWrapper& )
 : imageType(ImageType::GREY)
 {
 	throw std::exception();

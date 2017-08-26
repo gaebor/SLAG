@@ -19,25 +19,44 @@ Slag/UNIX/TerminationSignal.cpp
 
 SLAG_OBJ=$(SLAG_SRC:.cpp=.o)
 
+dummy_build_folder := $(shell mkdir -p $(OUT_DIR))
+
 all: cmodules mymodules slag
 
 doc: doxy/config
 	doxygen doxy/config 
 
-dir:
-	mkdir -p $(OUT_DIR)
-
 Slag/%.o:Slag/%.cpp
 	g++ -c $(CPPFLAGS) -I$(ASYNCQUEUE_DIR)/inc $< -o $@
 
-slag: dir $(SLAG_OBJ)
-	g++ $(CPPFLAGS) $(SLAG_OBJ) -L$(ASYNCQUEUE_DIR)/bin -lasyncqueue -ldl -o $(OUT_DIR)/Slag
+$(OUT_DIR)/Slag: $(SLAG_OBJ)
+	g++ $(CPPFLAGS) $(SLAG_OBJ) -L$(ASYNCQUEUE_DIR)/bin -lasyncqueue -ldl -o $@
 
-cmodules: dir CModules/CModules.c
-	gcc CModules/CModules.c $(CFLAGS) $(SHARED) -o $(OUT_DIR)/CModules.so
+slag: $(OUT_DIR)/Slag
+	
+CModules/CModules.o: CModules/CModules.c
+	gcc -c $(CFLAGS) $(SHARED) $^ -o $@
 
-mymodules: dir MyModules/*.cpp
-	g++ MyModules/*.cpp $(CPPFLAGS) $(OPENCVLIB) $(SHARED) -o $(OUT_DIR)/MyModules.so
+$(OUT_DIR)/CModules.so: CModules/CModules.o
+	gcc $(CFLAGS) $(SHARED) CModules/CModules.o -o $@
+
+cmodules: $(OUT_DIR)/CModules.so
+
+MYMODULES_SRC=MyModules/AbstractInterface.cpp\
+    MyModules/AddModule.cpp\
+    MyModules/KeyReader.cpp\
+    MyModules/MyModules.cpp\
+    MyModules/VideoSource.cpp
+
+MYMODULES_OBJ=$(MYMODULES_SRC:.cpp=.o)
+
+MyModules/%.o: MyModules/%.cpp
+	g++ -c $(CPPFLAGS) $(SHARED) $< -o $@
+    
+$(OUT_DIR)/MyModules.so: $(MYMODULES_OBJ)
+	g++ $(CPPFLAGS) $(SHARED) $(MYMODULES_OBJ) $(OPENCVLIB) -o $@
+
+mymodules: $(OUT_DIR)/MyModules.so
 
 clean:
-	rm -R -f $(OUT_DIR)/ Slag/*.o Slag/UNIX/*.o
+	rm -Rf $(OUT_DIR)/ Slag/*.o Slag/UNIX/*.o CModules/*.o MyModules/*.o
