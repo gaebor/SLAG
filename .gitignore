@@ -8,12 +8,6 @@ Desktop.ini
 # Recycle Bin used on file shares
 $RECYCLE.BIN/
 
-# Windows Installer files
-*.cab
-*.msi
-*.msm
-*.msp
-
 #Doxygen
 doxy/html/*
 
@@ -24,12 +18,18 @@ doxy/html/*
 bin/*
 *.exe
 *.obj
+*.o
 *.pdb
 *.ilk
 *.idb
 *.lib
+*.a
 *.dll
+*.so
 *.exp
+
+*.ipch
+.vs/*
 
 # log files
 *.tlog
