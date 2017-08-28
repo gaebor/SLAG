@@ -1,7 +1,7 @@
 #include "../OS_dependent.h"
 
+#include <signal.h>
 #include <thread>
-#include <wordexp.h>
 
 #include "aq/Clock.h"
 
@@ -10,12 +10,23 @@ static double startTime;
 static double timeout;
 static aq::Clock timer;
 
+void new_handler(int signum)
+{
+	*run = false;
+}
+
 void init_termination_signal(bool* do_run, double hardResetTimeout)
 {
 	startTime = timer.Tock();
 	run = do_run;
 	*run = true;
-	
+
+	for (auto sgn : { SIGINT , SIGHUP , SIGTERM })
+	{
+		if (signal(sgn, new_handler) == SIG_IGN)
+			signal(sgn, SIG_IGN);
+	}
+
 	timeout = hardResetTimeout;
 }
 
@@ -29,17 +40,3 @@ void wait_termination_signal()
 	}
 }
 
-std::vector<std::string> split_to_argv(const std::string& line)
-{
-	wordexp_t wordexp_result;
-	std::vector<std::string> argv;
-	
-	if (wordexp(line.c_str(), &wordexp_result, 0) == 0)
-	{
-		for (size_t i = 0; i < wordexp_result.we_wordc; ++i)
-			argv.emplace_back(wordexp_result.we_wordv[i]);
-
-		wordfree(&wordexp_result);
-	}
-	return argv;
-}

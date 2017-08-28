@@ -42,9 +42,6 @@
     <ClCompile Include="ConfigReader.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="OutputText.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="WIN\Imshow.cpp">
       <Filter>WIN</Filter>
     </ClCompile>
@@ -52,6 +49,9 @@
       <Filter>WIN</Filter>
     </ClCompile>
     <ClCompile Include="WIN\TerminationSignal.cpp">
+      <Filter>WIN</Filter>
+    </ClCompile>
+    <ClCompile Include="WIN\OutputText.cpp">
       <Filter>WIN</Filter>
     </ClCompile>
   </ItemGroup>

@@ -42,12 +42,12 @@ void handle_output_text(const std::string& module_name_and_instance, const char*
 */
 void terminate_output_text();
 
-//! textual visualization speed can be set
+//! textual visualization settings
 /*!
 	Textual output should be readable for a human, so you don't want to update it at 60fps or so.
 	You can neglect this if you think otherwise, although additional overhead is expected due to thread locks.
 */
-void set_output_text_speed(int millisec_to_wait);
+void configure_output_text(const std::vector<std::string>& params);
 
 //! textual visualization speed can be set
 /*!
@@ -62,6 +62,9 @@ void handle_statistics(const std::string& module_name_and_instance, double cycle
 ImageType get_image_type(void);
 void handle_output_image(const std::string& module_name_and_instance, int w, int h, ImageType type, const unsigned char* data);
 void terminate_output_image();
+
+//! image visualization settings
+void configure_output_image(const std::vector<std::string>&);
 
 //!loads a library, .so or .dll
 void* load_library(const char* file_name);

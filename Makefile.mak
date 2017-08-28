@@ -27,9 +27,9 @@ SLAG_SRC=Slag/ConfigReader.cpp\
     Slag/InternalTypes.cpp\
     Slag/ModuleIdentifier.cpp\
     Slag/ModuleWrapper.cpp\
-    Slag/OutputText.cpp\
     Slag/Slag.cpp\
     Slag/WIN/Imshow.cpp\
+    Slag/WIN/OutputText.cpp\
     Slag/WIN/LoadLibrary.cpp\
     Slag/WIN/TerminationSignal.cpp
 

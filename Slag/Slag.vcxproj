@@ -173,10 +173,10 @@
     <ClCompile Include="InternalTypes.cpp" />
     <ClCompile Include="ModuleIdentifier.cpp" />
     <ClCompile Include="ModuleWrapper.cpp" />
-    <ClCompile Include="OutputText.cpp" />
     <ClCompile Include="Slag.cpp" />
     <ClCompile Include="WIN\Imshow.cpp" />
     <ClCompile Include="WIN\LoadLibrary.cpp" />
+    <ClCompile Include="WIN\OutputText.cpp" />
     <ClCompile Include="WIN\TerminationSignal.cpp" />
   </ItemGroup>
   <ItemGroup>

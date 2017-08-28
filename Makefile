@@ -6,16 +6,16 @@ ASYNCQUEUE_DIR=../AsyncQueue
 OUT_DIR=bin
 
 SLAG_SRC=Slag/ConfigReader.cpp\
-Slag/Factory.cpp\
-Slag/HumanReadable.cpp\
-Slag/InternalTypes.cpp\
-Slag/ModuleIdentifier.cpp\
-Slag/ModuleWrapper.cpp\
-Slag/OutputText.cpp\
-Slag/Slag.cpp\
-Slag/UNIX/Imshow.cpp\
-Slag/UNIX/LoadLibrary.cpp\
-Slag/UNIX/TerminationSignal.cpp
+    Slag/Factory.cpp\
+    Slag/HumanReadable.cpp\
+    Slag/InternalTypes.cpp\
+    Slag/ModuleIdentifier.cpp\
+    Slag/ModuleWrapper.cpp\
+    Slag/Slag.cpp\
+    Slag/Imshow.cpp\
+    Slag/UNIX/OutputText.cpp\
+    Slag/UNIX/LoadLibrary.cpp\
+    Slag/UNIX/TerminationSignal.cpp
 
 SLAG_OBJ=$(SLAG_SRC:.cpp=.o)
 

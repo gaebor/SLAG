@@ -316,3 +316,8 @@ void terminate_output_image()
 {
 	_images.clear();
 }
+
+void configure_output_image(const std::vector<std::string>&)
+{
+	//TODO scale
+}

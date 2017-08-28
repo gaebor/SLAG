@@ -25,7 +25,6 @@ int main(int argc, char* argv[])
 	std::map<ModuleIdentifier, ModuleWrapper> modules;
 	MessageQueue::LimitBehavior queueBehavior = MessageQueue::None;
 	size_t queueLimit = std::numeric_limits<size_t>::max();
-	int vizualizationSpeed = 500;
 	double hardResetTime = 0.0;
 
 	std::vector<std::string> global_settings;
@@ -63,8 +62,10 @@ int main(int argc, char* argv[])
 			}
 			else if (key == "QueueLimit")
 				queueLimit = atoi(value.c_str());
-			else if (key == "VisualizationDelay")
-				vizualizationSpeed = atoi(value.c_str());
+			else if (key == "TextOutputSettings")
+				configure_output_text(split_to_argv(value));
+			else if (key == "ImageOutputSettings")
+				configure_output_image(split_to_argv(value));
 			else if (key == "HardResetTime")
 				hardResetTime = atoi(value.c_str());
 		}
@@ -152,7 +153,6 @@ int main(int argc, char* argv[])
 				goto halt;
 			}break;
 			}
-			
 		}
 		//read port connections topology
 
@@ -168,53 +168,6 @@ int main(int argc, char* argv[])
 			const auto toModuleId = PortIdentifier(ConfigReader::trim1(c.substr(c.find("->") + 2)).c_str());
 				
 			connections[toModuleId] = fromModuleId;
-
-			//auto outputNode = node->createView("Outputs");
-			//Poco::Util::AbstractConfiguration::Keys output_keys;
-			//outputNode->keys(output_keys);
-			//if (output_keys.size() == 0)
-			//{
-			//	const std::string outputNodeStr = node->getString("Outputs");
-			//	const auto outputPortId = PortIdentifier(outputNodeStr.c_str());
-
-			//	connections[outputPortId] = PortIdentifier(fromModuleId, 0);
-			//}
-			//else if (outputNode.isSeq())
-			//{
-			//	PortNumber fromPort = 0;
-			//	for (auto& output : outputNode)
-			//	{
-			//		const std::string outputNodeStr = output;
-			//		const auto outputPortId = PortIdentifier(outputNodeStr.c_str());
-
-			//		connections[outputPortId] = PortIdentifier(fromModuleId, fromPort);
-			//		++fromPort;
-			//	}
-			//}
-			//else if (outputNode.isMap())
-			//	for (auto& output : outputNode)
-			//	{
-			//		std::string outputNodeName = output.name();
-			//		if (outputNodeName[0] != '_')
-			//		{
-			//			std::cerr << "output port number should be preceded by underscore in \"" << (std::string)fromModuleId << std::endl;
-			//			goto halt;
-			//		}
-			//		PortNumber fromPort = atoi(outputNodeName.substr(1).c_str());
-			//		if (output.isSeq())
-			//		{
-			//			for (auto& port : output)
-			//			{
-			//				PortIdentifier outputPortId(std::string(port).c_str());
-			//				connections[outputPortId] = PortIdentifier(fromModuleId, fromPort);
-			//			}
-			//		}
-			//		else
-			//		{
-			//			PortIdentifier outputPortId(std::string(output).c_str());
-			//			connections[outputPortId] = PortIdentifier(fromModuleId, fromPort);
-			//		}
-			//	}
 		}
 
 		//purge bad connections
@@ -282,8 +235,6 @@ no_halt:
 		}
 		run = false;
 	});
-
-	set_output_text_speed(vizualizationSpeed);
 
 	wait_termination_signal();
 
