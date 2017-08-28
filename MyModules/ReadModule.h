@@ -23,7 +23,7 @@ public:
 			ifs.open(settingsv[0]);
 		return true;
 	}
-	::MyMessage** Compute(::MyMessage** input, int inputPortNumber, int* outputPortNumber)
+	::MyMessage** Compute(::MyMessage**, int, int* outputPortNumber)
 	{
 		if (getline(ifs, line).good())
 		{

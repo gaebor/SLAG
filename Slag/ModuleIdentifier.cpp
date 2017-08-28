@@ -43,11 +43,7 @@ ModuleIdentifier& ModuleIdentifier::assign( const char* id )
 {
 	std::string n,i,d;
 	std::string idStr = id;
-	auto dllSeparator = idStr.find('/');
-	if (dllSeparator != idStr.rfind('/'))
-	{
-		//invalid syntax!
-	}
+	auto dllSeparator = idStr.rfind('/');
 	if (dllSeparator != std::string::npos)
 	{
 		d = idStr.substr(0, dllSeparator);
@@ -55,13 +51,9 @@ ModuleIdentifier& ModuleIdentifier::assign( const char* id )
 	}else
 		dllSeparator = 0;
 
-	auto instanceSeparator = idStr.find('.', dllSeparator);
-	if (instanceSeparator != idStr.rfind('.'))
-	{
-		//invalid syntax!
-	}
+	auto instanceSeparator = idStr.rfind('.');
 
-	if (instanceSeparator != std::string::npos)
+	if (instanceSeparator != std::string::npos && instanceSeparator > dllSeparator)
 	{
 		n = idStr.substr(dllSeparator, instanceSeparator-dllSeparator);
 		i = idStr.substr(instanceSeparator+1);

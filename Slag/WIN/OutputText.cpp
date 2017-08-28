@@ -32,8 +32,7 @@ static double _speed = 0.5;
 static std::map<std::string, ModuleTextualData> _texts;
 static std::mutex _mutex;
 static int nameOffset;
-static char wait_marker = '-';
-static char overhead_marker = '+';
+static char wait_marker = '-', overhead_marker = '+', load_marker = ' ';
 
 typedef std::lock_guard<std::mutex> AutoLock;
 
@@ -73,12 +72,12 @@ static std::thread _textThread([]()
 			const int load = round_int(10 * m.second.compute_time / m.second.cycle_time);
 			const int wait = round_int(10 * m.second.wait_time / m.second.cycle_time);
 			printf("%-*s|%s|", nameOffset, m.first.c_str(), line);
-			for (int i = load + wait; i < 10; ++i)
-				putchar(overhead_marker);
 			for (int i = 0; i < wait; ++i)
 				putchar(wait_marker);
 			for (int i = 0; i < load; ++i)
-				putchar(' ');
+				putchar(load_marker);
+			for (int i = load + wait; i < 10; ++i)
+				putchar(overhead_marker);
 			
 			putchar('|');
 			std::cout << m.second.output << "\n";
@@ -140,12 +139,13 @@ void configure_output_text(const std::vector<std::string>& params)
 			double speed = atof(params[i + 1].c_str());
 			if (speed >= 0)
 				_speed = speed;
-			return;
 		}
 		else if (params[i] == "-w" || params[i] == "--wait" && i + 1 < params.size())
 			wait_marker = params[i + 1][0];
 		else if (params[i] == "-o" || params[i] == "--overhead" && i + 1 < params.size())
 			overhead_marker = params[i + 1][0];
+		else if (params[i] == "-l" || params[i] == "--load" && i + 1 < params.size())
+			load_marker = params[i + 1][0];
 	}
 }
 

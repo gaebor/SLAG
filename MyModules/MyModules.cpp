@@ -15,7 +15,7 @@ extern "C" {
 #endif
 
 //! this function instantiates your modules
-DLL_EXPORT void* __stdcall SlagInstantiate(const char* name, const char* instance, const char** out_text, unsigned char** out_img, int* w, int* h, enum ImageType type)
+DLL_EXPORT void* __stdcall SlagInstantiate(const char* name, const char*, const char** out_text, unsigned char** out_img, int* w, int* h, enum ImageType type)
 {
 	const std::string nameStr = name;
 	MyModule* result = nullptr;

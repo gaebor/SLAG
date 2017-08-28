@@ -11,7 +11,7 @@ KeyReader::~KeyReader()
 {
 }
 
-MyMessage** KeyReader::Compute(MyMessage** input, int inputPortNumber, int* outputPortNumber)
+MyMessage** KeyReader::Compute(MyMessage** input, int, int* outputPortNumber)
 {
 	if (input == nullptr)
 	{
@@ -22,6 +22,7 @@ MyMessage** KeyReader::Compute(MyMessage** input, int inputPortNumber, int* outp
 		auto output = new IntMessage();
 		output->val = fgetc(stdin);
 		outouts[0] = output;
+		*outputPortNumber = 1;
 		std::ostringstream oss;
 		oss << output->val;
 		text = oss.str();

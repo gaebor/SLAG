@@ -10,7 +10,7 @@ MyModule::~MyModule()
 
 }
 
-bool MyModule::Initialize( int settingsc, const char* settingsv[] )
+bool MyModule::Initialize( int, const char** )
 {
 	return true;
 }

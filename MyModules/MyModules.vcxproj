@@ -22,7 +22,7 @@
     <ProjectGuid>{17A95669-D9E1-4659-93EB-FE44160ED6FA}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>MyModules</RootNamespace>
-    <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0.15063.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -190,6 +190,7 @@
     <ClInclude Include="VideoSource.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="..\Testing\graph.cfg" />
     <None Include="def.def" />
     <None Include="ImageProcessor.cpp" />
     <None Include="ImageProcessor.h" />

@@ -117,7 +117,6 @@ void configure_output_text(const std::vector<std::string>& params)
 			double speed = atof(params[i + 1].c_str());
 			if (speed >= 0)
 				_speed = speed;
-			return;
 		}
 		else if (params[i] == "-w" || params[i] == "--wait" && i + 1 < params.size())
 			wait_marker = params[i + 1][0];

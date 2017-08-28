@@ -4,6 +4,7 @@
 #include <vector>
 #include <string>
 #include <map>
+#include <ostream>
 
 #include "slag/slag_interface.h"
 #include "ModuleIdentifier.h"
@@ -25,11 +26,11 @@ public:
 		CannotInstantiateByLibrary //!<< the requested library couldn't instantiate your module
 	};
 public:
-	ErrorCode InstantiateModule(ModuleWrapper& moduleWrapper)const;
+	ErrorCode InstantiateModule(ModuleWrapper& moduleWrapper);
 
 	struct Functions
 	{
-		Functions() :instantiate(NULL), compute(NULL), deleteMsg(NULL), deleteModule(NULL), initialize(NULL){}
+		Functions();
 		SlagInstantiate_t instantiate;
 		SlagCompute_t compute;
 		SlagDestroyMessage_t deleteMsg;
@@ -39,6 +40,9 @@ public:
 
 private:
 	std::map<std::string, Functions> pModuleFunctions;
+	
+	bool TryToLoadLibrary(std::ostream& os, const std::string& filename);
+	bool TryToInstantiate(ModuleWrapper& moduleWrapper, const Functions& f);
 	std::vector<void*> module_dll_handles;
 };
 

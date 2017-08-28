@@ -20,7 +20,7 @@ VideoSource::~VideoSource(void)
 {
 }
 
-bool VideoSource::Initialize( int settingsc, const char* settingsv[] )
+bool VideoSource::Initialize( int settingsc, const char** settingsv )
 {
 	for (int i = 0; i < settingsc; ++i)
 	{
@@ -46,7 +46,7 @@ bool VideoSource::Initialize( int settingsc, const char* settingsv[] )
 	return false;
 }
 
-MyMessage** VideoSource::Compute( MyMessage** input, int inputPortNumber, int* outputPortNumber )
+MyMessage** VideoSource::Compute( MyMessage**, int, int* outputPortNumber )
 {
 	auto output = new Frame();
 	capture >> output->image;

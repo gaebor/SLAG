@@ -58,5 +58,8 @@
     <None Include="ImageProcessor.cpp">
       <Filter>Source Files</Filter>
     </None>
+    <None Include="..\Testing\graph.cfg">
+      <Filter>Resource Files</Filter>
+    </None>
   </ItemGroup>
 </Project>

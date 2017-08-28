@@ -8,7 +8,7 @@
 class ImageProcessor : public MyModule
 {
 public:
-	ImageProcessor();
+	ImageProcessor(void);
 	virtual ~ImageProcessor();
 
 	MyMessage** Compute(MyMessage** input, int inputPortNumber, int* outputPortNumber);

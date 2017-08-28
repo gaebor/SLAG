@@ -20,6 +20,7 @@ OUT_DIR=bin
 CL_FLAGS=/MD /W4 /O2 /Ot /Qpar /GL /DNDEBUG /Iinc
 CPP_FLAGS=/c /EHsc $(CL_FLAGS)
 C_FLAGS=/TC $(CL_FLAGS)
+LINK_FLAGS=/LTCG
 
 SLAG_SRC=Slag/ConfigReader.cpp\
     Slag/Factory.cpp\
@@ -56,7 +57,7 @@ doc: doxy\config
 	cl $(CPP_FLAGS) /I"$(ASYNCQUEUE_DIR)\inc" /Fo"Slag/WIN/" $<
 
 $(OUT_DIR)\SLAG.exe: $(SLAG_OBJ) "$(ASYNCQUEUE_LIB)"
-	link $(WINAPI_LIB) "$(ASYNCQUEUE_LIB)" $(SLAG_OBJ) /OUT:$(OUT_DIR)\SLAG.exe
+	link $(LINK_FLAGS) $(WINAPI_LIB) "$(ASYNCQUEUE_LIB)" $(SLAG_OBJ) /OUT:$(OUT_DIR)\SLAG.exe
 
 slag: $(OUT_DIR)\SLAG.exe
 
@@ -64,7 +65,7 @@ CModules/CModules.obj: CModules/CModules.c
 	cl /c $(C_FLAGS) CModules/CModules.c /Fo"CModules/CModules.obj"
 
 $(OUT_DIR)\CModules.dll: CModules/CModules.obj
-	link $** /DLL /OUT:$(OUT_DIR)\CModules.dll /DEF:CModules\def.def
+	link $(LINK_FLAGS) $** /DLL /OUT:$(OUT_DIR)\CModules.dll /DEF:CModules\def.def
 
 cmodules: $(OUT_DIR)\CModules.dll
 
@@ -78,7 +79,7 @@ OPENCV_DLLS=$(OPENCV_LIBS:.lib=.dll)
 	cl $(CPP_FLAGS) /Fo"MyModules/" /I"$(OPENCV_DIR)\include" $<
 
 $(OUT_DIR)\MyModules.dll: $(MYMODULES_OBJ)
-	link /LIBPATH:"$(OPENCV_BIN)\lib" $(OPENCV_LIBS) $** /DLL /OUT:$(OUT_DIR)\MyModules.dll /DEF:MyModules\def.def
+	link $(LINK_FLAGS) /LIBPATH:"$(OPENCV_BIN)\lib" $(OPENCV_LIBS) $** /DLL /OUT:$(OUT_DIR)\MyModules.dll /DEF:MyModules\def.def
     cd "$(OPENCV_BIN)\bin"
     (
     robocopy "$(OPENCV_BIN)\bin" "$(MAKEDIR)\$(OUT_DIR)" $(OPENCV_DLLS) > nul && (echo Success) || (echo )

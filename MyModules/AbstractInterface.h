@@ -29,7 +29,7 @@ public:
 		@param settingsc number of settings
 		@param settingsc array of c-strings containing the received settings
 	*/
-	virtual bool Initialize(int settingsc, const char* settingsv[]);
+	virtual bool Initialize(int settingsc, const char** settingsv);
 
 public:
 	//! pointer to text output

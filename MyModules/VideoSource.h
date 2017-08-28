@@ -19,7 +19,7 @@ public:
 	VideoSource(void);
 	virtual ~VideoSource(void);
 
-	bool Initialize(int settingsc, const char* settingsv[]);
+	bool Initialize(int settingsc, const char** settingsv);
 	MyMessage** Compute(MyMessage** input, int inputPortNumber, int* outputPortNumber);
 
 private:

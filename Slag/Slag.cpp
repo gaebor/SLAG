@@ -122,13 +122,13 @@ int main(int argc, char* argv[])
 			switch (result)
 			{
 			case Factory::Duplicate:
-				std::cout << "can be instantiated by more than one library, the one in \"" << moduleId.library << "\" will be used ... ";
+				std::cout << "found more than once ... ";
 			case Factory::Success:
 			{
 				moduleWrapper.global_settings_c = (int)global_settings.size();
 				moduleWrapper.global_settings_v = global_settings_v.data();
 
-				std::cout << "instantiated ... "; std::cout.flush();
+				std::cout << "instantiated by \"" << moduleId.library << "\" ... "; std::cout.flush();
 
 				if (!moduleWrapper.Initialize(arguments))
 				{
