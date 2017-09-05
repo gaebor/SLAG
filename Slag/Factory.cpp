@@ -77,12 +77,7 @@ bool Factory::TryToInstantiate(ModuleWrapper& moduleWrapper, const Functions& f)
 
 	const auto module = (f.instantiate)(
 		moduleId.name.c_str(),
-		moduleId.instance.c_str(),
-		&moduleWrapper.output_text_raw,
-		&moduleWrapper.output_image_raw,
-		&moduleWrapper.output_image_width,
-		&moduleWrapper.output_image_height,
-		moduleWrapper.imageType);
+		moduleId.instance.c_str());
 	
 	if (module)
 	{

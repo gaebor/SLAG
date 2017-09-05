@@ -20,7 +20,7 @@ VideoSource::~VideoSource(void)
 {
 }
 
-bool VideoSource::Initialize( int settingsc, const char** settingsv )
+bool VideoSource::InitializeCallback( int settingsc, const char** settingsv )
 {
 	for (int i = 0; i < settingsc; ++i)
 	{

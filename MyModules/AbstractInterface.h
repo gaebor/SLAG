@@ -29,8 +29,12 @@ public:
 		@param settingsc number of settings
 		@param settingsc array of c-strings containing the received settings
 	*/
-	virtual bool Initialize(int settingsc, const char** settingsv);
+	bool Initialize(int settingsc, const char** settingsv,
+		const char** out_text, int* l,
+		unsigned char** out_img, int* w, int* h, enum ImageType imageType);
 
+protected:
+	virtual bool InitializeCallback(int settingsc, const char** settingsv);
 public:
 	//! pointer to text output
 	/*!
@@ -38,6 +42,7 @@ public:
 		You should allocate and free the memory
 	*/
 	const char** outputText;
+	int* outputTextLength;
 	//! pointer to image output
 	/*!
 		You should allocate and free the memory

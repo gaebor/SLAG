@@ -44,6 +44,6 @@ void wait_termination_signal()
 	{
 		if ( timeout > 0 && startTime + timeout <= timer.Tock())
 			*run = false;
-		Sleep(1);
+		Sleep(0);
 	}
 }

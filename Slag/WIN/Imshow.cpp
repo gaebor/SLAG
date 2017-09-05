@@ -116,7 +116,7 @@ inline size_t GetByteDepth(ImageType t)
 	}
 }
 
-//! wor windows, this is always the same
+//! for windows, this is always the same
 ImageType get_image_type(void)
 {
 	return ImageType::RGBA;

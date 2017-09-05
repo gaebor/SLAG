@@ -18,6 +18,7 @@ ModuleWrapper::ModuleWrapper(const bool* run)
 	_module(nullptr),
 	output_image_raw(nullptr),
 	output_text_raw(nullptr),
+	output_text_length(0),
 	output_image_width(0), output_image_height(0),
 	do_run(run),
 	imageType(get_image_type())
@@ -43,7 +44,12 @@ bool ModuleWrapper::Initialize(const std::vector<std::string> settings)
 			settings_array.push_back(setting.c_str());
 
 		//Initialize
-		return initialize(_module, (int)settings_array.size(), settings_array.data()) == 0;
+		return initialize(
+					_module,
+					(int)settings_array.size(), settings_array.data(),
+					&output_text_raw, &output_text_length,
+					&output_image_raw, &output_image_width, &output_image_height, imageType
+			) == 0;
 		// module settings are lost after the module initialize!
 		//TODO global settings
 	}

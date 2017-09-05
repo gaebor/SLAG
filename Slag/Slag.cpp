@@ -27,8 +27,9 @@ int main(int argc, char* argv[])
 	size_t queueLimit = std::numeric_limits<size_t>::max();
 	double hardResetTime = 0.0;
 
-	std::vector<std::string> global_settings;
+	std::list<std::string> global_settings;
 	std::vector<const char*> global_settings_v;
+	size_t max_settings_size = 1024;
 
 	if (argc < 2)
 	{
@@ -72,23 +73,20 @@ int main(int argc, char* argv[])
 		//global settings
 		for (auto l : cfg.GetSection("global"))
 		{
-			const auto key = l.substr(0U, l.find('='));
-			const auto value = l.substr(l.find('=') + 1);
+			const auto pos = l.find('=');
+			const auto key = l.substr(0U, pos);
+			const auto value = l.substr(pos == std::string::npos ? l.size() : l.find('=') + 1);
 			global_settings.push_back(key); global_settings.push_back(value);
+			max_settings_size = std::max(max_settings_size, value.size());
 		}
-		for (auto& setting : global_settings)
-		{
-			if (setting.size() >= SETTINGS_MAX_LENGTH)
-			{
-				std::cerr << "Global setting >>>\n" << setting << "\n<<< shouldn't exceed the length of " << SETTINGS_MAX_LENGTH << "!" << std::endl;
-				goto halt;
-			}
-			//be careful, from now on, settings may change, but the NUMBER of settings doesn't!
-			//also no settings can be longer than this reserved length to ensure iterator validity
-			setting.reserve(SETTINGS_MAX_LENGTH);
+		//TODO
+		//for (auto& setting : global_settings)
+		//{
+		//	
+		//	setting.reserve(SETTINGS_MAX_LENGTH);
 
-			global_settings_v.push_back(setting.c_str());
-		}
+		//	global_settings_v.push_back(setting.c_str());
+		//}
 		//instantiate modules
 		for (auto moduleStr : cfg.GetSection("modules"))
 		{
@@ -125,8 +123,8 @@ int main(int argc, char* argv[])
 				std::cout << "found more than once ... ";
 			case Factory::Success:
 			{
-				moduleWrapper.global_settings_c = (int)global_settings.size();
-				moduleWrapper.global_settings_v = global_settings_v.data();
+				//moduleWrapper.global_settings_c = (int)global_settings.size();
+				//moduleWrapper.global_settings_v = global_settings_v.data();
 
 				std::cout << "instantiated by \"" << moduleId.library << "\" ... "; std::cout.flush();
 

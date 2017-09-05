@@ -41,7 +41,7 @@ void** Mul(void** input, int inputPortNumber, int* outputPortNumber)
 	return &result;
 }
 
-DLL_EXPORT void* __stdcall SlagInstantiate(const char* moduleName, const char* InstanceName, const char** out_text, unsigned char** out_img, int* w, int* h, enum ImageType* type)
+MODULE_EXPORT(void*) SlagInstantiate(const char* moduleName, const char* InstanceName)
 {
 	SlagFunction_t function = NULL;
 
@@ -53,16 +53,16 @@ DLL_EXPORT void* __stdcall SlagInstantiate(const char* moduleName, const char* I
 	return (void*)function;
 }
 
-DLL_EXPORT void** __stdcall SlagCompute(void* module, void** input, int inputPortNumber, int* outputPortNumber)
+MODULE_EXPORT(void**) SlagCompute(void* module, void** input, int inputPortNumber, int* outputPortNumber)
 {
 	return ((SlagFunction_t)module)(input, inputPortNumber, outputPortNumber);
 }
 
-DLL_EXPORT void __stdcall SlagDestroyMessage(void* message)
+MODULE_EXPORT(void) SlagDestroyMessage(void* message)
 {
 	free(message);
 }
 
-DLL_EXPORT void __stdcall SlagDestroyModule(void* module)
+MODULE_EXPORT(void) SlagDestroyModule(void* module)
 {
 }

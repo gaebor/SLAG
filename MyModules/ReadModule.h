@@ -17,12 +17,6 @@ public:
 	ReadModule(void){}
 	virtual ~ReadModule(void){}
 
-	bool Initialize(int settingsc, const char* settingsv[])
-	{
-		if (settingsc > 0)
-			ifs.open(settingsv[0]);
-		return true;
-	}
 	::MyMessage** Compute(::MyMessage**, int, int* outputPortNumber)
 	{
 		if (getline(ifs, line).good())
@@ -44,6 +38,13 @@ public:
 		}
 	}
 
+protected:
+	bool InitializeCallback(int settingsc, const char** settingsv)
+	{
+		if (settingsc > 0)
+			ifs.open(settingsv[0]);
+		return true;
+	}
 private:
 	std::string line;
 	std::ifstream ifs;

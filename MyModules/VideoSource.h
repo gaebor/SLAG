@@ -19,8 +19,10 @@ public:
 	VideoSource(void);
 	virtual ~VideoSource(void);
 
-	bool Initialize(int settingsc, const char** settingsv);
 	MyMessage** Compute(MyMessage** input, int inputPortNumber, int* outputPortNumber);
+
+protected:
+	virtual bool InitializeCallback(int settingsc, const char** settingsv);
 
 private:
 	std::string text;

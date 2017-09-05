@@ -23,8 +23,8 @@ void init_termination_signal(bool* do_run, double hardResetTimeout = 0.0);
 /*!
 	termination event can be:
 	 * timeout expired
-	 * modules ran out of job
-	 * console CTRL+C event
+	 * do_run set to false
+	 * terminate signal from OS
 */
 void wait_termination_signal();
 
@@ -59,6 +59,7 @@ You can neglect this if you think otherwise, although additional overhead is exp
 */
 void handle_statistics(const std::string& module_name_and_instance, double cycle, double load, double wait, const std::map<PortNumber, size_t>& buffer_sizes);
 
+//! return your OS's favourable image type
 ImageType get_image_type(void);
 void handle_output_image(const std::string& module_name_and_instance, int w, int h, ImageType type, const unsigned char* data);
 void terminate_output_image();

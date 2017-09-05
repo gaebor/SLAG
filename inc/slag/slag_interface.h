@@ -2,13 +2,12 @@
 #define INCLUDE_SLAG_INTERFACE_H
 
 #ifdef __GNUC__
-#	define DLL_EXPORT __attribute__ ((visibility ("default")))
-#	define __stdcall 
+#	define EXPORT_FLAG __attribute__((visibility("default")))
 #elif defined _MSC_VER
-#	define DLL_EXPORT __declspec(dllexport)
-#else
-#	define DLL_EXPORT 
+#	define EXPORT_FLAG __declspec(dllexport)
 #endif
+
+#define MODULE_EXPORT(type) EXPORT_FLAG type __stdcall
 
 #ifdef __cplusplus
 extern "C" {
@@ -22,8 +21,6 @@ enum ImageType
 	RGBA,
 	BGRA
 };
-
-//mandatory
 
 //! SLAG calls this once, your module or whatever necessary data should be allocated
 /*!
@@ -50,10 +47,7 @@ enum ImageType
 */
 typedef void* (__stdcall *SlagInstantiate_t)(
 	const char* moduleName,
-	const char* InstanceName,
-	const char** out_text,
-	unsigned char** out_img,
-	int* w, int* h, enum ImageType imageType);
+	const char* InstanceName);
 
 //! SLAG calls this if a message is useless anymore
 /*!
@@ -69,7 +63,7 @@ typedef void(__stdcall *SlagDestroyMessage_t)(void* message);
 //! SLAG calls this after the graph has been finished
 /*!
 	Same memory management issues apply like SlagDestroyMessage
-	@param module pointer to a module. You should delete it however you like!
+	@param module pointer to a module. You can delete it however you like!
 */
 typedef void(__stdcall *SlagDestroyModule_t)(void* module);
 
@@ -88,14 +82,24 @@ typedef void** (*SlagFunction_t)(void** input, int inputPortNumber, int* outputP
 /*!
 	@param module pointer to the instantiated module to be initialized
 	@param settingsc number of received settings
-	@param settingsv pointer to array of settings, each entry if a null terminated C string.
+	@param settingsv pointer to array of settings, each entry is a null terminated C string.
 		This array is valid only until the initializer has been completed, after that it is destructed
 		If you want to keep any of these settings later, you have to copy it to your heap.
+	@param out_text pointer where you can set your output text
+	@param l write the length of your output text here
+	@param 	out_img write your output image here
+	@param w write the width of your output image here
+	@param h write the height of your output image here
+	@param imageType you have to convert your output image to this format
 	@return 0 on success, otherwise initialization is considered to be failed and the graph doesn't even start
 */
-typedef  int(__stdcall *SlagInitialize_t)(void* module, int settingsc, const char** settingsv);
+typedef  int (__stdcall *SlagInitialize_t)(
+	void* module, int settingsc, const char** settingsv,
+	const char** out_text, int* l,
+	unsigned char** out_img,
+	int* w, int* h, enum ImageType imageType);
 
-#define SETTINGS_MAX_LENGTH 1024
+// #define SETTINGS_MAX_LENGTH 1024
 
 #ifdef __cplusplus
 }

@@ -33,6 +33,7 @@ MyMessage** AddModule::Compute( MyMessage** input, int inputPortNumber, int* out
 		oss << output->val;
 		text = oss.str();
 		*outputText = text.c_str();
+		*outputTextLength = (int)text.size();
 		return &output_msg;
 	}
 }

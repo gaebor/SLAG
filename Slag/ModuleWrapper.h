@@ -31,17 +31,19 @@ public:
 	std::map<PortNumber, size_t> bufferSize;
 
 	//! gets a global ptr
-	int global_settings_c;
-	const char** global_settings_v;
+	//int global_settings_c;
+	//const char** global_settings_v;
 	const bool* do_run;
 
-protected:
-	friend class Factory;
-
+private:
 	const char* output_text_raw;
+	int output_text_length;
 	unsigned char* output_image_raw;
 	int output_image_width, output_image_height;
 	const ImageType imageType;
+
+protected:
+	friend class Factory;
 
 	void* _module; // responsible for it!
 	SlagCompute_t compute;
