@@ -7,10 +7,12 @@
 #include <iostream>
 #include <sstream>
 #include <algorithm>
+#include <chrono>
+#include <wordexp.h>
 
 #include "../HumanReadable.h"
 
-#include <wordexp.h>
+#undef max
 
 struct ModuleTextualData
 {
@@ -18,94 +20,32 @@ struct ModuleTextualData
 		: output(), cycle_time(0.0), compute_time(0.0), wait_time(0.0)
 	{
 	}
-	std::string output;
+	std::vector<char> output;
 	double cycle_time, compute_time, wait_time;
 	std::vector<std::pair<PortNumber, size_t>> bufferSizes;
 };
 
 static bool run = true;
-static bool started = false; //it is set to true at the first handle_output_text call
 static double _speed = 0.5;
 static std::map<std::string, ModuleTextualData> _texts;
 static std::mutex _mutex;
 static int nameOffset;
-static char wait_marker = '-';
-static char overhead_marker = '+';
+static char wait_marker = '-', overhead_marker = '+', load_marker = ' ';
 
 typedef std::lock_guard<std::mutex> AutoLock;
 
-static inline int round_int( double x )
+static inline int round_int(double x)
 {
-	return int(x+0.5);
+	return int(x + 0.5);
 }
 
-static std::thread _textThread([]()
-{
-	std::string nameTag = "  module  ";
-	nameOffset = (int)nameTag.size();
-	short cursor = 0;
-	short cursor_end;
-
-	auto internal_func = [&]()
-	{
-		system("clear");
-		
-		printf("%-*s", nameOffset, nameTag.c_str());
-		printf("|  speed   | overhead | text output\n");
-		for (int i = 0; i < nameOffset; ++i)
-			putchar('-');
-		printf("+----------+----------+-\n");
-
-		for (const auto& m : _texts)
-		{
-			char line[1024];
-			print_humanreadable_time(line, 1024, m.second.cycle_time);
-			const int load = round_int(10 * m.second.compute_time / m.second.cycle_time);
-			const int wait = round_int(10 * m.second.wait_time / m.second.cycle_time);
-			printf("%-*s|%s|", nameOffset, m.first.c_str(), line);
-			for (int i = load + wait; i < 10; ++i)
-				putchar(overhead_marker);
-			for (int i = 0; i < wait; ++i)
-				putchar(wait_marker);
-			for (int i = 0; i < load; ++i)
-				putchar(' ');
-			
-			putchar('|');
-			std::cout << m.second.output << "\n";
-
-			for (auto& q : m.second.bufferSizes)
-			{
-				print_humanreadable_giga(line, 1024, (double)q.second);
-				printf("%*s|> %d\n", nameOffset, line, q.first);
-			}
-			
-			for (int i = 0; i < nameOffset; ++i)
-				putchar('-');
-			printf("+----------+----------+-\n");
-		}
-		printf("\n");
-	};
-
-	// waits until anything happens, or the run has completed even before printing anything out
-	while (!started && run)
-		std::this_thread::sleep_for(std::chrono::nanoseconds((std::int64_t)(_speed * std::nano::den / std::nano::num)));
-
-	while (run)
-	{
-		{
-		AutoLock lock(_mutex);
-		internal_func();
-		}
-		std::this_thread::sleep_for(std::chrono::nanoseconds((std::int64_t)(_speed * std::nano::den / std::nano::num)));
-	}
-	if (started)
-		internal_func();
-});
+static std::shared_ptr<std::thread> _textThread;
 
 void terminate_output_text()
 {
 	run = false;
-	_textThread.join();
+	if (_textThread.get() && _textThread->joinable())
+		_textThread->join();
 }
 
 void configure_output_text(const std::vector<std::string>& params)
@@ -122,30 +62,82 @@ void configure_output_text(const std::vector<std::string>& params)
 			wait_marker = params[i + 1][0];
 		else if (params[i] == "-o" || params[i] == "--overhead" && i + 1 < params.size())
 			overhead_marker = params[i + 1][0];
+		else if (params[i] == "-l" || params[i] == "--load" && i + 1 < params.size())
+			load_marker = params[i + 1][0];
 	}
+
+	_textThread.reset(new std::thread([]()
+	{
+		std::string nameTag = "  module  ";
+		nameOffset = (int)nameTag.size();
+
+		while (run)
+		{
+			{
+				AutoLock lock(_mutex);
+
+				printf("\033[%d;%dH", 1, 1);
+
+				printf("%-*s", nameOffset, nameTag.c_str());
+				printf("|  speed   | overhead | text output\n");
+				for (int i = 0; i < nameOffset; ++i)
+					putchar('-');
+				printf("+----------+----------+-\n");
+
+				for (const auto& m : _texts)
+				{
+					char line[1024];
+					print_humanreadable_time(line, 1024, m.second.cycle_time);
+					const int load = round_int(10 * m.second.compute_time / m.second.cycle_time);
+					const int wait = round_int(10 * m.second.wait_time / m.second.cycle_time);
+					printf("%-*s|%s|", nameOffset, m.first.c_str(), line);
+					for (int i = 0; i < wait; ++i)
+						putchar(wait_marker);
+					for (int i = 0; i < load; ++i)
+						putchar(load_marker);
+					for (int i = load + wait; i < 10; ++i)
+						putchar(overhead_marker);
+
+					putchar('|');
+					fwrite(m.second.output.data(), 1, m.second.output.size(), stdout);
+					putchar('\n');
+
+					for (auto& q : m.second.bufferSizes)
+					{
+						print_humanreadable_giga(line, 1024, (double)q.second);
+						printf("%*s|> %*d|\n", nameOffset, line, -19, q.first);
+					}
+
+					for (int i = 0; i < nameOffset; ++i)
+						putchar('-');
+					printf("+----------+----------+-\n");
+				}
+				printf("\n");
+			}
+			std::this_thread::sleep_for(std::chrono::nanoseconds((std::int64_t)(_speed * std::nano::den / std::nano::num)));
+		}
+	}));
 }
 
-void handle_output_text( const std::string& module_name_and_instance, const char* text )
+void handle_output_text(const std::string& module_name_and_instance, const char* text, int length)
 {
-	static const bool start = (started = true);
 	if (text)
 	{
 		AutoLock lock(_mutex);
 		auto& data = _texts[module_name_and_instance];
-		data.output = text;
+		data.output.assign(text, text + length);
 		nameOffset = std::max((int)module_name_and_instance.size(), nameOffset);
 	}
 }
 
-void handle_statistics( const std::string& module_name_and_instance, double cycle, double load, double wait, const std::map<PortNumber, size_t>& buffer_sizes)
+void handle_statistics(const std::string& module_name_and_instance, double cycle, double load, double wait, const std::map<PortNumber, size_t>& buffer_sizes)
 {
-	static const bool start = (started = true);
 	AutoLock lock(_mutex);
 	auto& data = _texts[module_name_and_instance];
 	data.cycle_time = cycle;
 	data.compute_time = load;
 	data.wait_time = wait;
-	nameOffset =  std::max((int)module_name_and_instance.size(), nameOffset);
+	nameOffset = std::max((int)module_name_and_instance.size(), nameOffset);
 	data.bufferSizes.assign(buffer_sizes.begin(), buffer_sizes.end());
 }
 

@@ -26,6 +26,7 @@ public:
 			iss >> output->value;
 
 			*outputText = line.c_str();
+			*outputTextLength = (int)line.size();
 
 			output_msg = output;
 			*outputPortNumber = 1;

@@ -31,6 +31,8 @@ int main(int argc, char* argv[])
 	std::vector<const char*> global_settings_v;
 	size_t max_settings_size = 1024;
 
+	std::vector<std::string> output_text_argv;
+
 	if (argc < 2)
 	{
 		std::cerr << "USAGE: slag.exe >>config.cfg<<" << std::endl;
@@ -64,7 +66,7 @@ int main(int argc, char* argv[])
 			else if (key == "QueueLimit")
 				queueLimit = atoi(value.c_str());
 			else if (key == "TextOutputSettings")
-				configure_output_text(split_to_argv(value));
+				output_text_argv = split_to_argv(value);
 			else if (key == "ImageOutputSettings")
 				configure_output_image(split_to_argv(value));
 			else if (key == "HardResetTime")
@@ -214,7 +216,10 @@ halt:
 	return -1;
 
 no_halt:
-	init_termination_signal(&run, hardResetTime);
+
+	init_termination_signal(&run, hardResetTime);	
+
+	configure_output_text(output_text_argv);
 
 	std::thread module_processes([&]()
 	{

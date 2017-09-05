@@ -34,7 +34,7 @@ void wait_termination_signal();
 	Store the data for yourself.
 	These calls will be asynchronous.
 */
-void handle_output_text(const std::string& module_name_and_instance, const char* text);
+void handle_output_text(const std::string& module_name_and_instance, const char* text, int length);
 
 //!SLAG calls this if the process graph has ended.
 /*!

@@ -138,7 +138,7 @@ void ModuleWrapper::ThreadProcedure()
 
 		handle_statistics(printableName, cycle_time, compute_time, wait_time, bufferSize);
 		if (output_text_raw != nullptr)
-			handle_output_text(printableName, output_text_raw);
+			handle_output_text(printableName, output_text_raw, output_text_length);
 
 		if (output_image_raw != nullptr)
 		{
