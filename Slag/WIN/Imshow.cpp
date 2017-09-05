@@ -19,6 +19,7 @@
 static WNDCLASSEX windowsClass;
 static std::mutex _mutex;
 static HINSTANCE const _hInstance = GetModuleHandle(NULL);
+static double _scale = 1.0;
 
 typedef std::lock_guard<std::mutex> AutoLock;
 
@@ -157,7 +158,7 @@ LRESULT CALLBACK SlagWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 				if (it->actual_width != it->_image.w || it->actual_height != it->_image.h)
 				{
 					SetWindowPos(hwnd, HWND_NOTOPMOST, 0, 0,
-						it->_image.w, it->_image.h,
+						(int)std::ceil(_scale * (it->_image.w)), (int)std::ceil(_scale * (it->_image.h)),
 						SWP_NOACTIVATE | SWP_NOMOVE | SWP_NOREPOSITION | SWP_NOZORDER
 					);
 
@@ -175,7 +176,13 @@ LRESULT CALLBACK SlagWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
 					HBITMAP hbmOldBuffer = (HBITMAP)SelectObject(hdcBuffer, hbm);
 
-					BitBlt(hdc, 0, 0, it->_image.w, it->_image.h, hdcBuffer, 0, 0, SRCCOPY);
+					//BitBlt(hdc, 0, 0, it->_image.w, it->_image.h, hdcBuffer, 0, 0, SRCCOPY);
+					StretchBlt(
+						hdc,       0, 0,
+						(int)std::ceil(_scale * (it->_image.w)), (int)std::ceil(_scale * (it->_image.h)),
+						hdcBuffer, 0, 0,
+						it->_image.w                           , it->_image.h,
+						SRCCOPY);
 
 					SelectObject(hdcBuffer, hbmOldBuffer);
 					DeleteObject(hbm);
@@ -317,7 +324,15 @@ void terminate_output_image()
 	_images.clear();
 }
 
-void configure_output_image(const std::vector<std::string>&)
+void configure_output_image(const std::vector<std::string>& params)
 {
-	//TODO scale
+	for (size_t i = 0; i < params.size(); ++i)
+	{
+		if (params[i] == "-s" || params[i] == "--scale" && i + 1 < params.size())
+		{
+			double scale = atof(params[i + 1].c_str());
+			if (scale > 0)
+				_scale= scale;
+		}
+	}
 }
