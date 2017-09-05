@@ -15,7 +15,7 @@ extern "C" {
 #endif
 
 //! this function instantiates your modules
-MODULE_EXPORT(void*) SlagInstantiate(const char* name, const char*)
+SLAG_MODULE_EXPORT(void*) SlagInstantiate(const char* name, const char*)
 {
 	const std::string nameStr = name;
 	MyModule* result = nullptr;
@@ -37,23 +37,23 @@ MODULE_EXPORT(void*) SlagInstantiate(const char* name, const char*)
 	return (void*)result;
 }
 
-MODULE_EXPORT(void) SlagDestroyMessage(void* message)
+SLAG_MODULE_EXPORT(void) SlagDestroyMessage(void* message)
 {
 	delete (MyMessage*)(message);
 }
 
-MODULE_EXPORT(void) SlagDestroyModule(void* module)
+SLAG_MODULE_EXPORT(void) SlagDestroyModule(void* module)
 {
 	delete (MyModule*)(module);
 }
 
-MODULE_EXPORT(void**) SlagCompute(void* module, void** input, int inputPortNumber, int* outputPortNumber)
+SLAG_MODULE_EXPORT(void**) SlagCompute(void* module, void** input, int inputPortNumber, int* outputPortNumber)
 {
 	return (void**)(((MyModule*)module)->Compute((MyMessage**)input, inputPortNumber, outputPortNumber));
 }
 
 //! returns 0 on success
-MODULE_EXPORT(int) SlagInitialize(
+SLAG_MODULE_EXPORT(int) SlagInitialize(
 	void* module,
 	int settingsc, const char** settingsv,
 	const char** out_text, int* l,

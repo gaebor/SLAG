@@ -41,7 +41,7 @@ void** Mul(void** input, int inputPortNumber, int* outputPortNumber)
 	return &result;
 }
 
-MODULE_EXPORT(void*) SlagInstantiate(const char* moduleName, const char* InstanceName)
+SLAG_MODULE_EXPORT(void*) SlagInstantiate(const char* moduleName, const char* InstanceName)
 {
 	SlagFunction_t function = NULL;
 
@@ -53,16 +53,16 @@ MODULE_EXPORT(void*) SlagInstantiate(const char* moduleName, const char* Instanc
 	return (void*)function;
 }
 
-MODULE_EXPORT(void**) SlagCompute(void* module, void** input, int inputPortNumber, int* outputPortNumber)
+SLAG_MODULE_EXPORT(void**) SlagCompute(void* module, void** input, int inputPortNumber, int* outputPortNumber)
 {
 	return ((SlagFunction_t)module)(input, inputPortNumber, outputPortNumber);
 }
 
-MODULE_EXPORT(void) SlagDestroyMessage(void* message)
+SLAG_MODULE_EXPORT(void) SlagDestroyMessage(void* message)
 {
 	free(message);
 }
 
-MODULE_EXPORT(void) SlagDestroyModule(void* module)
+SLAG_MODULE_EXPORT(void) SlagDestroyModule(void* module)
 {
 }

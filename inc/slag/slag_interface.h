@@ -2,12 +2,14 @@
 #define INCLUDE_SLAG_INTERFACE_H
 
 #ifdef __GNUC__
-#	define EXPORT_FLAG __attribute__((visibility("default")))
+#   define SLAG_VISIBILITY __attribute__((visibility("default")))
+#	define SLAG_CALL 
 #elif defined _MSC_VER
-#	define EXPORT_FLAG __declspec(dllexport)
+#   define SLAG_VISIBILITY __declspec(dllexport)
+#	define SLAG_CALL __stdcall
 #endif
 
-#define MODULE_EXPORT(type) EXPORT_FLAG type __stdcall
+#define SLAG_MODULE_EXPORT(X) SLAG_VISIBILITY X SLAG_CALL
 
 #ifdef __cplusplus
 extern "C" {
@@ -45,7 +47,7 @@ enum ImageType
 		Set to 0 if you don't have any image to show!
 	@return pointer to whatever you call a module
 */
-typedef void* (__stdcall *SlagInstantiate_t)(
+typedef void* (SLAG_CALL *SlagInstantiate_t)(
 	const char* moduleName,
 	const char* InstanceName);
 
@@ -58,20 +60,20 @@ typedef void* (__stdcall *SlagInstantiate_t)(
 	@param message pointer to a message, which was allocated by some of your modules.
 		You should know how to delete it!
 */
-typedef void(__stdcall *SlagDestroyMessage_t)(void* message);
+typedef void(SLAG_CALL *SlagDestroyMessage_t)(void* message);
 
 //! SLAG calls this after the graph has been finished
 /*!
 	Same memory management issues apply like SlagDestroyMessage
 	@param module pointer to a module. You can delete it however you like!
 */
-typedef void(__stdcall *SlagDestroyModule_t)(void* module);
+typedef void(SLAG_CALL *SlagDestroyModule_t)(void* module);
 
 //! the core of SLAG
 /*!
 
 */
-typedef void** (__stdcall *SlagCompute_t)(void* module, void** input, int inputPortNumber, int* outputPortNumber);
+typedef void** (SLAG_CALL *SlagCompute_t)(void* module, void** input, int inputPortNumber, int* outputPortNumber);
 
 //! auxiliary
 typedef void** (*SlagFunction_t)(void** input, int inputPortNumber, int* outputPortNumber);
@@ -93,7 +95,7 @@ typedef void** (*SlagFunction_t)(void** input, int inputPortNumber, int* outputP
 	@param imageType you have to convert your output image to this format
 	@return 0 on success, otherwise initialization is considered to be failed and the graph doesn't even start
 */
-typedef  int (__stdcall *SlagInitialize_t)(
+typedef  int (SLAG_CALL *SlagInitialize_t)(
 	void* module, int settingsc, const char** settingsv,
 	const char** out_text, int* l,
 	unsigned char** out_img,
