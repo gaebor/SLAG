@@ -35,7 +35,7 @@ bool Factory::TryToLoadLibrary(std::ostream& os, const std::string& filename)
 
 		if (instantiate != NULL && deleteMsg != NULL && deleteModule != NULL && compute != NULL)
 		{
-			os << "loaded as " << library_name;
+			os << "loaded as \"" << library_name << '"';
 			os.flush();
 
 			auto& f = pModuleFunctions[library_name];
