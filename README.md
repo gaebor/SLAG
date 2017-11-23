@@ -8,7 +8,7 @@ It wants to be OS independent, as much as it is possible.
 ## Dependencies
 In order to compile SLAG all you need is
 * compiler which supports C++11, or VisualC++
-* [AsyncQueue](https://github.com/gaebor/human_readable/AsyncQueue)
+* [AsyncQueue](https://github.com/gaebor/AsyncQueue)
 * Optionally [OpenCV](https://opencv.org/)
 
 ## Usage
