@@ -7,7 +7,9 @@ It wants to be OS independent, as much as it is possible.
 
 ## Dependencies
 In order to compile SLAG all you need is
-* [PoCo](http://pocoproject.org/)
+* compiler which supports C++11, or VisualC++
+* [AsyncQueue](https://github.com/gaebor/human_readable/AsyncQueue)
+* Optionally [OpenCV](https://opencv.org/)
 
 ## Usage
 The interface of the SLAG is rather simple, you have to implement a given set of C functions, and pack it in a shared library (SO) or a dynamic library (DLL).
