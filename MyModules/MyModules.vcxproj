@@ -178,7 +178,6 @@
   <ItemGroup>
     <ClCompile Include="AbstractInterface.cpp" />
     <ClCompile Include="AddModule.cpp" />
-    <ClCompile Include="KeyReader.cpp" />
     <ClCompile Include="MyModules.cpp" />
     <ClCompile Include="VideoSource.cpp" />
   </ItemGroup>

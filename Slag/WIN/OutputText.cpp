@@ -1,4 +1,5 @@
 #include <windows.h>
+#include <io.h>
 
 #include "../OS_dependent.h"
 
@@ -18,10 +19,10 @@
 struct ModuleTextualData
 {
 	ModuleTextualData()
-		: output(), cycle_time(0.0), compute_time(0.0), wait_time(0.0)
+		: output(nullptr), cycle_time(0.0), compute_time(0.0), wait_time(0.0)
 	{
 	}
-	std::vector<char> output;
+	FILE* output;
 	double cycle_time, compute_time, wait_time;
 	std::vector<std::pair<PortNumber, size_t>> bufferSizes;
 };
@@ -47,6 +48,12 @@ void terminate_output_text()
 	run = false;
 	if (_textThread.get() && _textThread->joinable())
 		_textThread->join();
+}
+
+void* get_output_text_handle(const std::string& module_name_and_instance)
+{
+	if (_texts[module_name_and_instance].output == nullptr)
+		_texts[module_name_and_instance].output
 }
 
 void configure_output_text(const std::vector<std::string>& params)
@@ -151,16 +158,16 @@ void configure_output_text(const std::vector<std::string>& params)
 	}));
 }
 
-void handle_output_text( const std::string& module_name_and_instance, const char* text, int length)
-{
-	if (text)
-	{
-		AutoLock lock(_mutex);
-		auto& data = _texts[module_name_and_instance];
-		data.output.assign(text, text + length);
-		nameOffset = std::max((int)module_name_and_instance.size(), nameOffset);
-	}
-}
+//void handle_output_text( const std::string& module_name_and_instance, const char* text, int length)
+//{
+//	if (text)
+//	{
+//		AutoLock lock(_mutex);
+//		auto& data = _texts[module_name_and_instance];
+//		data.output.assign(text, text + length);
+//		nameOffset = std::max((int)module_name_and_instance.size(), nameOffset);
+//	}
+//}
 
 void handle_statistics( const std::string& module_name_and_instance, double cycle, double load, double wait, const std::map<PortNumber, size_t>& buffer_sizes)
 {

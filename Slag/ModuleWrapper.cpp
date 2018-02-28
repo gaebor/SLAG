@@ -40,6 +40,7 @@ bool ModuleWrapper::Initialize(const std::vector<std::string> settings)
 
 		std::vector<const char*> settings_array;
 
+		// outtext;
 		for (const auto& setting : settings)
 			settings_array.push_back(setting.c_str());
 
@@ -47,7 +48,7 @@ bool ModuleWrapper::Initialize(const std::vector<std::string> settings)
 		return initialize(
 					_module,
 					(int)settings_array.size(), settings_array.data(),
-					&output_text_raw, &output_text_length,
+					outtext,
 					&output_image_raw, &output_image_width, &output_image_height, imageType
 			) == 0;
 		// module settings are lost after the module initialize!

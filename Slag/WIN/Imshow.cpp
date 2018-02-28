@@ -117,7 +117,7 @@ inline size_t GetByteDepth(ImageType t)
 	}
 }
 
-//! for windows, this is always the same
+//! for Windows, this is always the same
 ImageType get_image_type(void)
 {
 	return ImageType::RGBA;
@@ -231,7 +231,7 @@ WindowWrapper::WindowWrapper(const std::string& name)
 		RECT rect;
 		if (GetWindowRect(self->_hwnd, &rect))
 		{
-			std::ofstream ofs(self->_name + ".pos");
+			std::ofstream ofs(self->_name + ".img.pos");
 			if (ofs)
 			{
 				ofs << rect.top << " " << rect.left;
@@ -248,7 +248,7 @@ WindowWrapper::WindowWrapper(const std::string& name)
 
 void WindowWrapper::Init()
 {
-	std::ifstream ifs(_name + ".pos");
+	std::ifstream ifs(_name + ".img.pos");
 	int top_corner = 0, left_corner = 0;
 	if (ifs)
 	{

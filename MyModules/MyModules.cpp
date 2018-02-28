@@ -28,9 +28,6 @@ SLAG_MODULE_EXPORT(void*) SlagInstantiate(const char* name, const char*)
 	else if (nameStr == "ReadInt")
 		result = new ReadModule<int>();
 	
-	else if (nameStr == "KeyReader")
-		result = new KeyReader();
-	
 	else if (nameStr == "ImageProcessor")
 		result = new ImageProcessor();
 
@@ -56,11 +53,11 @@ SLAG_MODULE_EXPORT(void**) SlagCompute(void* module, void** input, int inputPort
 SLAG_MODULE_EXPORT(int) SlagInitialize(
 	void* module,
 	int settingsc, const char** settingsv,
-	const char** out_text, int* l,
+	void* out_text,
 	unsigned char** out_img,
 	int* w, int* h, enum ImageType imageType)
 {
-	return (((MyModule*)module)->Initialize(settingsc, settingsv, out_text, l, out_img, w, h, imageType)) ? 0 : -1 ;
+	return (((MyModule*)module)->Initialize(settingsc, settingsv, (FILE*)out_text, out_img, w, h, imageType)) ? 0 : -1 ;
 }
 
 #ifdef __cplusplus

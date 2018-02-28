@@ -21,5 +21,4 @@ public:
 
 private:
 	MyMessage* output_msg;
-	std::string text;
 };

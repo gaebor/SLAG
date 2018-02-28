@@ -97,7 +97,7 @@ typedef void** (*SlagFunction_t)(void** input, int inputPortNumber, int* outputP
 */
 typedef  int (SLAG_CALL *SlagInitialize_t)(
 	void* module, int settingsc, const char** settingsv,
-	const char** out_text, int* l,
+	void* outputtext,
 	unsigned char** out_img,
 	int* w, int* h, enum ImageType imageType);
 

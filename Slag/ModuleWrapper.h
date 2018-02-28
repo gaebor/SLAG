@@ -41,7 +41,7 @@ private:
 	unsigned char* output_image_raw;
 	int output_image_width, output_image_height;
 	const ImageType imageType;
-
+	void* outtext;
 protected:
 	friend class Factory;
 

@@ -24,9 +24,6 @@
     <ClCompile Include="AbstractInterface.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="KeyReader.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="MyModules.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>

@@ -1,6 +1,8 @@
 #pragma once
 #include "slag/slag_interface.h"
 
+#include <stdio.h>
+
 class MyMessage
 {
 public:
@@ -30,19 +32,13 @@ public:
 		@param settingsc array of c-strings containing the received settings
 	*/
 	bool Initialize(int settingsc, const char** settingsv,
-		const char** out_text, int* l,
+		FILE* outputtext,
 		unsigned char** out_img, int* w, int* h, enum ImageType imageType);
 
 protected:
 	virtual bool InitializeCallback(int settingsc, const char** settingsv);
 public:
-	//! pointer to text output
-	/*!
-		pointer to a null-terminated string
-		You should allocate and free the memory
-	*/
-	const char** outputText;
-	int* outputTextLength;
+	FILE* outputText;
 	//! pointer to image output
 	/*!
 		You should allocate and free the memory
