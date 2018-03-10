@@ -175,8 +175,19 @@ int main(int argc, char* argv[])
 		{
 			const auto& toPort = connection.first;
 			const auto& fromModule = connection.second;
-			if (modules.find(toPort.module) != modules.end())
-				checked_connections[toPort] = fromModule;
+            if (modules.find(fromModule.module) == modules.end())
+            {
+                std::cerr << "Cannot connect !" << (std::string)fromModule << "! -> \"" <<
+                    (std::string)toPort << "\"" << std::endl;
+                continue;
+            }
+            if (modules.find(toPort.module) == modules.end())
+            {
+                std::cerr << "Cannot connect \"" << (std::string)fromModule << "\" -> !" <<
+                    (std::string)toPort << "!" << std::endl;
+                continue;
+            }
+            checked_connections[toPort] = fromModule;
 			//automatically overrides duplicate inputs
 		}
 
