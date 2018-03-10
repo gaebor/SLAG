@@ -19,15 +19,16 @@ public:
 
 	::MyMessage** Compute(::MyMessage**, int, int* outputPortNumber)
 	{
-		std::string line;
-		if (getline(ifs, line).good())
+		if (getline(ifs, str).good())
 		{
 			auto output = new Message();
-			std::istringstream iss(line);
+			std::istringstream iss(str);
 			iss >> output->value;
 
-			if (outputText)
-				fprintf(outputText, line.c_str());
+            *strout = str.c_str();
+            *strout_length = str.size();
+            //if (outputText)
+			//	fprintf(outputText, line.c_str());
 
 			output_msg = output;
 			*outputPortNumber = 1;

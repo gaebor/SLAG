@@ -29,10 +29,10 @@ MyMessage** AddModule::Compute( MyMessage** input, int inputPortNumber, int* out
 		}
 		*outputPortNumber = 1;
 		output_msg = output;
-		std::ostringstream oss;
+		std::ostringstream oss(str);
 		oss << output->val;
-		if (outputText)
-			fprintf(outputText, "%s\n", oss.str().c_str());
+        *strout = str.c_str();
+        *strout_length = str.size();
 
 		return &output_msg;
 	}

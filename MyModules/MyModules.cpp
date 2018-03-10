@@ -53,11 +53,16 @@ SLAG_MODULE_EXPORT(void**) SlagCompute(void* module, void** input, int inputPort
 SLAG_MODULE_EXPORT(int) SlagInitialize(
 	void* module,
 	int settingsc, const char** settingsv,
-	void* out_text,
+    void* txtin, void* txtout,
+    const char** strout, int* strout_size,
 	unsigned char** out_img,
 	int* w, int* h, enum ImageType imageType)
 {
-	return (((MyModule*)module)->Initialize(settingsc, settingsv, (FILE*)out_text, out_img, w, h, imageType)) ? 0 : -1 ;
+	return (((MyModule*)module)->Initialize(
+            settingsc, settingsv,
+            txtin, txtout,
+            strout, strout_size,
+            out_img, w, h, imageType)) ? 0 : -1 ;
 }
 
 #ifdef __cplusplus

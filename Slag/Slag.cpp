@@ -13,7 +13,6 @@
 #include "ModuleIdentifier.h"
 #include "aq/AsyncQueue.h"
 #include "ModuleWrapper.h"
-#include "HumanReadable.h"
 #include "OS_dependent.h"
 
 bool run = true; //signaling the termination event

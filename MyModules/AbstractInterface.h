@@ -1,7 +1,7 @@
 #pragma once
 #include "slag/slag_interface.h"
 
-#include <stdio.h>
+#include<string>
 
 class MyMessage
 {
@@ -32,13 +32,16 @@ public:
 		@param settingsc array of c-strings containing the received settings
 	*/
 	bool Initialize(int settingsc, const char** settingsv,
-		FILE* outputtext,
+        void* txtin, void* txtout,
+        const char** strout, int* strout_size,
 		unsigned char** out_img, int* w, int* h, enum ImageType imageType);
 
 protected:
 	virtual bool InitializeCallback(int settingsc, const char** settingsv);
 public:
-	FILE* outputText;
+	const char** strout;
+    std::string str;
+    int* strout_length;
 	//! pointer to image output
 	/*!
 		You should allocate and free the memory

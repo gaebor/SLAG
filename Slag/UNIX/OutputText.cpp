@@ -10,7 +10,7 @@
 #include <chrono>
 #include <wordexp.h>
 
-#include "../HumanReadable.h"
+#include "hr.h"
 
 #undef max
 
@@ -87,7 +87,7 @@ void configure_output_text(const std::vector<std::string>& params)
 				for (const auto& m : _texts)
 				{
 					char line[1024];
-					print_humanreadable_time(line, 1024, m.second.cycle_time);
+					hr_time(line, 1024, m.second.cycle_time, "");
 					const int load = round_int(10 * m.second.compute_time / m.second.cycle_time);
 					const int wait = round_int(10 * m.second.wait_time / m.second.cycle_time);
 					printf("%-*s|%s|", nameOffset, m.first.c_str(), line);
@@ -104,7 +104,7 @@ void configure_output_text(const std::vector<std::string>& params)
 
 					for (auto& q : m.second.bufferSizes)
 					{
-						print_humanreadable_giga(line, 1024, (double)q.second);
+						hr_giga(line, 1024, (double)q.second, "");
 						printf("%*s|> %*d|\n", nameOffset, line, -19, q.first);
 					}
 
@@ -155,3 +155,15 @@ std::vector<std::string> split_to_argv(const std::string& line)
 	}
 	return argv;
 }
+
+//TODO pipe write to console
+void* get_txtout(const std::string&)
+{
+    return nullptr;
+}
+
+void* get_txtin(const std::string&)
+{
+    return nullptr;
+}
+

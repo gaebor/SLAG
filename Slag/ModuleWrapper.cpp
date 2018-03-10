@@ -17,8 +17,8 @@ ModuleWrapper::ModuleWrapper(const bool* run)
 :	inputPortLength(0),
 	_module(nullptr),
 	output_image_raw(nullptr),
-	output_text_raw(nullptr),
-	output_text_length(0),
+    strout(nullptr),
+    strout_size(0),
 	output_image_width(0), output_image_height(0),
 	do_run(run),
 	imageType(get_image_type())
@@ -47,8 +47,9 @@ bool ModuleWrapper::Initialize(const std::vector<std::string> settings)
 		//Initialize
 		return initialize(
 					_module,
-					(int)settings_array.size(), settings_array.data(),
-					outtext,
+					(int)settings_array.size(), settings_array.data(),                    
+					get_txtin(printableName), get_txtout(printableName),
+                    &strout, &strout_size,
 					&output_image_raw, &output_image_width, &output_image_height, imageType
 			) == 0;
 		// module settings are lost after the module initialize!
@@ -138,8 +139,8 @@ void ModuleWrapper::ThreadProcedure()
 		timer_cycle.Tick();
 
 		handle_statistics(printableName, cycle_time, compute_time, wait_time, bufferSize);
-		if (output_text_raw != nullptr)
-			handle_output_text(printableName, output_text_raw, output_text_length);
+		if (strout != nullptr)
+			handle_output_text(printableName, strout, strout_size);
 
 		if (output_image_raw != nullptr)
 		{

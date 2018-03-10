@@ -96,10 +96,11 @@ typedef void** (*SlagFunction_t)(void** input, int inputPortNumber, int* outputP
 	@return 0 on success, otherwise initialization is considered to be failed and the graph doesn't even start
 */
 typedef  int (SLAG_CALL *SlagInitialize_t)(
-	void* module, int settingsc, const char** settingsv,
-	void* outputtext,
-	unsigned char** out_img,
-	int* w, int* h, enum ImageType imageType);
+	void* module,
+    int settingsc, const char** settingsv,
+    void* txtin, void* txtout,
+    const char** strout, int* strout_size,
+	unsigned char** out_img, int* w, int* h, enum ImageType imageType);
 
 // #define SETTINGS_MAX_LENGTH 1024
 

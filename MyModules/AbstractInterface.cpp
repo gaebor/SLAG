@@ -11,10 +11,12 @@ MyModule::~MyModule()
 }
 
 bool MyModule::Initialize(int settingsc, const char** settingsv,
-	FILE* outtext,
+    void* txtin, void* txtout,
+    const char** _strout, int* strout_size,
 	unsigned char** out_img, int* w, int*h , enum ImageType type)
 {
-	outputText = outtext;
+	strout = _strout;
+    strout_length = strout_size;
 	outputPicture = out_img;
 	outputPictureWidth = w;
 	outputPictureHeight = h;

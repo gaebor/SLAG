@@ -36,12 +36,12 @@ public:
 	const bool* do_run;
 
 private:
-	const char* output_text_raw;
-	int output_text_length;
+    void* txtin, *txtout;
+	const char* strout;
+	int strout_size;
 	unsigned char* output_image_raw;
 	int output_image_width, output_image_height;
 	const ImageType imageType;
-	void* outtext;
 protected:
 	friend class Factory;
 

@@ -28,8 +28,8 @@ MyMessage** ImageProcessor::Compute(MyMessage** input, int inputPortNumber, int*
 			*outputPicture = img.data;
 			*outputPictureWidth = img.cols;
 			*outputPictureHeight = img.rows;
-			*outputText = nullptr;
-			*outputTextLength = 0;
+			*strout = nullptr;
+			*strout_length = 0;
 
 			*outputPortNumber = 0;
 			return (MyMessage**)fake_msg;
