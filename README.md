@@ -9,7 +9,23 @@ It wants to be OS independent, as much as it is possible.
 In order to compile SLAG all you need is
 * compiler which supports C++11, or VisualC++
 * [AsyncQueue](https://github.com/gaebor/AsyncQueue)
+* [human_readable](https://github.com/gaebor/human_readable)
 * Optionally [OpenCV](https://opencv.org/)
+
+### Build
+* GCC
+
+    mkdir bin
+    cd bin
+    cmake ..
+    make
+
+* Visual Studio
+
+    mkdir bin
+    cd bin
+    cmake -G "Visual Studio 15 2017 Win64" ..
+    start SLAG.sln
 
 ## Usage
 The interface of the SLAG is rather simple, you have to implement a given set of C functions, and pack it in a shared library (SO) or a dynamic library (DLL).
@@ -33,7 +49,7 @@ These should be implemented in your Library
 ## Platforms
 In theory, SLAG can be implemented for any platform which can load and run a C Library.
 Of course, your Library have to compile for that particular platform (that's YOUR job).
-Although, it is very understandable to fulfil __one of the following Platform Requirements__:
+Although, it is very understandable to fulfill __one of the following Platform Requirements__:
 
 Input capability | Platform service | Output capability
 ---------------- | ---------------- | -----------------
