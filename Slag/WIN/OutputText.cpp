@@ -19,14 +19,12 @@
 struct ModuleTextualData
 {
 	ModuleTextualData()
-		: strout(nullptr), strout_old(nullptr),
+		: strout_current(nullptr), strout_end(nullptr),
         cycle_time(0.0), compute_time(0.0), wait_time(0.0)
 	{
 	}
-	const char* strout;
-    const char* strout_old;
-    int strout_length;
-    // PHANDLE read_end;
+    const char* strout_current;
+    const char* strout_end;
 	double cycle_time, compute_time, wait_time;
 	std::vector<std::pair<PortNumber, size_t>> bufferSizes;
 };
@@ -57,22 +55,13 @@ void terminate_output_text()
 void* get_txtout(const std::string& module_name_and_instance)
 {
     return nullptr;
-    //auto& textual_data = _texts[module_name_and_instance];
-    //HANDLE write_end;
-
-    //if (textual_data.output == nullptr)
-    //{
-    //    if (CreatePipe(textual_data.read_end, &write_end, NULL,0))
-    //        textual_data.output = (FILE*)write_end;
-    //}
-
-    //return _texts[module_name_and_instance].output;
 }
 
 void* get_txtin(const std::string& module_name_and_instance)
 {
     return nullptr;
 }
+
 void configure_output_text(const std::vector<std::string>& params)
 {
 	for (size_t i = 0; i < params.size(); ++i)
@@ -121,18 +110,19 @@ void configure_output_text(const std::vector<std::string>& params)
 				}
 
 				printf("%-*s", nameOffset, nameTag.c_str());
-				printf("|  speed   | overhead | text output\n");
+				printf("| speed | overhead | text output\n");
 				for (int i = 0; i < nameOffset; ++i)
 					putchar('-');
-				printf("+----------+----------+-\n");
+				printf("+-------+----------+-\n");
 
 				for (auto& m : _texts)
 				{
+                    auto& t = m.second;
                     std::vector<char> line(width + 1, '\0');
-					hr_time(line.data(), width + 1, (float)m.second.cycle_time, "");
-					const int load = round_int(10 * m.second.compute_time / m.second.cycle_time);
-					const int wait = round_int(10 * m.second.wait_time / m.second.cycle_time);
-					printf("%-*s|%s|", nameOffset, m.first.c_str(), line.data() + line.size());
+					hr_time(line.data(), width + 1, (float)t.cycle_time, "");
+					const int load = round_int(10 * t.compute_time / t.cycle_time);
+					const int wait = round_int(10 * t.wait_time / t.cycle_time);
+					printf("%-*s|%s|", nameOffset, m.first.c_str(), line.data());
 					for (int i = 0; i < wait; ++i)
 						putchar(wait_marker);
 					for (int i = 0; i < load; ++i)
@@ -142,23 +132,28 @@ void configure_output_text(const std::vector<std::string>& params)
 
 					putchar('|');
 
-                    for (int i = nameOffset + 20;
-                         *m.second.strout && *m.second.strout != '\n' && i < width;
-                         ++(m.second.strout), ++i)
+                    for (int j = nameOffset + 20;
+                        t.strout_current && t.strout_current < t.strout_end && *t.strout_current && j < width - 1;
+                        ++(t.strout_current), ++j)
                     {
-                        putchar(*m.second.strout);
+                        if (*t.strout_current == '\n')
+                        {
+                            ++t.strout_current;
+                            break;
+                        }
+                        putchar(*m.second.strout_current);
                     }
-					putchar('\n');
-
+                    putchar('\n');
+                    
 					for (auto& q : m.second.bufferSizes)
 					{
 						hr_giga(line.data(), width + 1, (float)q.second, "");
-						printf("%*s|> %*d|\n", nameOffset, line.data(), -19, q.first);
+						printf("%*s|> %*d|\n", nameOffset, line.data(), -16, q.first);
 					}
 
 					for (int i = 0; i < nameOffset; ++i)
 						putchar('-');
-					printf("+----------+----------+-\n");
+					printf("+-------+----------+-\n");
 				}
 				printf("\n");
 
@@ -169,12 +164,9 @@ void configure_output_text(const std::vector<std::string>& params)
 				coord.Y = cursor;
 				SetConsoleCursorPosition(hCon, coord);
 				
-				//_texts.clear();
 			}
 			std::this_thread::sleep_for(std::chrono::nanoseconds((std::int64_t)(_speed * std::nano::den / std::nano::num)));
 		}
-		//if (started)
-		//	internal_func();
 
 		coord.X = 0;
 		coord.Y = cursor_end;
@@ -188,8 +180,8 @@ void handle_output_text( const std::string& module_name_and_instance, const char
 	{
 		AutoLock lock(_mutex);
 		auto& data = _texts[module_name_and_instance];
-        data.strout = text;
-        data.strout_length = length;
+        data.strout_current = text;
+        data.strout_end = text + length;
 		nameOffset = std::max((int)module_name_and_instance.size(), nameOffset);
 	}
 }
