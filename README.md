@@ -15,17 +15,17 @@ In order to compile SLAG all you need is
 ### Build
 * GCC
 
-    mkdir bin
-    cd bin
-    cmake ..
-    make
+      mkdir bin
+      cd bin
+      cmake ..
+      make
 
 * Visual Studio
 
-    mkdir bin
-    cd bin
-    cmake -G "Visual Studio 15 2017 Win64" ..
-    start SLAG.sln
+      mkdir bin
+      cd bin
+      cmake -G "Visual Studio 15 2017 Win64" ..
+      start SLAG.sln
 
 ## Usage
 The interface of the SLAG is rather simple, you have to implement a given set of C functions, and pack it in a shared library (SO) or a dynamic library (DLL).
