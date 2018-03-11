@@ -2,6 +2,8 @@
 
 #include <sstream>
 
+#include "ConfigReader.h"
+
 ModuleIdentifier::ModuleIdentifier( const std::string& n, const std::string& i /*= ""*/, const std::string& d /*= ""*/ )
 {
 	assign(n,i,d);
@@ -25,10 +27,12 @@ ModuleIdentifier::operator std::string() const
 
 bool ModuleIdentifier::operator<( const ModuleIdentifier& other ) const
 {
-	if (name != other.name)
-		return name < other.name;
-	else
-		return instance < other.instance;
+    return (name == other.name) ? instance < other.instance : name < other.name;
+}
+
+bool ModuleIdentifier::operator==(const ModuleIdentifier& other) const
+{
+    return (name == other.name) && instance == other.instance;
 }
 
 ModuleIdentifier& ModuleIdentifier::assign( const std::string& n, const std::string& i /*= ""*/, const std::string& d /*= ""*/ )
@@ -70,10 +74,9 @@ PortIdentifier::PortIdentifier( const ModuleIdentifier& m, PortNumber p /*= 0*/ 
 
 }
 
-PortIdentifier::PortIdentifier( const char* id ) : module(""), port(0)
+PortIdentifier::PortIdentifier( const std::string& idStr)
+    : module(""), port(0)
 {
-	std::string idStr = id;
-
 	auto portSeparator = idStr.find(':');
 	if (portSeparator != idStr.rfind(':'))
 	{
@@ -89,12 +92,12 @@ PortIdentifier::PortIdentifier( const char* id ) : module(""), port(0)
 
 bool PortIdentifier::operator<( const PortIdentifier& other ) const
 {
-	if (module < other.module)
-		return true;
-	else if (other.module < module)
-		return false;
-	else
-		return port < other.port;
+    return (module == other.module) ? port < other.port : module < other.module;
+}
+
+bool PortIdentifier::operator==(const PortIdentifier& other) const
+{
+    return module == other.module && port == other.port;
 }
 
 PortIdentifier::operator std::string() const
@@ -102,4 +105,38 @@ PortIdentifier::operator std::string() const
 	std::ostringstream oss;
 	oss << (std::string)module << ':' << port;
 	return oss.str();
+}
+
+ConnectionIdentifier::ConnectionIdentifier(const PortIdentifier & from, const PortIdentifier & to)
+: from(from), to(to)
+{
+}
+
+ConnectionIdentifier::ConnectionIdentifier(const std::string& c)
+: from(), to()
+{
+    if (c.find("->") == std::string::npos || c.find("->") != c.rfind("->"))
+        return;
+
+    from = PortIdentifier(ConfigReader::trim1(c.substr(0, c.find("->"))));
+    to = PortIdentifier(ConfigReader::trim1(c.substr(c.find("->") + 2)));
+
+}
+
+ConnectionIdentifier::operator std::string() const
+{
+    std::string result = from;
+    result += " -> ";
+    result += to;
+    return result;
+}
+
+bool ConnectionIdentifier::operator <(const ConnectionIdentifier& other) const
+{
+    return (from == other.from) ? to < other.to : from < other.from;
+}
+
+bool ConnectionIdentifier::operator== (const ConnectionIdentifier& other) const
+{
+    return (from == other.from) && to == other.to;
 }
