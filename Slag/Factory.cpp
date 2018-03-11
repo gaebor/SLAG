@@ -14,56 +14,63 @@ bool Factory::TryToLoadLibrary(std::ostream& os, const std::string& filename)
 	os << "Loading library from \"" << filename << "\" ... ";
 	os.flush();
 
-	const std::string library_name = get_file_name(filename);
-	
-	auto const hndl = load_library(filename.c_str());
+    if (module_dll_handles.find(filename) == module_dll_handles.end() ||
+        module_dll_handles[filename] == nullptr)
+    {
+        const std::string library_name = get_file_name(filename);
 
-	if (hndl != nullptr)
-	{
-		auto instantiate = (SlagInstantiate_t)get_symbol_from_library(hndl, "SlagInstantiate");
-		auto deleteMsg = (SlagDestroyMessage_t)get_symbol_from_library(hndl, "SlagDestroyMessage");
-		auto deleteModule = (SlagDestroyModule_t)get_symbol_from_library(hndl, "SlagDestroyModule");
-		auto compute = (SlagCompute_t)get_symbol_from_library(hndl, "SlagCompute");
-		auto initialize = (SlagInitialize_t)get_symbol_from_library(hndl, "SlagInitialize");
+        auto const hndl = load_library(filename.c_str());
+        if (hndl != nullptr)
+        {
+            auto instantiate = (SlagInstantiate_t)get_symbol_from_library(hndl, "SlagInstantiate");
+            auto deleteMsg = (SlagDestroyMessage_t)get_symbol_from_library(hndl, "SlagDestroyMessage");
+            auto deleteModule = (SlagDestroyModule_t)get_symbol_from_library(hndl, "SlagDestroyModule");
+            auto compute = (SlagCompute_t)get_symbol_from_library(hndl, "SlagCompute");
+            auto initialize = (SlagInitialize_t)get_symbol_from_library(hndl, "SlagInitialize");
 
-		if (instantiate != NULL && deleteMsg != NULL && deleteModule != NULL && compute != NULL)
-		{
-			os << "loaded as \"" << library_name << '"';
-			os.flush();
+            if (instantiate != NULL && deleteMsg != NULL && deleteModule != NULL && compute != NULL)
+            {
+                os << "loaded as \"" << library_name << '"';
+                os.flush();
 
-			auto& f = pModuleFunctions[library_name];
+                auto& f = pModuleFunctions[library_name];
 
-			f.instantiate = instantiate;
-			f.compute = compute;
-			f.deleteModule = deleteModule;
-			f.deleteMsg = deleteMsg;
+                f.instantiate = instantiate;
+                f.compute = compute;
+                f.deleteModule = deleteModule;
+                f.deleteMsg = deleteMsg;
 
-			module_dll_handles.push_back(hndl);
-			if (initialize != NULL)
-				f.initialize = initialize;
-			return true;
-		}
-		else
-		{
-			//none of my business
-			os << "SLAG interface not found";
-			os.flush();
-			close_library(hndl);
-		}
-	}
-	else
-	{
-		os << "cannot be opened";
-		os.flush();
-	}
-	return false;
+                module_dll_handles[filename] = hndl;
+                if (initialize != NULL)
+                    f.initialize = initialize;
+                return true;
+            }
+            else
+            {
+                //none of my business
+                os << "SLAG interface not found";
+                os.flush();
+                close_library(hndl);
+            }
+        }
+        else
+        {
+            os << "cannot be opened";
+            os.flush();
+        }
+        return false;
+    }else
+    {
+        os << "already loaded";
+    }
+    return false;
 }
 
 bool Factory::TryToInstantiate(ModuleWrapper& moduleWrapper, const Functions& f)
 {
-	if (moduleWrapper._module && moduleWrapper.deleteModule) // already a module
+	if (moduleWrapper._module) // already a module
 	{
-		ManagedModule garbageCollector(moduleWrapper._module, moduleWrapper.deleteModule);
+        moduleWrapper._module.reset();
 	}
 
 	const auto& moduleId = moduleWrapper.identifier;
@@ -74,8 +81,7 @@ bool Factory::TryToInstantiate(ModuleWrapper& moduleWrapper, const Functions& f)
 	
 	if (module)
 	{
-		moduleWrapper._module = module;
-		moduleWrapper.deleteModule = f.deleteModule;
+		moduleWrapper._module.reset(module, f.deleteModule);
 		moduleWrapper.deleteMsg = f.deleteMsg;
 		moduleWrapper.compute = f.compute;
 		moduleWrapper.initialize = f.initialize;
@@ -143,8 +149,9 @@ Factory::ErrorCode Factory::InstantiateModule(ModuleWrapper& moduleWrapper)
 
 Factory::~Factory()
 {
-	for (auto hndl : module_dll_handles)
-		close_library(hndl);
+	for (auto& hndl : module_dll_handles)
+		close_library(hndl.second);
+    module_dll_handles.clear();
 }
 
 Factory::Functions::Functions()

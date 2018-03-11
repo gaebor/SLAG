@@ -9,13 +9,11 @@
 
 ModuleWrapper::~ModuleWrapper(void)
 {
-	if (_module)
-		deleteModule(_module);
 }
 
 ModuleWrapper::ModuleWrapper(const bool* run)
 :	inputPortLength(0),
-	_module(nullptr),
+	_module(),
 	output_image_raw(nullptr),
     strout(nullptr),
     strout_size(0),
@@ -25,13 +23,7 @@ ModuleWrapper::ModuleWrapper(const bool* run)
 {
 }
 
-ModuleWrapper::ModuleWrapper( const ModuleWrapper& )
-: imageType(ImageType::GREY)
-{
-	throw std::exception();
-}
-
-bool ModuleWrapper::Initialize(const std::vector<std::string> settings)
+bool ModuleWrapper::Initialize(const std::vector<std::string>& settings)
 {
 	if (_module != nullptr)
 	{
@@ -46,7 +38,7 @@ bool ModuleWrapper::Initialize(const std::vector<std::string> settings)
 
 		//Initialize
 		return initialize(
-					_module,
+					_module.get(),
 					(int)settings_array.size(), settings_array.data(),                    
 					get_txtin((std::string)identifier), get_txtout((std::string)identifier),
                     &strout, &strout_size,
@@ -56,6 +48,16 @@ bool ModuleWrapper::Initialize(const std::vector<std::string> settings)
 		//TODO global settings
 	}
 	return false;
+}
+
+void ModuleWrapper::Start()
+{
+    _thread = std::thread([](ModuleWrapper* _m) {_m->ThreadProcedure(); }, this);
+}
+
+void ModuleWrapper::Wait()
+{
+    _thread.join();
 }
 
 void ModuleWrapper::ThreadProcedure()
@@ -97,7 +99,7 @@ void ModuleWrapper::ThreadProcedure()
 		wait_time = timer.Tock();
 		
 		timer.Tick();
-		outputMessages_raw = compute(_module, inputMessages.data(), (int)inputMessages.size(), &outputNumber);
+		outputMessages_raw = compute(_module.get(), inputMessages.data(), (int)inputMessages.size(), &outputNumber);
 		compute_time = timer.Tock();
 
 		for (const auto& q : inputQueues)

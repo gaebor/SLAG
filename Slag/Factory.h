@@ -1,5 +1,4 @@
-#ifndef INCLUDE_MODULE_FACTORY_H
-#define INCLUDE_MODULE_FACTORY_H
+#pragma once
 
 #include <vector>
 #include <string>
@@ -45,7 +44,5 @@ private:
 	
 	bool TryToLoadLibrary(std::ostream& os, const std::string& filename);
 	bool TryToInstantiate(ModuleWrapper& moduleWrapper, const Functions& f);
-	std::vector<void*> module_dll_handles;
+	std::map<std::string, void*> module_dll_handles;
 };
-
-#endif //INCLUDE_MODULE_FACTORY_H

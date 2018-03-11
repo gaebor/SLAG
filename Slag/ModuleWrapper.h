@@ -1,7 +1,7 @@
-#ifndef INCLUDE_MODULE_WRAPPER_H
-#define INCLUDE_MODULE_WRAPPER_H
+#pragma once
 
 #include <vector>
+#include <thread>
 #include <map>
 
 #include "slag/slag_interface.h"
@@ -17,8 +17,14 @@ public:
 	ModuleWrapper(const bool* run);
 	~ModuleWrapper();
 
-	bool Initialize(const std::vector<std::string> settings);
-	void ThreadProcedure();
+    bool Initialize(const std::vector<std::string>& settings);
+
+    //! start processing
+    void Start();
+    //! wait until the module has job left
+    void Wait();
+    //! force stop
+    void Stop();
 
 public:
 	ModuleIdentifier identifier;
@@ -27,13 +33,16 @@ public:
 	std::map<PortNumber, std::vector<MessageQueue*>> outputQueues; //!< output can be duplicated and distributed to many modules
 	size_t inputPortLength;
 
-	std::map<PortNumber, size_t> bufferSize;
-
 	//! gets a global ptr
 	//int global_settings_c;
 	//const char** global_settings_v;
 	const bool* do_run;
 
+private:
+    
+    void ThreadProcedure();
+
+    std::thread _thread;
 private:
     void* txtin, *txtout;
 	const char* strout;
@@ -41,16 +50,16 @@ private:
 	unsigned char* output_image_raw;
 	int output_image_width, output_image_height;
 	const ImageType imageType;
+
+    std::map<PortNumber, size_t> bufferSize;
+
 protected:
 	friend class Factory;
 
-	void* _module; // responsible for it!
+    ManagedModule _module;
 	SlagCompute_t compute;
 	SlagInitialize_t initialize;
-	SlagDestroyModule_t deleteModule;
 	SlagDestroyMessage_t deleteMsg;
-public:
-	ModuleWrapper(const ModuleWrapper& other);
+private:
+	// ModuleWrapper(const ModuleWrapper& other);
 };
-
-#endif //INCLUDE_MODULE_WRAPPER_H

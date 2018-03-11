@@ -19,7 +19,8 @@ bool run = true; //signaling the termination event
 
 int main(int argc, char* argv[])
 {
-	Factory factory;
+    Factory factory;
+
 	std::list<std::unique_ptr<MessageQueue>> messageQueues;
 	std::map<ModuleIdentifier, ModuleWrapper> modules;
 	MessageQueue::LimitBehavior queueBehavior = MessageQueue::None;
@@ -243,20 +244,13 @@ no_halt:
 
 	std::thread module_processes([&]()
 	{
-		std::vector<std::shared_ptr<std::thread>> moduleThreads(modules.size());
-		auto threadIt = moduleThreads.begin();
-		for (auto& m : modules)
-		{
-			threadIt->reset(new std::thread([](ModuleWrapper* _m){_m->ThreadProcedure();}, &m.second));
-			++threadIt;
-		}
+        for (auto& m : modules)
+            m.second.Start();
 
-		threadIt = moduleThreads.begin();
-		for (threadIt = moduleThreads.begin(); threadIt != moduleThreads.end(); ++threadIt)
-		{
-			(*threadIt)->join();
-		}
-		run = false;
+        for (auto& m : modules)
+            m.second.Wait();
+		
+        run = false;
 	});
 
 	wait_termination_signal();
