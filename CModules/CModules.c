@@ -99,6 +99,28 @@ static void** Read(void** input, int inputPortNumber, int* outputPortNumber)
         return NULL;
 }
 
+int quit_limit = 0;
+static void** Quitter(void** input, int inputPortNumber, int* outputPortNumber)
+{
+    static void* result = NULL;
+    static int i = 0;
+
+    *outputPortNumber = 1;
+    if (inputPortNumber > 0)
+        result = input[0];
+    else
+        result = NULL;
+
+    ++i;
+
+    if (quit_limit > 0 && i >= quit_limit)
+    {
+        *outputPortNumber = 0;
+        return NULL; // quit
+    }
+    return &result;
+}
+
 SLAG_MODULE_EXPORT(int) SlagInitialize(
     void* module,
     int settingsc, const char** settingsv,
@@ -111,6 +133,11 @@ SLAG_MODULE_EXPORT(int) SlagInitialize(
     {
         if (settingsc > 0)
             input_for_read = fopen(settingsv[0], "r");
+    }
+    if (module == Quitter)
+    {
+        if (settingsc > 0)
+            quit_limit = atoi(settingsv[0]);
     }
     return 0;
 }
@@ -128,6 +155,8 @@ SLAG_MODULE_EXPORT(void*) SlagInstantiate(const char* moduleName, const char* In
         function = Read;
     else if (0 == strcmp("Double", moduleName))
         function = Double;
+    else if (0 == strcmp("Quitter", moduleName))
+        function = Quitter;
 	return (void*)function;
 }
 
