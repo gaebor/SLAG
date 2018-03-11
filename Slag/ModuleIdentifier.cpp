@@ -77,17 +77,16 @@ PortIdentifier::PortIdentifier( const ModuleIdentifier& m, PortNumber p /*= 0*/ 
 PortIdentifier::PortIdentifier( const std::string& idStr)
     : module(""), port(0)
 {
-	auto portSeparator = idStr.find(':');
-	if (portSeparator != idStr.rfind(':'))
-	{
-		//parse error, more than one ':'
-	}
-	if (portSeparator != std::string::npos)
+	auto const portSeparator = idStr.find(':');
+    if (portSeparator != idStr.rfind(':'))
+        return;
+
+    if (portSeparator != std::string::npos)
 	{
 		port = atoi(idStr.substr(portSeparator+1).c_str());
 		module = ModuleIdentifier(idStr.substr(0,portSeparator).c_str());
 	}else
-		module = ModuleIdentifier(id);	
+		module = ModuleIdentifier(idStr);
 }
 
 bool PortIdentifier::operator<( const PortIdentifier& other ) const
@@ -102,9 +101,15 @@ bool PortIdentifier::operator==(const PortIdentifier& other) const
 
 PortIdentifier::operator std::string() const
 {
-	std::ostringstream oss;
-	oss << (std::string)module << ':' << port;
-	return oss.str();
+    const std::string moduleStr(module);
+    if (moduleStr.empty())
+        return "";
+    else
+    {
+        std::ostringstream oss;
+        oss << (std::string)module << ':' << port;
+        return oss.str();
+    }
 }
 
 ConnectionIdentifier::ConnectionIdentifier(const PortIdentifier & from, const PortIdentifier & to)
@@ -125,9 +130,13 @@ ConnectionIdentifier::ConnectionIdentifier(const std::string& c)
 
 ConnectionIdentifier::operator std::string() const
 {
-    std::string result = from;
-    result += " -> ";
-    result += to;
+    const std::string fromStr = from;
+    const std::string toStr = to;
+    std::string result;
+
+    if (!fromStr.empty() && !toStr.empty())
+        result = fromStr + " -> " + toStr;
+
     return result;
 }
 

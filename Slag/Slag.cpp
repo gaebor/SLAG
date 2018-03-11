@@ -170,8 +170,8 @@ int main(int argc, char* argv[])
 			if (c.find("->") == std::string::npos || c.find("->") != c.rfind("->"))
 				continue;
 
-			const auto fromModuleId = PortIdentifier(ConfigReader::trim1(c.substr(0, c.find("->"))).c_str());
-			const auto toModuleId = PortIdentifier(ConfigReader::trim1(c.substr(c.find("->") + 2)).c_str());
+			const auto fromModuleId = PortIdentifier(ConfigReader::trim1(c.substr(0, c.find("->"))));
+			const auto toModuleId = PortIdentifier(ConfigReader::trim1(c.substr(c.find("->") + 2)));
 				
 			connections[toModuleId] = fromModuleId;
 		}
