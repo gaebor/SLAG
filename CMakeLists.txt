@@ -23,11 +23,12 @@ elseif(UNIX)
     add_compile_options("-std=c++11" -pthread)
 endif(WIN32)
 
-link_directories(Slag ${AsyncQueueDir}/bin)
-link_directories(Slag ${HrDir}/bin)
+link_directories(${AsyncQueueDir}/bin ${HrDir}/bin ${OPENCV_LIB})
 
 ### Slag ###
-add_executable(Slag ${SlagSource})
+file(GLOB SlagInclude RELATIVE ${CMAKE_SOURCE_DIR} Slag/*.h)
+
+add_executable(Slag ${SlagSource} ${SlagInclude})
 
 include_directories(Slag inc)
 target_include_directories(Slag PRIVATE ${AsyncQueueDir}/inc ${HrDir})
@@ -36,7 +37,7 @@ include_directories(Slag "${OPENCV_DIR}/include")
 target_link_libraries(Slag asyncqueue hrlib)
 
 if (WIN32)
-    target_link_libraries(Slag asyncqueue shlwapi)
+    target_link_libraries(Slag shlwapi)
 elseif(UNIX)
     target_link_libraries(Slag dl pthread)
 endif(WIN32)
@@ -51,10 +52,9 @@ add_custom_command(TARGET CModules POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:CModules> .
 )
 ### C++ modules ###
-link_directories(MyModules ${OPENCV_LIB})
-
 file(GLOB MyModulesSource RELATIVE ${CMAKE_SOURCE_DIR} MyModules/*.cpp)
-add_library(MyModules SHARED ${MyModulesSource})
+file(GLOB MyModulesInclude RELATIVE ${CMAKE_SOURCE_DIR} MyModules/*.h)
+add_library(MyModules SHARED ${MyModulesSource} ${MyModulesInclude})
 
 set(OpenCvDep opencv_world${OPENCV_VERSION})
 target_link_libraries(MyModules ${OpenCvDep})

@@ -138,7 +138,6 @@ Factory::ErrorCode Factory::InstantiateModule(ModuleWrapper& moduleWrapper)
 			result = NoSuchLibrary;
 		}
 	}
-	moduleWrapper.printableName = moduleWrapper.identifier;
 	return result;
 }
 

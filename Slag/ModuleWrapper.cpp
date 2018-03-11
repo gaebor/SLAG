@@ -48,7 +48,7 @@ bool ModuleWrapper::Initialize(const std::vector<std::string> settings)
 		return initialize(
 					_module,
 					(int)settings_array.size(), settings_array.data(),                    
-					get_txtin(printableName), get_txtout(printableName),
+					get_txtin((std::string)identifier), get_txtout((std::string)identifier),
                     &strout, &strout_size,
 					&output_image_raw, &output_image_width, &output_image_height, imageType
 			) == 0;
@@ -62,8 +62,10 @@ void ModuleWrapper::ThreadProcedure()
 {
 	std::vector<void*> inputMessages(inputPortLength+1, nullptr);//HACK
     inputMessages.resize(inputPortLength);
+    
+    const std::string printableName(identifier);
 
-	void** outputMessages_raw;
+    void** outputMessages_raw;
 
 	//Dequeued input messages which haven't been Enqueued to the output yet
 	std::vector<ManagedMessage> receivedMessages;

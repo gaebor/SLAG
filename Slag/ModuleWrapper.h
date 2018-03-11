@@ -22,7 +22,6 @@ public:
 
 public:
 	ModuleIdentifier identifier;
-	std::string printableName;
 	// TODO async and sync inputs
 	std::map<PortNumber, MessageQueue*> inputQueues; //!< non-responsible for MessageQueues
 	std::map<PortNumber, std::vector<MessageQueue*>> outputQueues; //!< output can be duplicated and distributed to many modules
