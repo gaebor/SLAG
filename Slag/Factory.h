@@ -27,7 +27,7 @@ public:
 
     void Scan();
 public:
-	ErrorCode InstantiateModule(ModuleWrapper& moduleWrapper);
+	std::pair<ModuleWrapper*, ErrorCode> InstantiateModule(const ModuleIdentifier& id);
 
 	struct Functions
 	{
@@ -43,6 +43,6 @@ private:
 	std::map<std::string, Functions> pModuleFunctions;
 	
 	bool TryToLoadLibrary(std::ostream& os, const std::string& filename);
-	bool TryToInstantiate(ModuleWrapper& moduleWrapper, const Functions& f);
+    ModuleWrapper* TryToInstantiate(const ModuleIdentifier& moduleId, const Functions& f);
 	std::map<std::string, void*> module_dll_handles;
 };

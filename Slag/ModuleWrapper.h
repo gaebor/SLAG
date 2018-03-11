@@ -14,7 +14,7 @@ class Factory;
 class ModuleWrapper
 {
 public:
-	ModuleWrapper(const bool* run);
+	ModuleWrapper();
 	~ModuleWrapper();
 
     bool Initialize(const std::vector<std::string>& settings);
@@ -36,7 +36,7 @@ public:
 	//! gets a global ptr
 	//int global_settings_c;
 	//const char** global_settings_v;
-	const bool* do_run;
+	bool do_run;
 
 private:
     

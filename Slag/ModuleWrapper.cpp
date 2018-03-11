@@ -11,14 +11,14 @@ ModuleWrapper::~ModuleWrapper(void)
 {
 }
 
-ModuleWrapper::ModuleWrapper(const bool* run)
+ModuleWrapper::ModuleWrapper()
 :	inputPortLength(0),
 	_module(),
 	output_image_raw(nullptr),
     strout(nullptr),
     strout_size(0),
 	output_image_width(0), output_image_height(0),
-	do_run(run),
+	do_run(nullptr),
 	imageType(get_image_type())
 {
 }
@@ -52,12 +52,20 @@ bool ModuleWrapper::Initialize(const std::vector<std::string>& settings)
 
 void ModuleWrapper::Start()
 {
+    do_run = true;
     _thread = std::thread([](ModuleWrapper* _m) {_m->ThreadProcedure(); }, this);
 }
 
 void ModuleWrapper::Wait()
 {
     _thread.join();
+    do_run = false;
+}
+
+void ModuleWrapper::Stop()
+{
+    do_run = false;
+    Wait();
 }
 
 void ModuleWrapper::ThreadProcedure()
@@ -76,7 +84,7 @@ void ModuleWrapper::ThreadProcedure()
 	double cycle_time = 1.0, compute_time = 0.0, wait_time = 0.0;
 	PortNumber outputNumber;
 
-	while (*do_run) //a terminating signal leaves every message in the queue and quits the loop
+	while (do_run) //a terminating signal leaves every message in the queue and quits the loop
 	{
 		timer.Tick();
 		//manage input data
@@ -90,7 +98,7 @@ void ModuleWrapper::ThreadProcedure()
 				wait_time = timer.Tock();
 				compute_time = 0.0;
 				cycle_time = timer_cycle.Tock();
-				goto halt;
+                goto halt; // input causes halt
 			}
 
 			inputMessages[q.first] = input.get();
@@ -112,7 +120,7 @@ void ModuleWrapper::ThreadProcedure()
 		{
 			compute_time = timer.Tock();
 			cycle_time = timer_cycle.Tock();
-			goto halt;
+			goto halt; // module itself causes halt
 		}
 
 		auto outputIt = outputQueues.begin();
@@ -157,7 +165,7 @@ void ModuleWrapper::ThreadProcedure()
 halt:
 	handle_statistics(printableName, cycle_time, compute_time, wait_time, bufferSize);
 
-	if (*do_run) //in this case soft terminate
+	if (do_run) //in this case soft terminate
 		for (auto& qs : outputQueues)
 			for (auto& q : qs.second)
 				q->WaitForEmpty();
@@ -166,5 +174,6 @@ halt:
 	for (auto& qs : outputQueues)
 		for (auto& q : qs.second)
 			q->WakeUp();
-
+    
+    do_run = false;
 }

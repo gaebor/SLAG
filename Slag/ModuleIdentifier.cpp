@@ -86,7 +86,7 @@ PortIdentifier::PortIdentifier( const std::string& idStr)
 		port = atoi(idStr.substr(portSeparator+1).c_str());
 		module = ModuleIdentifier(idStr.substr(0,portSeparator).c_str());
 	}else
-		module = ModuleIdentifier(idStr);
+		module = ModuleIdentifier(idStr.c_str());
 }
 
 bool PortIdentifier::operator<( const PortIdentifier& other ) const

@@ -66,3 +66,9 @@ add_custom_command(TARGET MyModules POST_BUILD
 add_custom_command(TARGET MyModules POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy "${OPENCV_BIN}/${OpenCvDep}.dll" .
 )
+
+include(CTest)
+
+add_test(DryRun Slag ../Testing/emptygraph.cfg)
+
+add_test(AddText Slag ../Testing/graphCAdd.cfg)

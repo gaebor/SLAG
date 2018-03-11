@@ -26,7 +26,7 @@ public:
 			iss >> output->value;
 
             *strout = str.c_str();
-            *strout_length = str.size();
+            *strout_length = (int)str.size();
             //if (outputText)
 			//	fprintf(outputText, line.c_str());
 

@@ -22,10 +22,11 @@ int main(int argc, char* argv[])
     Factory factory;
 
 	std::list<std::unique_ptr<MessageQueue>> messageQueues;
-	std::map<ModuleIdentifier, ModuleWrapper> modules;
+	std::map<ModuleIdentifier, std::shared_ptr<ModuleWrapper>> modules;
 	MessageQueue::LimitBehavior queueBehavior = MessageQueue::None;
 	size_t queueLimit = std::numeric_limits<size_t>::max();
 	double hardResetTime = 0.0;
+    int loglevel = 1;
 
 	std::list<std::string> global_settings;
 	std::vector<const char*> global_settings_v;
@@ -35,7 +36,7 @@ int main(int argc, char* argv[])
 
 	if (argc < 2)
 	{
-		std::cerr << "USAGE: slag.exe >>config.cfg<<" << std::endl;
+		std::cerr << "USAGE: " << argv[0] << " >>config.cfg<<" << std::endl;
 		goto halt;
 	}
 	try{
@@ -43,7 +44,7 @@ int main(int argc, char* argv[])
 		std::ifstream f(argv[1]);
 		if (!f.good())
 		{
-			std::cerr << "Cannot read " << argv[1] << "\"!" << std::endl;
+			std::cerr << "Cannot read \"" << argv[1] << "\"!" << std::endl;
 			goto halt;
 		}
 		ConfigReader cfg(f);
@@ -103,42 +104,45 @@ int main(int argc, char* argv[])
 			if (moduleName.empty())
 			{
 				std::cerr << "module should have a non-empty \"Name\"!" << std::endl;
-				goto halt;
+                continue;
 			}
 			arguments.erase(arguments.begin());
 
-			auto insert_result = modules.emplace(moduleName.c_str(), &run);
-			auto& moduleWrapper = insert_result.first->second;
-			auto& moduleId = moduleWrapper.identifier;
-			moduleId.assign(moduleName.c_str());
-			moduleName = moduleId;
+			//auto insert_result = modules.emplace(moduleName.c_str(), &run);
+			//auto& moduleWrapper = insert_result.first->second;
+			//auto& moduleId = moduleWrapper.identifier;
+			//moduleId.assign(moduleName.c_str());
+			//moduleName = moduleId;
+            const ModuleIdentifier moduleId(moduleName.c_str());
 
 			std::cout << "Module \"" << moduleName << "\" ... "; std::cout.flush();
 
-			if (!insert_result.second)
+			if (modules.find(moduleId) != modules.end())
 			{
 				std::cout<< "appears more than once in the graph. Please give it a distinctive name or instance ID!" << std::endl;
-				goto halt;
+                continue;
 			}
 
-			auto result = factory.InstantiateModule(moduleWrapper);
+			auto result = factory.InstantiateModule(moduleId);
 			moduleName = moduleId;
 
-			switch (result)
+			switch (result.second)
 			{
 			case Factory::Duplicate:
 				std::cout << "found more than once ... ";
 			case Factory::Success:
 			{
+                modules[moduleId].reset(result.first);
 				//moduleWrapper.global_settings_c = (int)global_settings.size();
 				//moduleWrapper.global_settings_v = global_settings_v.data();
 
-				std::cout << "instantiated by \"" << moduleId.library << "\" ... "; std::cout.flush();
+				std::cout << "instantiated by \"" << result.first->identifier.library << "\" ... ";
+                std::cout.flush();
 
-				if (!moduleWrapper.Initialize(arguments))
+				if (!modules[moduleId]->Initialize(arguments))
 				{
 					std::cout << "cannot be initialized!" << std::endl;
-					goto halt;
+                    modules.erase(moduleId);
 				}else
 					std::cout << "initialized" << std::endl;
 			}break;
@@ -212,10 +216,10 @@ int main(int argc, char* argv[])
 
 			auto fromModulePtr = modules.find(fromModule.module);
 			auto toModulePtr = modules.find(toModule.module);
-			fromModulePtr->second.outputQueues[fromModule.port].push_back(newMessageQueue);
-			toModulePtr->second.inputQueues[toModule.port] = newMessageQueue;
+			fromModulePtr->second->outputQueues[fromModule.port].push_back(newMessageQueue);
+			toModulePtr->second->inputQueues[toModule.port] = newMessageQueue;
 
-			auto& inputLength = toModulePtr->second.inputPortLength;
+			auto& inputLength = toModulePtr->second->inputPortLength;
 			inputLength = std::max(inputLength, toModule.port + (size_t)1);
 
             std::cout << "Connected \"" << (std::string)fromModule << "\" -> \"" << (std::string)toModule << "\"" << std::endl;
@@ -238,32 +242,42 @@ halt:
 
 no_halt:
 
-	init_termination_signal(&run, hardResetTime);	
-
-	configure_output_text(output_text_argv);
-
+    std::cout << "init_termination_signal ";
+    init_termination_signal(&run, hardResetTime);	
+    std::cout << "OK\nconfigure_output_text ";
+    configure_output_text(output_text_argv);
+    std::cout << "OK\nstart modules ";
 	std::thread module_processes([&]()
 	{
         for (auto& m : modules)
-            m.second.Start();
+            m.second->Start();
 
         for (auto& m : modules)
-            m.second.Wait();
+            m.second->Wait();
 		
+        // if this point is reached the modules ran out of jobs and halted naturally
         run = false;
 	});
-
+    std::cout << "OK\nwait_termination_signal ";
 	wait_termination_signal();
-
+    std::cout << "OK\ntell modules to stop ";
+    // modules stop processing (may have unprocessed inputs in the queues)
+    for (auto& m : modules)
+    {
+        m.second->do_run = false;
+    }
+    std::cout << "OK\nwakeup queues ";
 	//if the modules haven't ran empty at this point, then the termination must be a CTRL+C (hard reset)
 	for (auto& q : messageQueues)
 	{
 		q->WakeUp();
 	}
-
+    std::cout << "OK\nstop modules ";
 	module_processes.join();
+    std::cout << "OK\nterminate_output_text ";
 	terminate_output_text();
+    std::cout << "OK\nterminate_output_image ";
 	terminate_output_image();
-
+    std::cout << "OK\nempty queues\n";
 	return 0;
 }

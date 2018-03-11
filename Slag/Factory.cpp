@@ -66,29 +66,23 @@ bool Factory::TryToLoadLibrary(std::ostream& os, const std::string& filename)
     return false;
 }
 
-bool Factory::TryToInstantiate(ModuleWrapper& moduleWrapper, const Functions& f)
+ModuleWrapper* Factory::TryToInstantiate(const ModuleIdentifier& moduleId, const Factory::Functions& f)
 {
-	if (moduleWrapper._module) // already a module
-	{
-        moduleWrapper._module.reset();
-	}
+    const auto module = (f.instantiate)(moduleId.name.c_str(), moduleId.instance.c_str());
+    if (module)
+    {
+        auto wrapper = new ModuleWrapper();
 
-	const auto& moduleId = moduleWrapper.identifier;
+        wrapper->_module.reset(module, f.deleteModule);
+        wrapper->deleteMsg = f.deleteMsg;
+        wrapper->compute = f.compute;
+        wrapper->initialize = f.initialize;
 
-	const auto module = (f.instantiate)(
-		moduleId.name.c_str(),
-		moduleId.instance.c_str());
-	
-	if (module)
-	{
-		moduleWrapper._module.reset(module, f.deleteModule);
-		moduleWrapper.deleteMsg = f.deleteMsg;
-		moduleWrapper.compute = f.compute;
-		moduleWrapper.initialize = f.initialize;
+        wrapper->identifier = moduleId;
 
-		return true;
-	}
-	return false;
+        return wrapper;
+    }
+    return nullptr;
 }
 
 void Factory::Scan()
@@ -103,21 +97,20 @@ void Factory::Scan()
     std::cout << std::endl;
 }
 
-Factory::ErrorCode Factory::InstantiateModule(ModuleWrapper& moduleWrapper)
+std::pair<ModuleWrapper*, Factory::ErrorCode> Factory::InstantiateModule(const ModuleIdentifier& moduleId)
 {
-	ErrorCode result = CannotInstantiate;
-	auto& moduleId = moduleWrapper.identifier;
+    std::pair<ModuleWrapper*, ErrorCode> result(nullptr, CannotInstantiate);
 
 	if (moduleId.library.empty())
 	{// find out which library can instantiate it
 		for (const auto& f : pModuleFunctions)
 		{
-			//instantiate module
-			if (TryToInstantiate(moduleWrapper, f.second))
+            const auto& functions = f.second;
+            ModuleIdentifier thisId(moduleId.name, moduleId.instance, f.first);
+			if (result.first = TryToInstantiate(thisId, functions))
 			{
-				moduleWrapper.identifier.library = f.first;
-				result = Success;
-				break;
+                result.second = Success;
+                break;
 			}
 		}
 	}else
@@ -125,23 +118,25 @@ Factory::ErrorCode Factory::InstantiateModule(ModuleWrapper& moduleWrapper)
 		auto moduleFactory = pModuleFunctions.find(moduleId.library);
 		if (moduleFactory != pModuleFunctions.end())
 		{
-			if (TryToInstantiate(moduleWrapper, moduleFactory->second))
-				result = Success;
+            const auto functions = moduleFactory->second;
+            if (result.first = TryToInstantiate(moduleId, functions))
+				result.second = Success;
 			else
-				result = CannotInstantiateByLibrary;
+				result.second = CannotInstantiateByLibrary;
 		}else if (TryToLoadLibrary(std::cout, moduleId.library))
 		{ // try to load from never-seen library
 			std::cout << ", ";
-			moduleId.library = get_file_name(moduleId.library);
-			if (TryToInstantiate(moduleWrapper, pModuleFunctions.find(moduleId.library)->second))
-				result = Success;
+            auto thisId = moduleId;
+            thisId.library = get_file_name(moduleId.library);
+			if (result.first = TryToInstantiate(thisId, pModuleFunctions[thisId]))
+				result.second = Success;
 			else
-				result = CannotInstantiateByLibrary;
+				result.second = CannotInstantiateByLibrary;
 		}
 		else
 		{
 			std::cout << ", ";
-			result = NoSuchLibrary;
+			result.second = NoSuchLibrary;
 		}
 	}
 	return result;
