@@ -52,24 +52,17 @@ static std::string GetSectionName(const std::string& str)
 ConfigReader::ConfigReader(std::ifstream& f)
 {
 	std::string line;
-
-	if (f.good())
+	std::string section;
+	while (getline(f, line))
 	{
-		std::string section;
-		while (f.good())
+        trim(line);
+		if (GetSectionName(line).empty())
 		{
-			auto thisSection = section;
-			while (f.good() && (thisSection = GetSectionName(line)).empty())
-			{
-				if (!line.empty() && ! IsComment(line))
-					linesBySection[section].push_back(line);
-				getline(f, line);
-				trim(line);
-			}
-			section = thisSection;
-			getline(f, line);
-			trim(line);
-		}
+			if (!line.empty() && ! IsComment(line))
+				linesBySection[section.empty() ? "global" : section].push_back(line);
+        }
+        else
+            section = GetSectionName(line);
 	}
 }
 

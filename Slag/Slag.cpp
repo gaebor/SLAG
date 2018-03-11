@@ -51,7 +51,7 @@ int main(int argc, char* argv[])
 		for (auto l : cfg.GetSection("graph"))
 		{
 			const auto key = l.substr(0, l.find('='));
-			const auto value = l.substr(l.find('=') + 1);
+			const auto value = l.find('=') != std::string::npos ? l.substr(l.find('=') + 1) : "";
 
 			if (key == "QueueBehavior")
 			{
@@ -59,6 +59,8 @@ int main(int argc, char* argv[])
 					queueBehavior = MessageQueue::Wait;
 				else if (value == "Drop")
 					queueBehavior = MessageQueue::Drop;
+                else if (value == "Refuse")
+                    queueBehavior = MessageQueue::Refuse;
 				else
 					queueBehavior = MessageQueue::None;
 			}
