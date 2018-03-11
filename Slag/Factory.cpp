@@ -7,13 +7,6 @@
 
 Factory::Factory()
 {
-	auto files = enlist_libraries();
-
-	for (const auto& filename : files)
-	{
-		TryToLoadLibrary(std::cout, filename);
-		std::cout << std::endl;
-	}
 }
 
 bool Factory::TryToLoadLibrary(std::ostream& os, const std::string& filename)
@@ -90,6 +83,18 @@ bool Factory::TryToInstantiate(ModuleWrapper& moduleWrapper, const Functions& f)
 		return true;
 	}
 	return false;
+}
+
+void Factory::Scan()
+{
+    auto files = enlist_libraries();
+
+    for (const auto& filename : files)
+    {
+        TryToLoadLibrary(std::cout, filename);
+        std::cout << std::endl;
+    }
+    std::cout << std::endl;
 }
 
 Factory::ErrorCode Factory::InstantiateModule(ModuleWrapper& moduleWrapper)

@@ -88,6 +88,9 @@ int main(int argc, char* argv[])
 
 		//	global_settings_v.push_back(setting.c_str());
 		//}
+
+        factory.Scan();
+
 		//instantiate modules
 		for (auto moduleStr : cfg.GetSection("modules"))
 		{
@@ -153,7 +156,9 @@ int main(int argc, char* argv[])
 			}break;
 			}
 		}
-		//read port connections topology
+        std::cout << std::endl;
+		
+        //read port connections topology
 
 		//the key is the input port (destination), because a destination can receive only from one source!
 		//the mapped value is the output port (source), one source can send to many destinations
@@ -209,7 +214,10 @@ int main(int argc, char* argv[])
 
 			auto& inputLength = toModulePtr->second.inputPortLength;
 			inputLength = std::max(inputLength, toModule.port + (size_t)1);
+
+            std::cout << "Connected \"" << (std::string)fromModule << "\" -> \"" << (std::string)toModule << "\"" << std::endl;
 		}
+        std::cout << std::endl;
 	}
 	catch (std::exception& e)
 	{

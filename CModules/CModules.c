@@ -4,7 +4,7 @@
 
 #include "slag/slag_interface.h"
 
-void** Add(void** input, int inputPortNumber, int* outputPortNumber)
+static void** Add(void** input, int inputPortNumber, int* outputPortNumber)
 {
 	static void* result = NULL;
 
@@ -24,7 +24,41 @@ void** Add(void** input, int inputPortNumber, int* outputPortNumber)
 	return &result;
 }
 
-void** Mul(void** input, int inputPortNumber, int* outputPortNumber)
+static void** Double(void** input, int inputPortNumber, int* outputPortNumber)
+{
+    static void** result = NULL;
+    static int outportNumber = 0;
+    int i;
+
+    if (inputPortNumber > outportNumber)
+    {
+        if (result)
+            free(result);
+
+        result = malloc(sizeof(void*)*(inputPortNumber +1 ));
+        if (result)
+        {
+            outportNumber = inputPortNumber + 1;
+            *outputPortNumber = outportNumber;
+        }
+    }
+
+    if (result)   
+    {
+        for (i = 0; i < inputPortNumber; ++i)
+            result[i] = input[i];
+        if (inputPortNumber > 0)
+        {
+            result[inputPortNumber] = malloc(sizeof(int));
+            *(int*)(result[inputPortNumber]) = 0xffff;
+        }
+
+    }
+
+    return result;
+}
+
+static void** Mul(void** input, int inputPortNumber, int* outputPortNumber)
 {
 	static void* result = NULL;
 
@@ -42,26 +76,27 @@ void** Mul(void** input, int inputPortNumber, int* outputPortNumber)
 	return &result;
 }
 
-FILE* input_for_read;
-int* msg;
+static FILE* input_for_read = NULL;
 
-void** Read(void** input, int inputPortNumber, int* outputPortNumber)
+static void** Read(void** input, int inputPortNumber, int* outputPortNumber)
 {
-    static int i;
-    void** result = NULL;
+    static void* result = NULL;
+    int i;
 
     *outputPortNumber = 0;
-    if (fscanf(input_for_read, "%d", &i) == 1)
+    if (input_for_read && fscanf(input_for_read, "%d", &i) == 1)
     {
-        msg = (int*)malloc(sizeof(int));
-        if (msg)
+        result = malloc(sizeof(int));
+        if (result)
         {
-            *msg = i;
+            *(int*)result = i;
             *outputPortNumber = 1;
-            result = &msg;
+            return &result;
         }
-    }
-    return result;
+        else
+            return NULL;
+    }else
+        return NULL;
 }
 
 SLAG_MODULE_EXPORT(int) SlagInitialize(
@@ -91,6 +126,8 @@ SLAG_MODULE_EXPORT(void*) SlagInstantiate(const char* moduleName, const char* In
 		function = Mul;
     else if (0 == strcmp("Read", moduleName))
         function = Read;
+    else if (0 == strcmp("Double", moduleName))
+        function = Double;
 	return (void*)function;
 }
 
@@ -106,7 +143,7 @@ SLAG_MODULE_EXPORT(void) SlagDestroyMessage(void* message)
 
 SLAG_MODULE_EXPORT(void) SlagDestroyModule(void* module)
 {
-    if (module == Read)
+    if (module == Read && input_for_read)
     {
         fclose(input_for_read);
     }

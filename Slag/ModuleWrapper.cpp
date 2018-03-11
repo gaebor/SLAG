@@ -61,6 +61,8 @@ bool ModuleWrapper::Initialize(const std::vector<std::string> settings)
 void ModuleWrapper::ThreadProcedure()
 {
 	std::vector<void*> inputMessages(inputPortLength+1, nullptr);//HACK
+    inputMessages.resize(inputPortLength);
+
 	void** outputMessages_raw;
 
 	//Dequeued input messages which haven't been Enqueued to the output yet

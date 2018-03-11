@@ -25,6 +25,8 @@ public:
 		NoSuchLibrary, //!<< the requested library cannot be found
 		CannotInstantiateByLibrary //!<< the requested library couldn't instantiate your module
 	};
+
+    void Scan();
 public:
 	ErrorCode InstantiateModule(ModuleWrapper& moduleWrapper);
 
