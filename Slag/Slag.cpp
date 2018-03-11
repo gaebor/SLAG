@@ -242,11 +242,11 @@ halt:
 
 no_halt:
 
-    std::cout << "init_termination_signal ";
+    std::cout << "init_termination_signal" << std::endl;
     init_termination_signal(&run, hardResetTime);	
-    std::cout << "OK\nconfigure_output_text ";
+    std::cout << "configure_output_text" << std::endl;
     configure_output_text(output_text_argv);
-    std::cout << "OK\nstart modules ";
+    std::cout << "start modules" << std::endl;
 	std::thread module_processes([&]()
 	{
         for (auto& m : modules)
@@ -258,26 +258,26 @@ no_halt:
         // if this point is reached the modules ran out of jobs and halted naturally
         run = false;
 	});
-    std::cout << "OK\nwait_termination_signal ";
+    std::cout << "wait_termination_signal" << std::endl;
 	wait_termination_signal();
-    std::cout << "OK\ntell modules to stop ";
+    std::cout << "tell modules to stop" << std::endl;
     // modules stop processing (may have unprocessed inputs in the queues)
     for (auto& m : modules)
     {
         m.second->do_run = false;
     }
-    std::cout << "OK\nwakeup queues ";
+    std::cout << "wakeup queues" << std::endl;
 	//if the modules haven't ran empty at this point, then the termination must be a CTRL+C (hard reset)
 	for (auto& q : messageQueues)
 	{
 		q->WakeUp();
 	}
-    std::cout << "OK\nstop modules ";
+    std::cout << "stop modules" << std::endl;
 	module_processes.join();
-    std::cout << "OK\nterminate_output_text ";
+    std::cout << "terminate_output_text" << std::endl;
 	terminate_output_text();
-    std::cout << "OK\nterminate_output_image ";
+    std::cout << "terminate_output_image" << std::endl;
 	terminate_output_image();
-    std::cout << "OK\nempty queues\n";
+    std::cout << "empty queues" << std::endl;
 	return 0;
 }

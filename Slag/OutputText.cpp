@@ -1,4 +1,4 @@
-#include "../OS_dependent.h"
+#include "OS_dependent.h"
 
 #include <map>
 #include <thread>
@@ -8,11 +8,8 @@
 #include <sstream>
 #include <algorithm>
 #include <chrono>
-#include <wordexp.h>
 
 #include "hr.h"
-
-#undef max
 
 struct ModuleTextualData
 {
@@ -27,7 +24,8 @@ struct ModuleTextualData
 	std::vector<std::pair<PortNumber, size_t>> bufferSizes;
 };
 
-static bool run = true;
+static bool run = false;
+static bool roll = false;
 static double _speed = 0.5;
 static std::map<std::string, ModuleTextualData> _texts;
 static std::mutex _mutex;
@@ -41,13 +39,18 @@ static inline int round_int( double x )
 	return int(x+0.5);
 }
 
-static std::shared_ptr<std::thread> _textThread;
+static std::thread _textThread;
+
+int GetConsoleWidth();
+
+void RememberCursorPosition();
+void RestoreCursorPosition();
 
 void terminate_output_text()
 {
 	run = false;
-	if (_textThread.get() && _textThread->joinable())
-		_textThread->join();
+	if ( _textThread.joinable())
+		_textThread.join();
 }
 
 void* get_txtout(const std::string& module_name_and_instance)
@@ -61,37 +64,51 @@ void* get_txtin(const std::string& module_name_and_instance)
 }
 
 void configure_output_text(const std::vector<std::string>& params)
-{    
+{
 	for (size_t i = 0; i < params.size(); ++i)
 	{
-		if (params[i] == "-s" || params[i] == "--speed" && i + 1 < params.size())
-		{
-			double speed = atof(params[i + 1].c_str());
-			if (speed >= 0)
-				_speed = speed;
-		}
-		else if (params[i] == "-w" || params[i] == "--wait" && i + 1 < params.size())
-			wait_marker = params[i + 1][0];
-		else if (params[i] == "-o" || params[i] == "--overhead" && i + 1 < params.size())
-			overhead_marker = params[i + 1][0];
-		else if (params[i] == "-l" || params[i] == "--load" && i + 1 < params.size())
-			load_marker = params[i + 1][0];
+        if (params[i] == "-s" || params[i] == "--speed" && i + 1 < params.size())
+        {
+            double speed = atof(params[i + 1].c_str());
+            if (speed >= 0)
+                _speed = speed;
+        }
+        else if (params[i] == "-w" || params[i] == "--wait" && i + 1 < params.size())
+            wait_marker = params[i + 1][0];
+        else if (params[i] == "-o" || params[i] == "--overhead" && i + 1 < params.size())
+            overhead_marker = params[i + 1][0];
+        else if (params[i] == "-l" || params[i] == "--load" && i + 1 < params.size())
+            load_marker = params[i + 1][0];
+        else if (params[i] == "-r" || params[i] == "--roll")
+            roll = true;
 	}
 
-	_textThread.reset(new std::thread([]()
+    if (!run)
+    {
+    run = true;
+	_textThread = std::thread([]()
 	{
 		std::string nameTag = "  module  ";
 		nameOffset = (int)nameTag.size();
-        int width = 80;
-        
+
+		//if (GetConsoleScreenBufferInfo(hCon, &cinfo))
+		//	cursor_end = cinfo.dwCursorPosition.Y;
+		//else
+		//	cursor_end = 0;
+        if (!roll)
+            RememberCursorPosition();
+
 		while (run)
 		{
 			{
 				AutoLock lock(_mutex);
 
-				printf("\033[%d;%dH", 1, 1);
+                if (!roll)
+                    RestoreCursorPosition();
 
-                printf("%-*s", nameOffset, nameTag.c_str());
+                const int width = GetConsoleWidth();
+
+				printf("%-*s", nameOffset, nameTag.c_str());
 				printf("| speed | overhead | text output\n");
 				for (int i = 0; i < nameOffset; ++i)
 					putchar('-');
@@ -141,7 +158,8 @@ void configure_output_text(const std::vector<std::string>& params)
 			}
 			std::this_thread::sleep_for(std::chrono::nanoseconds((std::int64_t)(_speed * std::nano::den / std::nano::num)));
 		}
-	}));
+	});
+    }
 }
 
 void handle_output_text( const std::string& module_name_and_instance, const char* text, int length)
@@ -165,19 +183,4 @@ void handle_statistics( const std::string& module_name_and_instance, double cycl
 	data.wait_time = wait;
 	nameOffset =  std::max((int)module_name_and_instance.size(), nameOffset);
 	data.bufferSizes.assign(buffer_sizes.begin(), buffer_sizes.end());
-}
-
-std::vector<std::string> split_to_argv(const std::string& line)
-{
-	wordexp_t wordexp_result;
-	std::vector<std::string> argv;
-
-	if (wordexp(line.c_str(), &wordexp_result, 0) == 0)
-	{
-		for (size_t i = 0; i < wordexp_result.we_wordc; ++i)
-			argv.emplace_back(wordexp_result.we_wordv[i]);
-
-		wordfree(&wordexp_result);
-	}
-	return argv;
 }
