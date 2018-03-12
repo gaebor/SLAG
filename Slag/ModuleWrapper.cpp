@@ -58,14 +58,14 @@ void ModuleWrapper::Start()
 
 void ModuleWrapper::Wait()
 {
-    _thread.join();
+    if (_thread.joinable())
+        _thread.join();
     do_run = false;
 }
 
 void ModuleWrapper::Stop()
 {
     do_run = false;
-    Wait();
 }
 
 void ModuleWrapper::ThreadProcedure()

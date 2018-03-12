@@ -264,7 +264,7 @@ no_halt:
     // modules stop processing (may have unprocessed inputs in the queues)
     for (auto& m : modules)
     {
-        m.second->do_run = false;
+        m.second->Stop();
     }
     std::cout << "wakeup queues" << std::endl;
 	//if the modules haven't ran empty at this point, then the termination must be a CTRL+C (hard reset)
@@ -279,5 +279,8 @@ no_halt:
     std::cout << "terminate_output_image" << std::endl;
 	terminate_output_image();
     std::cout << "empty queues" << std::endl;
+    messageQueues.clear();
+    std::cout << "destroy modules" << std::endl;
+    modules.clear();
 	return 0;
 }

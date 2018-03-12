@@ -21,9 +21,9 @@ public:
 
     //! start processing
     void Start();
-    //! wait until the module has job left
+    //! gracefully wait for the module
     void Wait();
-    //! force stop
+    //! tell to stop, but do not join or block
     void Stop();
 
 public:
@@ -36,12 +36,11 @@ public:
 	//! gets a global ptr
 	//int global_settings_c;
 	//const char** global_settings_v;
-	bool do_run;
 
 private:
     
     void ThreadProcedure();
-
+    bool do_run;
     std::thread _thread;
 private:
     void* txtin, *txtout;

@@ -62,6 +62,7 @@ bool Factory::TryToLoadLibrary(std::ostream& os, const std::string& filename)
     }else
     {
         os << "already loaded";
+        return true;
     }
     return false;
 }
