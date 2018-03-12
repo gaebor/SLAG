@@ -4,9 +4,8 @@
 
 #include "AbstractInterface.h"
 
-#include "AddModule.h"
-#include "ReadModule.h"
-#include "KeyReader.h"
+#include "VideoSource.h"
+#include "ImageProcessor.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -17,11 +16,12 @@ SLAG_MODULE_EXPORT(void*) SlagInstantiate(const char* name, const char*)
 {
 	const std::string nameStr = name;
 	MyModule* result = nullptr;
-	if (nameStr == "Add")
-		result = new AddModule();
-
-	else if (nameStr == "ReadInt")
-		result = new ReadModule<int>();
+    
+	if (nameStr == "VideoSource")
+		result = new VideoSource();
+	
+    else if (nameStr == "ImageProcessor")
+		result = new ImageProcessor();
 
 	return (void*)result;
 }
