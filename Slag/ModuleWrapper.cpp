@@ -18,36 +18,48 @@ ModuleWrapper::ModuleWrapper()
     strout(nullptr),
     strout_size(0),
 	output_image_width(0), output_image_height(0),
-	do_run(nullptr),
+	do_run(false), is_initialized(false),
 	imageType(get_image_type())
 {
+    messages.reserve(1024);
 }
 
 bool ModuleWrapper::Initialize(const std::vector<std::string>& settings)
 {
 	if (_module != nullptr)
 	{
-		if (initialize == NULL)
-			return true;
+        if (initialize == NULL)
+        {
+            is_initialized = true;
+            messages = "";
+        }
+        else
+        {
+            std::vector<const char*> settings_array;
 
-		std::vector<const char*> settings_array;
+            // outtext;
+            for (const auto& setting : settings)
+                settings_array.push_back(setting.c_str());
 
-		// outtext;
-		for (const auto& setting : settings)
-			settings_array.push_back(setting.c_str());
-
-		//Initialize
-		return initialize(
-					_module.get(),
-					(int)settings_array.size(), settings_array.data(),                    
-					get_txtin((std::string)identifier), get_txtout((std::string)identifier),
+            //Initialize
+            is_initialized =
+                initialize(
+                    _module.get(),
+                    (int)settings_array.size(), settings_array.data(),
+                    get_txtin((std::string)identifier), get_txtout((std::string)identifier),
                     &strout, &strout_size,
-					&output_image_raw, &output_image_width, &output_image_height, imageType
-			) == 0;
+                    &output_image_raw, &output_image_width, &output_image_height, imageType
+                ) == 0;
+            if (is_initialized)
+                messages = "[INITIALIZED]";
+            else
+                messages = "[INIT FAILED]";
+            handle_output_text(identifier, messages.c_str(), (int)messages.size());
+        }
 		// module settings are lost after the module initialize!
 		//TODO global settings
 	}
-	return false;
+	return is_initialized;
 }
 
 void ModuleWrapper::Start()
@@ -164,6 +176,10 @@ void ModuleWrapper::ThreadProcedure()
 	}
 halt:
 	handle_statistics(printableName, cycle_time, compute_time, wait_time, bufferSize);
+
+    messages = "[STOPPED]";
+
+    handle_output_text(printableName, messages.c_str(), (int)messages.size());
 
 	if (do_run) //in this case soft terminate
 		for (auto& qs : outputQueues)

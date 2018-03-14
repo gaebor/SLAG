@@ -1,7 +1,5 @@
 #include "Factory.h"
 
-#include <iostream>
-
 #include "ModuleWrapper.h"
 #include "OS_dependent.h"
 
@@ -9,62 +7,16 @@ Factory::Factory()
 {
 }
 
-bool Factory::TryToLoadLibrary(std::ostream& os, const std::string& filename)
+Factory::ErrorCode Factory::TryToLoadLibrary(const std::string& filename)
 {
-	os << "Loading library from \"" << filename << "\" ... ";
-	os.flush();
-
-    if (module_dll_handles.find(filename) == module_dll_handles.end() ||
-        module_dll_handles[filename] == nullptr)
-    {
-        const std::string library_name = get_file_name(filename);
-
-        auto const hndl = load_library(filename.c_str());
-        if (hndl != nullptr)
-        {
-            auto instantiate = (SlagInstantiate_t)get_symbol_from_library(hndl, "SlagInstantiate");
-            auto deleteMsg = (SlagDestroyMessage_t)get_symbol_from_library(hndl, "SlagDestroyMessage");
-            auto deleteModule = (SlagDestroyModule_t)get_symbol_from_library(hndl, "SlagDestroyModule");
-            auto compute = (SlagCompute_t)get_symbol_from_library(hndl, "SlagCompute");
-            auto initialize = (SlagInitialize_t)get_symbol_from_library(hndl, "SlagInitialize");
-
-            if (instantiate != NULL && deleteMsg != NULL && deleteModule != NULL && compute != NULL)
-            {
-                os << "loaded as \"" << library_name << '"';
-                os.flush();
-
-                auto& f = pModuleFunctions[library_name];
-
-                f.instantiate = instantiate;
-                f.compute = compute;
-                f.deleteModule = deleteModule;
-                f.deleteMsg = deleteMsg;
-
-                module_dll_handles[filename] = hndl;
-                if (initialize != NULL)
-                    f.initialize = initialize;
-                return true;
-            }
-            else
-            {
-                //none of my business
-                os << "SLAG interface not found";
-                os.flush();
-                close_library(hndl);
-            }
-        }
-        else
-        {
-            os << "cannot be opened";
-            os.flush();
-        }
-        return false;
-    }else
-    {
-        os << "already loaded";
-        return true;
-    }
-    return false;
+    auto lib = std::shared_ptr<ManagedLibrary>(new ManagedLibrary(filename));
+    const auto instertion = libraries.emplace(get_file_name(filename), lib);
+    const ErrorCode error(*(instertion.first->second));
+    if (instertion.second == false)
+        return Duplicate;
+    else if (!*(instertion.first->second))
+        libraries.erase(instertion.first);
+    return error;
 }
 
 ModuleWrapper* Factory::TryToInstantiate(const ModuleIdentifier& moduleId, const Factory::Functions& f)
@@ -88,14 +40,8 @@ ModuleWrapper* Factory::TryToInstantiate(const ModuleIdentifier& moduleId, const
 
 void Factory::Scan()
 {
-    auto files = enlist_libraries();
-
-    for (const auto& filename : files)
-    {
-        TryToLoadLibrary(std::cout, filename);
-        std::cout << std::endl;
-    }
-    std::cout << std::endl;
+    for (const auto& filename : enlist_libraries())
+        TryToLoadLibrary(filename);
 }
 
 std::pair<ModuleWrapper*, Factory::ErrorCode> Factory::InstantiateModule(const ModuleIdentifier& moduleId)
@@ -104,10 +50,10 @@ std::pair<ModuleWrapper*, Factory::ErrorCode> Factory::InstantiateModule(const M
 
 	if (moduleId.library.empty())
 	{// find out which library can instantiate it
-		for (const auto& f : pModuleFunctions)
+		for (const auto& f : libraries)
 		{
-            const auto& functions = f.second;
-            ModuleIdentifier thisId(moduleId.name, moduleId.instance, f.first);
+            const auto& functions = f.second->GetFunctions();
+            const auto thisId = ModuleIdentifier(moduleId.name, moduleId.instance, f.first);
 			if (result.first = TryToInstantiate(thisId, functions))
 			{
                 result.second = Success;
@@ -116,28 +62,26 @@ std::pair<ModuleWrapper*, Factory::ErrorCode> Factory::InstantiateModule(const M
 		}
 	}else
 	{ // try with a specific library
-		auto moduleFactory = pModuleFunctions.find(moduleId.library);
-		if (moduleFactory != pModuleFunctions.end())
+		auto library = libraries.find(moduleId.library);
+		if (library != libraries.end())
 		{
-            const auto functions = moduleFactory->second;
+            const auto functions = library->second->GetFunctions();
             if (result.first = TryToInstantiate(moduleId, functions))
 				result.second = Success;
 			else
 				result.second = CannotInstantiateByLibrary;
-		}else if (TryToLoadLibrary(std::cout, moduleId.library))
+		}else if (TryToLoadLibrary(moduleId.library) <= Duplicate)
 		{ // try to load from never-seen library
-			std::cout << ", ";
-            auto thisId = moduleId;
-            thisId.library = get_file_name(moduleId.library);
-			if (result.first = TryToInstantiate(thisId, pModuleFunctions[thisId]))
+            const auto libraryName = get_file_name(moduleId.library);
+            const ModuleIdentifier thisId(moduleId.name, moduleId.instance, libraryName);
+			if (result.first = TryToInstantiate(thisId, libraries[libraryName]->GetFunctions()))
 				result.second = Success;
 			else
 				result.second = CannotInstantiateByLibrary;
 		}
 		else
 		{
-			std::cout << ", ";
-			result.second = NoSuchLibrary;
+			result.second = CannotOpen;
 		}
 	}
 	return result;
@@ -145,12 +89,65 @@ std::pair<ModuleWrapper*, Factory::ErrorCode> Factory::InstantiateModule(const M
 
 Factory::~Factory()
 {
-	for (auto& hndl : module_dll_handles)
-		close_library(hndl.second);
-    module_dll_handles.clear();
+    libraries.clear();
 }
 
 Factory::Functions::Functions()
 	:instantiate(NULL), compute(NULL), deleteMsg(NULL), deleteModule(NULL), initialize(NULL)
 {
+}
+
+Factory::ManagedLibrary::ManagedLibrary(const std::string & filename)
+    : handle(load_library(filename.c_str())),
+    error(NotALibrary)
+{
+    if (handle != nullptr)
+    {
+        functions.instantiate = (SlagInstantiate_t)get_symbol_from_library(handle, "SlagInstantiate");
+        functions.deleteMsg = (SlagDestroyMessage_t)get_symbol_from_library(handle, "SlagDestroyMessage");
+        functions.deleteModule = (SlagDestroyModule_t)get_symbol_from_library(handle, "SlagDestroyModule");
+        functions.compute = (SlagCompute_t)get_symbol_from_library(handle, "SlagCompute");
+        functions.initialize = (SlagInitialize_t)get_symbol_from_library(handle, "SlagInitialize");
+
+        if (functions.instantiate != NULL && functions.compute != NULL &&
+            functions.deleteMsg != NULL && functions.deleteModule != NULL)
+        {
+            error = Factory::Success;
+        }
+        else
+        {
+            error = Factory::NotALibrary;
+        }
+    }
+    else
+    {
+        error = Factory::CannotOpen;
+    }
+}
+
+Factory::ManagedLibrary::~ManagedLibrary()
+{
+    if (handle)
+        close_library(handle);
+}
+
+Factory::ManagedLibrary::operator Factory::ErrorCode() const
+{
+    return error;
+}
+
+Factory::ManagedLibrary::operator bool()const
+{
+    return error == Factory::Success;
+}
+
+Factory::Functions& Factory::Functions::operator=(const Factory::Functions& other)
+{
+    instantiate = other.instantiate;
+    compute = other.compute;
+    deleteMsg = other.deleteMsg;
+    deleteModule = other.deleteModule;
+    initialize = other.initialize;
+
+    return *this;
 }

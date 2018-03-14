@@ -40,7 +40,7 @@ public:
 private:
     
     void ThreadProcedure();
-    bool do_run;
+    bool do_run, is_initialized;
     std::thread _thread;
 private:
     void* txtin, *txtout;
@@ -51,7 +51,7 @@ private:
 	const ImageType imageType;
 
     std::map<PortNumber, size_t> bufferSize;
-
+    std::string messages;
 protected:
 	friend class Factory;
 

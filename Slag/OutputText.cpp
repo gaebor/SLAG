@@ -73,28 +73,26 @@ void configure_output_text(const std::vector<std::string>& params)
             if (speed >= 0)
                 _speed = speed;
         }
-        else if (params[i] == "-w" || params[i] == "--wait" && i + 1 < params.size())
+        else if (params[i] == "-w" || params[i] == "--wait" && i + 1 < params.size() && params[i + 1].size() > 0)
             wait_marker = params[i + 1][0];
-        else if (params[i] == "-o" || params[i] == "--overhead" && i + 1 < params.size())
+        else if (params[i] == "-o" || params[i] == "--overhead" && i + 1 < params.size() && params[i + 1].size() > 0)
             overhead_marker = params[i + 1][0];
-        else if (params[i] == "-l" || params[i] == "--load" && i + 1 < params.size())
+        else if (params[i] == "-l" || params[i] == "--load" && i + 1 < params.size() && params[i + 1].size() > 0)
             load_marker = params[i + 1][0];
         else if (params[i] == "-r" || params[i] == "--roll")
             roll = true;
 	}
 
-    if (!run)
+    if (!run && !_textThread.joinable())
     {
     run = true;
 	_textThread = std::thread([]()
 	{
 		std::string nameTag = "  module  ";
-		nameOffset = (int)nameTag.size();
-
-		//if (GetConsoleScreenBufferInfo(hCon, &cinfo))
-		//	cursor_end = cinfo.dwCursorPosition.Y;
-		//else
-		//	cursor_end = 0;
+        {
+            AutoLock lock(_mutex);
+            nameOffset = std::max((int)nameTag.size(), nameOffset);
+        }
         if (!roll)
             RememberCursorPosition();
 
@@ -158,6 +156,7 @@ void configure_output_text(const std::vector<std::string>& params)
 			}
 			std::this_thread::sleep_for(std::chrono::nanoseconds((std::int64_t)(_speed * std::nano::den / std::nano::num)));
 		}
+        run = false;
 	});
     }
 }

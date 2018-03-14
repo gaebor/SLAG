@@ -108,11 +108,6 @@ int main(int argc, char* argv[])
 			}
 			arguments.erase(arguments.begin());
 
-			//auto insert_result = modules.emplace(moduleName.c_str(), &run);
-			//auto& moduleWrapper = insert_result.first->second;
-			//auto& moduleId = moduleWrapper.identifier;
-			//moduleId.assign(moduleName.c_str());
-			//moduleName = moduleId;
             const ModuleIdentifier moduleId(moduleName.c_str());
 
 			std::cout << "Module \"" << moduleName << "\" ... "; std::cout.flush();
@@ -146,7 +141,7 @@ int main(int argc, char* argv[])
 				}else
 					std::cout << "initialized" << std::endl;
 			}break;
-			case Factory::NoSuchLibrary:
+			case Factory::CannotOpen:
 			{
 				std::cout << "cannot be instantiated because there is no library \"" << moduleId.library << "\"!" << std::endl;
 				goto halt;
@@ -242,12 +237,12 @@ halt:
 
 no_halt:
 
-    std::cout << "init_termination_signal" << std::endl;
+    std::cerr << "init_termination_signal" << std::endl;
     init_termination_signal(&run, hardResetTime);	
-    std::cout << "configure_output_text" << std::endl;
+    std::cerr << "configure_output_text" << std::endl;
     configure_output_text(output_text_argv);
-    std::cout << "start modules" << std::endl;
-	std::thread module_processes([&]()
+    std::cerr << "start modules" << std::endl;
+	std::thread modules_process([&]()
 	{
         for (auto& m : modules)
             m.second->Start();
@@ -258,29 +253,29 @@ no_halt:
         // if this point is reached the modules ran out of jobs and halted naturally
         run = false;
 	});
-    std::cout << "wait_termination_signal" << std::endl;
+    std::cerr << "wait_termination_signal" << std::endl;
 	wait_termination_signal();
-    std::cout << "tell modules to stop" << std::endl;
+    std::cerr << "tell modules to stop" << std::endl;
     // modules stop processing (may have unprocessed inputs in the queues)
     for (auto& m : modules)
     {
         m.second->Stop();
     }
-    std::cout << "wakeup queues" << std::endl;
+    std::cerr << "wakeup queues" << std::endl;
 	//if the modules haven't ran empty at this point, then the termination must be a CTRL+C (hard reset)
 	for (auto& q : messageQueues)
 	{
 		q->WakeUp();
 	}
-    std::cout << "stop modules" << std::endl;
-	module_processes.join();
-    std::cout << "terminate_output_text" << std::endl;
+    std::cerr << "stop modules" << std::endl;
+	modules_process.join();
+    std::cerr << "terminate_output_text" << std::endl;
 	terminate_output_text();
-    std::cout << "terminate_output_image" << std::endl;
+    std::cerr << "terminate_output_image" << std::endl;
 	terminate_output_image();
-    std::cout << "empty queues" << std::endl;
+    std::cerr << "empty queues" << std::endl;
     messageQueues.clear();
-    std::cout << "destroy modules" << std::endl;
+    std::cerr << "destroy modules" << std::endl;
     modules.clear();
 	return 0;
 }

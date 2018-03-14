@@ -1,9 +1,8 @@
 #pragma once
 
-#include <vector>
 #include <string>
 #include <map>
-#include <ostream>
+#include <memory>
 
 #include "slag/slag_interface.h"
 #include "ModuleIdentifier.h"
@@ -13,36 +12,53 @@ class ModuleWrapper;
 class Factory
 {
 public:
-	Factory();
-	~Factory();
+    Factory();
+    ~Factory();
 
-	enum ErrorCode
-	{
-		Success, //!< module is ready to go
-		Duplicate, //!< more than one library was able to instantiate the requested module, the first one was used
-		CannotInstantiate, //!< no library could instantiate your module
-		NoSuchLibrary, //!<< the requested library cannot be found
-		CannotInstantiateByLibrary //!<< the requested library couldn't instantiate your module
-	};
+    enum ErrorCode
+    {
+        Success, //!< module is ready to go
+        Duplicate, //!< more than one library was able to instantiate the requested module, the first one was used
+        CannotInstantiate, //!< no library could instantiate your module
+        CannotOpen, //!<< the requested library does not exists
+        NotALibrary, //!<< the requested file exists but not a Slag Library
+        CannotInstantiateByLibrary //!<< the requested library couldn't instantiate your module
+    };
+
+    struct Functions
+    {
+        Functions();
+        Functions& operator=(const Functions& other);
+        SlagInstantiate_t instantiate;
+        SlagCompute_t compute;
+        SlagDestroyMessage_t deleteMsg;
+        SlagDestroyModule_t deleteModule;
+        SlagInitialize_t initialize;
+    };
 
     void Scan();
-public:
-	std::pair<ModuleWrapper*, ErrorCode> InstantiateModule(const ModuleIdentifier& id);
 
-	struct Functions
-	{
-		Functions();
-		SlagInstantiate_t instantiate;
-		SlagCompute_t compute;
-		SlagDestroyMessage_t deleteMsg;
-		SlagDestroyModule_t deleteModule;
-		SlagInitialize_t initialize;
-	};
+    std::pair<ModuleWrapper*, ErrorCode> InstantiateModule(const ModuleIdentifier& id);
 
 private:
-	std::map<std::string, Functions> pModuleFunctions;
+    struct ManagedLibrary
+    {
+        ManagedLibrary(const std::string& filename);
+        ~ManagedLibrary();
+
+        operator ErrorCode()const;
+        operator bool()const;
+        const Functions& GetFunctions()const
+        {
+            return functions;
+        }
+    private:
+        void* const handle;
+        Functions functions;
+        ErrorCode error;
+    };
+    std::map<std::string, std::shared_ptr<ManagedLibrary>> libraries;
 	
-	bool TryToLoadLibrary(std::ostream& os, const std::string& filename);
+	ErrorCode TryToLoadLibrary(const std::string& filename);
     ModuleWrapper* TryToInstantiate(const ModuleIdentifier& moduleId, const Functions& f);
-	std::map<std::string, void*> module_dll_handles;
 };
