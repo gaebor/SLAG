@@ -2,9 +2,15 @@
 
 #include <vector>
 #include <string>
+#include <stdio.h>
 
 #include <windows.h>
 #include <Shlwapi.h>
+
+#if _MSC_VER < 1900
+//	without any better
+#	define snprintf sprintf_s
+#endif 
 
 void* load_library(const char* file_name)
 {

@@ -7,6 +7,7 @@
 #include <sstream>
 #include <algorithm>
 #include <chrono>
+#include <cstdint>
 
 #include "hr.h"
 
