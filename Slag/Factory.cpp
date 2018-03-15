@@ -44,6 +44,16 @@ void Factory::Scan()
         TryToLoadLibrary(filename);
 }
 
+std::vector<std::string> Factory::GetLibraries() const
+{
+    std::vector<std::string> result;
+    for (const auto& lib : libraries)
+    {
+        result.emplace_back(lib.first);
+    }
+    return result;
+}
+
 std::pair<ModuleWrapper*, Factory::ErrorCode> Factory::InstantiateModule(const ModuleIdentifier& moduleId)
 {
     std::pair<ModuleWrapper*, ErrorCode> result(nullptr, CannotInstantiate);
@@ -70,19 +80,16 @@ std::pair<ModuleWrapper*, Factory::ErrorCode> Factory::InstantiateModule(const M
 				result.second = Success;
 			else
 				result.second = CannotInstantiateByLibrary;
-		}else if (TryToLoadLibrary(moduleId.library) <= Duplicate)
-		{ // try to load from never-seen library
+        }
+        else if ((result.second = TryToLoadLibrary(moduleId.library)) <= Duplicate)
+        { // try to load from never-seen library
             const auto libraryName = get_file_name(moduleId.library);
             const ModuleIdentifier thisId(moduleId.name, moduleId.instance, libraryName);
-			if (result.first = TryToInstantiate(thisId, libraries[libraryName]->GetFunctions()))
-				result.second = Success;
-			else
-				result.second = CannotInstantiateByLibrary;
-		}
-		else
-		{
-			result.second = CannotOpen;
-		}
+            if (result.first = TryToInstantiate(thisId, libraries[libraryName]->GetFunctions()))
+                result.second = Success;
+            else
+                result.second = CannotInstantiateByLibrary;
+        }
 	}
 	return result;
 }

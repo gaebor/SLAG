@@ -3,6 +3,7 @@
 #include <string>
 #include <map>
 #include <memory>
+#include <vector>
 
 #include "slag/slag_interface.h"
 #include "ModuleIdentifier.h"
@@ -37,7 +38,7 @@ public:
     };
 
     void Scan();
-
+    std::vector<std::string> GetLibraries()const;
     std::pair<ModuleWrapper*, ErrorCode> InstantiateModule(const ModuleIdentifier& id);
 
 private:
@@ -52,6 +53,7 @@ private:
         {
             return functions;
         }
+
     private:
         void* const handle;
         Functions functions;
