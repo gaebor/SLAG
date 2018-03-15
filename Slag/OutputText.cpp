@@ -3,13 +3,14 @@
 #include <map>
 #include <thread>
 #include <memory>
-#include <mutex>
 #include <iostream>
 #include <sstream>
 #include <algorithm>
 #include <chrono>
 
 #include "hr.h"
+
+#include "InternalTypes.h"
 
 struct ModuleTextualData
 {
@@ -31,8 +32,6 @@ static std::map<std::string, ModuleTextualData> _texts;
 static std::mutex _mutex;
 static int nameOffset;
 static char wait_marker = '-', overhead_marker = '+', load_marker = ' ';
-
-typedef std::lock_guard<std::mutex> AutoLock;
 
 static inline int round_int( double x )
 {

@@ -22,7 +22,7 @@ int main(int argc, char* argv[])
     Factory factory;
 
 	std::list<std::unique_ptr<MessageQueue>> messageQueues;
-	std::map<ModuleIdentifier, std::shared_ptr<ModuleWrapper>> modules;
+	std::map<ModuleIdentifier, std::unique_ptr<ModuleWrapper>> modules;
 	MessageQueue::LimitBehavior queueBehavior = MessageQueue::None;
 	size_t queueLimit = std::numeric_limits<size_t>::max();
 	double hardResetTime = 0.0;
@@ -93,8 +93,14 @@ int main(int argc, char* argv[])
 		//	global_settings_v.push_back(setting.c_str());
 		//}
 
-        factory.Scan();
-
+        {
+            factory.Scan();
+            std::cout << "Scanned Libraries: " << std::endl;
+            auto foundLibs = factory.GetLibraries();
+            for (auto& lib : foundLibs)
+                std::cout << lib << std::endl;
+            std::cout << std::endl;
+        }
 		//instantiate modules
 		for (auto moduleStr : cfg.GetSection("modules"))
 		{
@@ -137,13 +143,13 @@ int main(int argc, char* argv[])
 				if (!modules[moduleId]->Initialize(arguments))
 				{
 					std::cout << "cannot be initialized!" << std::endl;
-                    modules.erase(moduleId);
+                    // modules.erase(moduleId);
 				}else
 					std::cout << "initialized" << std::endl;
 			}break;
 			case Factory::CannotOpen:
 			{
-				std::cout << "cannot be instantiated because there is no library \"" << moduleId.library << "\"!" << std::endl;
+				std::cout << "cannot be instantiated because couldn't open \"" << moduleId.library << "\"!" << std::endl;
 				goto halt;
 			}break;
 			case Factory::CannotInstantiateByLibrary:
@@ -156,6 +162,11 @@ int main(int argc, char* argv[])
 				std::cout << "cannot be instantiated!" << std::endl;
 				goto halt;
 			}break;
+            case Factory::NotALibrary:
+            {
+                std::cout << "cannot be instantiated because \"" << moduleId.library << "\" is not a Library!" << std::endl;
+                goto halt;
+            }break;
 			}
 		}
         std::cout << std::endl;
@@ -173,51 +184,46 @@ int main(int argc, char* argv[])
 			const auto fromModuleId = PortIdentifier(ConfigReader::trim1(c.substr(0, c.find("->"))));
 			const auto toModuleId = PortIdentifier(ConfigReader::trim1(c.substr(c.find("->") + 2)));
 				
+            if (modules.find(fromModuleId.module) == modules.end())
+            {
+                std::cerr << "Cannot connect !" << (std::string)fromModuleId << "! -> \"" <<
+                    (std::string)toModuleId << "\"" << std::endl;
+                continue;
+            }
+            if (modules.find(toModuleId.module) == modules.end())
+            {
+                std::cerr << "Cannot connect \"" << (std::string)fromModuleId << "\" -> !" <<
+                    (std::string)toModuleId << "!" << std::endl;
+                continue;
+            }
 			connections[toModuleId] = fromModuleId;
-		}
-
-		//purge bad connections
-		std::map<PortIdentifier, PortIdentifier> checked_connections;
-		for (const auto& connection : connections)
-		{
-			const auto& toPort = connection.first;
-			const auto& fromModule = connection.second;
-            if (modules.find(fromModule.module) == modules.end())
-            {
-                std::cerr << "Cannot connect !" << (std::string)fromModule << "! -> \"" <<
-                    (std::string)toPort << "\"" << std::endl;
-                continue;
-            }
-            if (modules.find(toPort.module) == modules.end())
-            {
-                std::cerr << "Cannot connect \"" << (std::string)fromModule << "\" -> !" <<
-                    (std::string)toPort << "!" << std::endl;
-                continue;
-            }
-            checked_connections[toPort] = fromModule;
-			//automatically overrides duplicate inputs
+            //automatically overrides duplicate inputs
 		}
 
 		//actually connect the output and input ports
-		for (auto connection : checked_connections)
+		for (auto connection : connections)
 		{
-			const auto& toModule = connection.first;
-			const auto& fromModule = connection.second;
-
+			const auto& toModuleId = connection.first;
+			const auto& fromModuleId = connection.second;
+            
 			messageQueues.emplace_back(new MessageQueue());
 			auto newMessageQueue = messageQueues.back().get();
 			newMessageQueue->limitBehavior = queueBehavior;
 			newMessageQueue->queueLimit = queueLimit;
 
-			auto fromModulePtr = modules.find(fromModule.module);
-			auto toModulePtr = modules.find(toModule.module);
-			fromModulePtr->second->outputQueues[fromModule.port].push_back(newMessageQueue);
-			toModulePtr->second->inputQueues[toModule.port] = newMessageQueue;
+			auto fromModulePtr = modules.find(fromModuleId.module);
+			auto toModulePtr = modules.find(toModuleId.module);
 
-			auto& inputLength = toModulePtr->second->inputPortLength;
-			inputLength = std::max(inputLength, toModule.port + (size_t)1);
-
-            std::cout << "Connected \"" << (std::string)fromModule << "\" -> \"" << (std::string)toModule << "\"" << std::endl;
+            const auto ok1 = toModulePtr->second->ConnectToInputPort(toModuleId.port, newMessageQueue);
+            if (ok1)
+            {
+                const auto ok2 = fromModulePtr->second->ConnectOutputPortTo(fromModuleId.port, newMessageQueue);
+                if (ok2)
+                {
+                    std::cout << "Connected \"" << (std::string)fromModuleId << "\" -> \"" << (std::string)toModuleId << "\"" << std::endl;
+                }else
+                    toModulePtr->second->RemoveInputPort(toModuleId.port);
+            }
 		}
         std::cout << std::endl;
 	}

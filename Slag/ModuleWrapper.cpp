@@ -12,8 +12,7 @@ ModuleWrapper::~ModuleWrapper(void)
 }
 
 ModuleWrapper::ModuleWrapper()
-:	inputPortLength(0),
-	_module(),
+:	_module(),
 	output_image_raw(nullptr),
     strout(nullptr),
     strout_size(0),
@@ -80,10 +79,58 @@ void ModuleWrapper::Stop()
     do_run = false;
 }
 
+bool ModuleWrapper::ConnectToInputPort(PortNumber n, MessageQueue* p)
+{
+    if (inputQueues.find(n) == inputQueues.end())
+    {
+        AutoLock lock(input_mutex);
+        inputQueues[n] = p;
+        return true;
+    }
+    else // already receives inpu
+        return false;
+}
+
+bool ModuleWrapper::ConnectOutputPortTo(PortNumber n, MessageQueue* p)
+{
+    if (outputQueues.find(n) == outputQueues.end())
+    {
+        AutoLock lock(output_mutex);
+        outputQueues[n].push_back(p);
+        return true;
+    }
+    else // already connected to somewhere   
+    { 
+        auto& queues = outputQueues[n];
+        for (auto q : queues)
+        {
+            if (q == p)
+                return false;
+        }
+        {
+            AutoLock lock(output_mutex);
+            queues.push_back(p);
+            return true;
+        }
+    }
+}
+
+bool ModuleWrapper::RemoveInputPort(PortNumber n)
+{
+    if (inputQueues.find(n) == inputQueues.end())
+    {
+        return false; // there is nothing to remove.
+    } else
+    {
+        AutoLock lock(input_mutex);
+        inputQueues.erase(n);
+        return true;
+    }
+}
+
 void ModuleWrapper::ThreadProcedure()
 {
-	std::vector<void*> inputMessages(inputPortLength+1, nullptr);//HACK
-    inputMessages.resize(inputPortLength);
+	std::vector<void*> inputMessages(1);
     
     const std::string printableName(identifier);
 
@@ -99,33 +146,36 @@ void ModuleWrapper::ThreadProcedure()
 	while (do_run) //a terminating signal leaves every message in the queue and quits the loop
 	{
 		timer.Tick();
-		//manage input data
-		for (auto& q : inputQueues)
-		{
-			// this actual deleteMsg function won't be used here, because the dequeue will override it and the nullptr won't be deleted anyway
-			ManagedMessage input;
+        {
+            AutoLock lock(input_mutex);
+            inputMessages.assign(inputMessages.size(), nullptr);
+            //manage input data
+            for (auto& q : inputQueues)
+            {
+                // this actual deleteMsg function won't be used here, because the dequeue will override it and the nullptr won't be deleted anyway
+                ManagedMessage input;
 
-			if (!q.second->DeQueue(input))
-			{
-				wait_time = timer.Tock();
-				compute_time = 0.0;
-				cycle_time = timer_cycle.Tock();
-                goto halt; // input causes halt
-			}
+                bufferSize[q.first] = q.second->GetSize();
 
-			inputMessages[q.first] = input.get();
-			receivedMessages.push_back(input);
-		}
+                if (!q.second->DeQueue(input))
+                {
+                    wait_time = timer.Tock();
+                    compute_time = 0.0;
+                    cycle_time = timer_cycle.Tock();
+                    goto halt; // input causes halt
+                }
+                if (q.first + 2 > inputMessages.size())
+                    inputMessages.resize(q.first + 2, nullptr);
+
+                inputMessages[q.first] = input.get();
+                receivedMessages.push_back(input);
+            }
+        }
 		wait_time = timer.Tock();
 		
 		timer.Tick();
-		outputMessages_raw = compute(_module.get(), inputMessages.data(), (int)inputMessages.size(), &outputNumber);
+		outputMessages_raw = compute(_module.get(), inputMessages.data(), (int)inputMessages.size()-1, &outputNumber);
 		compute_time = timer.Tock();
-
-		for (const auto& q : inputQueues)
-		{
-			bufferSize[q.first] = q.second->GetSize();
-		}
 
 		//manage output data
 		if (outputMessages_raw == nullptr)
@@ -135,30 +185,34 @@ void ModuleWrapper::ThreadProcedure()
 			goto halt; // module itself causes halt
 		}
 
-		auto outputIt = outputQueues.begin();
-		for (PortNumber i = 0; i < outputNumber; ++i)
-		{
-			auto messagePtr = outputMessages_raw[i];
-			ManagedMessage managedOutput;
+        {
+            AutoLock lock(output_mutex);
+            auto outputIt = outputQueues.begin();
+            for (PortNumber i = 0; i < outputNumber; ++i)
+            {
+                auto messagePtr = outputMessages_raw[i];
+                ManagedMessage managedOutput;
 
-			auto inputIt = std::find_if(receivedMessages.begin(), receivedMessages.end(), [&](const ManagedMessage& m){return m.get()==messagePtr;});
-			if (inputIt != receivedMessages.end())
-			{
-				managedOutput = *inputIt;
-			}else
-			{
-				managedOutput.reset(messagePtr, deleteMsg);
-			}
+                auto inputIt = std::find_if(receivedMessages.begin(), receivedMessages.end(), [&](const ManagedMessage& m) {return m.get() == messagePtr; });
+                if (inputIt != receivedMessages.end())
+                {
+                    managedOutput = *inputIt;
+                }
+                else
+                {
+                    managedOutput.reset(messagePtr, deleteMsg);
+                }
 
-			outputIt = outputQueues.find(i);
-			if (outputIt != outputQueues.end())
-			{
-				for (auto out : outputIt->second)
-				{
-					out->EnQueue(managedOutput);
-				}
-			}
-		}
+                outputIt = outputQueues.find(i);
+                if (outputIt != outputQueues.end())
+                {
+                    for (auto out : outputIt->second)
+                    {
+                        out->EnQueue(managedOutput);
+                    }
+                }
+            }
+        }
 		receivedMessages.clear();
 
 		cycle_time = timer_cycle.Tock();
@@ -175,10 +229,8 @@ void ModuleWrapper::ThreadProcedure()
 
 	}
 halt:
-	handle_statistics(printableName, cycle_time, compute_time, wait_time, bufferSize);
-
     messages = "[STOPPED]";
-
+    handle_statistics(printableName, cycle_time, compute_time, wait_time, bufferSize);
     handle_output_text(printableName, messages.c_str(), (int)messages.size());
 
 	if (do_run) //in this case soft terminate

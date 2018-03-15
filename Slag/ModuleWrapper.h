@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vector>
+#include <mutex>
 #include <thread>
 #include <map>
 
@@ -28,20 +29,28 @@ public:
 
 public:
 	ModuleIdentifier identifier;
-	// TODO async and sync inputs
-	std::map<PortNumber, MessageQueue*> inputQueues; //!< non-responsible for MessageQueues
-	std::map<PortNumber, std::vector<MessageQueue*>> outputQueues; //!< output can be duplicated and distributed to many modules
-	size_t inputPortLength;
 
 	//! gets a global ptr
 	//int global_settings_c;
 	//const char** global_settings_v;
+    bool ConnectToInputPort(PortNumber, MessageQueue*);
+    bool ConnectOutputPortTo(PortNumber, MessageQueue*);
+
+    bool RemoveInputPort(PortNumber);
 
 private:
     
     void ThreadProcedure();
     bool do_run, is_initialized;
     std::thread _thread;
+
+    std::mutex input_mutex, output_mutex;
+    // TODO async and sync inputs
+    std::map<PortNumber, MessageQueue*> inputQueues; //!< non-responsible for MessageQueues
+    std::map<PortNumber, std::vector<MessageQueue*>> outputQueues; //!< output can be duplicated and distributed to many modules
+
+    std::map<PortNumber, size_t> bufferSize;
+    std::string messages;
 private:
     void* txtin, *txtout;
 	const char* strout;
@@ -50,8 +59,6 @@ private:
 	int output_image_width, output_image_height;
 	const ImageType imageType;
 
-    std::map<PortNumber, size_t> bufferSize;
-    std::string messages;
 protected:
 	friend class Factory;
 
