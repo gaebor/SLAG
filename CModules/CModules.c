@@ -87,7 +87,7 @@ static void** Quitter(void** input, int inputPortNumber, int* outputPortNumber)
 
     ++i;
 
-    if (quit_limit > 0 && i >= quit_limit)
+    if (quit_limit > 0 && i > quit_limit)
     {
         *outputPortNumber = 0;
         return NULL; // quit
