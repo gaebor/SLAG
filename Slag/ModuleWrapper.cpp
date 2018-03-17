@@ -1,7 +1,8 @@
 #include "ModuleWrapper.h"
 
 #include <set>
-#include <algorithm>
+#include <unordered_set>
+#include <vector>
 
 #include "Factory.h"
 #include "aq/Clock.h"
@@ -11,6 +12,9 @@ ModuleWrapper::~ModuleWrapper(void)
 {
 }
 
+const ImageType ModuleWrapper::imageType(get_image_type());
+const SlagDestroyMessage_t ModuleWrapper::deleteNothing([](void*){ return; });
+
 ModuleWrapper::ModuleWrapper()
 :	_module(),
 	output_image_raw(nullptr),
@@ -18,9 +22,8 @@ ModuleWrapper::ModuleWrapper()
     strout_size(0),
 	output_image_width(0), output_image_height(0),
 	do_run(false), is_initialized(false),
-	imageType(get_image_type())
+	state(State::None)
 {
-    messages.reserve(1024);
 }
 
 bool ModuleWrapper::Initialize(const std::vector<std::string>& settings)
@@ -30,10 +33,10 @@ bool ModuleWrapper::Initialize(const std::vector<std::string>& settings)
         if (initialize == NULL)
         {
             is_initialized = true;
-            messages = "";
         }
         else
         {
+			state = State::Initializing;
             std::vector<const char*> settings_array;
 
             // outtext;
@@ -49,11 +52,6 @@ bool ModuleWrapper::Initialize(const std::vector<std::string>& settings)
                     &strout, &strout_size,
                     &output_image_raw, &output_image_width, &output_image_height, imageType
                 ) == 0;
-            if (is_initialized)
-                messages = "[INITIALIZED]";
-            else
-                messages = "[INIT FAILED]";
-            handle_output_text(identifier, messages.c_str(), (int)messages.size());
         }
 		// module settings are lost after the module initialize!
 		//TODO global settings
@@ -130,15 +128,15 @@ bool ModuleWrapper::RemoveInputPort(PortNumber n)
 
 void ModuleWrapper::ThreadProcedure()
 {
-	std::vector<void*> inputMessages(1);
+	std::vector<void*> inputMessages_c(1);
     
     const std::string printableName(identifier);
 
-    void** outputMessages_raw;
+    void** outputMessages_c;
 
 	//Dequeued input messages which haven't been Enqueued to the output yet
-	std::vector<ManagedMessage> receivedMessages;
-	
+	std::unordered_set<ManagedMessage> receivedMessages;
+
 	aq::Clock timer_cycle, timer;
 	double cycle_time = 1.0, compute_time = 0.0, wait_time = 0.0;
 	PortNumber outputNumber;
@@ -148,37 +146,34 @@ void ModuleWrapper::ThreadProcedure()
 		timer.Tick();
         {
             AutoLock lock(input_mutex);
-            inputMessages.assign(inputMessages.size(), nullptr);
+			inputMessages_c.assign(inputMessages_c.size(), nullptr);
             //manage input data
             for (auto& q : inputQueues)
             {
-                // this actual deleteMsg function won't be used here, because the dequeue will override it and the nullptr won't be deleted anyway
-                ManagedMessage input;
-
                 bufferSize[q.first] = q.second->GetSize();
-
-                if (!q.second->DeQueue(input))
+				ManagedMessage managedMessage;
+				if (!q.second->DeQueue(managedMessage))
                 {
                     wait_time = timer.Tock();
                     compute_time = 0.0;
                     cycle_time = timer_cycle.Tock();
                     goto halt; // input causes halt
                 }
-                if (q.first + 2 > inputMessages.size())
-                    inputMessages.resize(q.first + 2, nullptr);
+				if (q.first + 2 > inputMessages_c.size())
+					inputMessages_c.resize(q.first + 2, nullptr);
 
-                inputMessages[q.first] = input.get();
-                receivedMessages.push_back(input);
+				inputMessages_c[q.first] = managedMessage.get();
+				receivedMessages.insert(managedMessage);
             }
         }
 		wait_time = timer.Tock();
 		
 		timer.Tick();
-		outputMessages_raw = compute(_module.get(), inputMessages.data(), (int)inputMessages.size()-1, &outputNumber);
+		outputMessages_c = compute(_module.get(), inputMessages_c.data(), (int)inputMessages_c.size() - 1, &outputNumber);
 		compute_time = timer.Tock();
 
 		//manage output data
-		if (outputMessages_raw == nullptr)
+		if (outputMessages_c == nullptr)
 		{
 			compute_time = timer.Tock();
 			cycle_time = timer_cycle.Tock();
@@ -190,25 +185,23 @@ void ModuleWrapper::ThreadProcedure()
             auto outputIt = outputQueues.begin();
             for (PortNumber i = 0; i < outputNumber; ++i)
             {
-                auto messagePtr = outputMessages_raw[i];
-                ManagedMessage managedOutput;
-
-                auto inputIt = std::find_if(receivedMessages.begin(), receivedMessages.end(), [&](const ManagedMessage& m) {return m.get() == messagePtr; });
+				const auto message_c = outputMessages_c[i];
+				ManagedMessage managedMessage(message_c, deleteNothing);
+				auto inputIt = receivedMessages.find(managedMessage); //find by .get()
                 if (inputIt != receivedMessages.end())
                 {
-                    managedOutput = *inputIt;
+                    managedMessage = *inputIt; // gets input's deleter
                 }
-                else
-                {
-                    managedOutput.reset(messagePtr, deleteMsg);
-                }
-
+				else if (message_c != nullptr) // does it worth deleting
+				{  // gets this module's deleter
+					managedMessage.reset(message_c, deleteMsg);
+				}
                 outputIt = outputQueues.find(i);
                 if (outputIt != outputQueues.end())
                 {
                     for (auto out : outputIt->second)
                     {
-                        out->EnQueue(managedOutput);
+						out->EnQueue(managedMessage);
                     }
                 }
             }
@@ -220,18 +213,16 @@ void ModuleWrapper::ThreadProcedure()
 
 		handle_statistics(printableName, cycle_time, compute_time, wait_time, bufferSize);
 		if (strout != nullptr)
+		{
 			handle_output_text(printableName, strout, strout_size);
-
+		}
 		if (output_image_raw != nullptr)
 		{
 			handle_output_image(printableName, output_image_width, output_image_height, imageType, output_image_raw);
 		}
-
 	}
 halt:
-    messages = "[STOPPED]";
     handle_statistics(printableName, cycle_time, compute_time, wait_time, bufferSize);
-    handle_output_text(printableName, messages.c_str(), (int)messages.size());
 
 	if (do_run) //in this case soft terminate
 		for (auto& qs : outputQueues)

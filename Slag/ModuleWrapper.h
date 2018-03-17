@@ -3,6 +3,7 @@
 #include <vector>
 #include <mutex>
 #include <thread>
+#include <unordered_map>
 #include <map>
 
 #include "slag/slag_interface.h"
@@ -15,6 +16,17 @@ class Factory;
 class ModuleWrapper
 {
 public:
+	enum State
+	{
+		None, //!< no module
+		Uninitialized, //!< instantiated but not initialized
+		Initializing, //!< initializing
+		Initialized, //!< successfuly initialized, idle state
+		Running, //!< IDK but doing something
+		Waiting, //!< some of the input queues are blocking
+		Computing, //!< hardly working
+		Queueing, //!< some of the output queues are blocking
+	};
 	ModuleWrapper();
 	~ModuleWrapper();
 
@@ -28,7 +40,7 @@ public:
     void Stop();
 
 public:
-	ModuleIdentifier identifier;
+	const ModuleIdentifier& GetIdentifier() const{ return identifier; }
 
 	//! gets a global ptr
 	//int global_settings_c;
@@ -38,6 +50,10 @@ public:
 
     bool RemoveInputPort(PortNumber);
 
+	State GetState()const
+	{
+		return state;
+	}
 private:
     
     void ThreadProcedure();
@@ -46,26 +62,28 @@ private:
 
     std::mutex input_mutex, output_mutex;
     // TODO async and sync inputs
-    std::map<PortNumber, MessageQueue*> inputQueues; //!< non-responsible for MessageQueues
-    std::map<PortNumber, std::vector<MessageQueue*>> outputQueues; //!< output can be duplicated and distributed to many modules
+	std::unordered_map<PortNumber, MessageQueue*> inputQueues; //!< non-responsible for MessageQueues
+	std::unordered_map<PortNumber, std::vector<MessageQueue*>> outputQueues; //!< output can be duplicated and distributed to many modules
 
     std::map<PortNumber, size_t> bufferSize;
-    std::string messages;
+
+    static const SlagDestroyMessage_t deleteNothing;
 private:
     void* txtin, *txtout;
 	const char* strout;
 	int strout_size;
 	unsigned char* output_image_raw;
 	int output_image_width, output_image_height;
-	const ImageType imageType;
-
+	static const ImageType imageType;
+    
 protected:
 	friend class Factory;
 
+	ModuleIdentifier identifier;
     ManagedModule _module;
 	SlagCompute_t compute;
 	SlagInitialize_t initialize;
 	SlagDestroyMessage_t deleteMsg;
-private:
-	// ModuleWrapper(const ModuleWrapper& other);
+	
+    State state;
 };

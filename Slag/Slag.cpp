@@ -137,7 +137,7 @@ int main(int argc, char* argv[])
 				//moduleWrapper.global_settings_c = (int)global_settings.size();
 				//moduleWrapper.global_settings_v = global_settings_v.data();
 
-				std::cout << "instantiated by \"" << result.first->identifier.library << "\" ... ";
+				std::cout << "instantiated by \"" << result.first->GetIdentifier().library << "\" ... ";
                 std::cout.flush();
 
 				if (!modules[moduleId]->Initialize(arguments))
