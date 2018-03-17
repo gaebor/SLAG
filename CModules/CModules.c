@@ -11,14 +11,12 @@ static void** Add(void** input, int inputPortNumber, int* outputPortNumber)
 	double* sum = (double*)malloc(sizeof(double));
 	*sum = 0.0;
 
-	*outputPortNumber = 0;
+	*outputPortNumber = 1;
 
 	for(; inputPortNumber > 0; --inputPortNumber, ++input)
 	{
 		if (*input != NULL)
 			(*sum) += *((int*)(*input));
-
-		*outputPortNumber = 1;
 	}
 	result = sum;
 	return &result;
@@ -35,10 +33,10 @@ static void** Double(void** input, int inputPortNumber, int* outputPortNumber)
         if (result)
             free(result);
 
-        result = malloc(sizeof(void*)*(inputPortNumber +1 ));
+        result = malloc(sizeof(void*)*(inputPortNumber));
         if (result)
         {
-            outportNumber = inputPortNumber + 1;
+            outportNumber = inputPortNumber;
             *outputPortNumber = outportNumber;
         }
     }
@@ -47,33 +45,9 @@ static void** Double(void** input, int inputPortNumber, int* outputPortNumber)
     {
         for (i = 0; i < inputPortNumber; ++i)
             result[i] = input[i];
-        if (inputPortNumber > 0)
-        {
-            result[inputPortNumber] = malloc(sizeof(int));
-            *(int*)(result[inputPortNumber]) = 0xffff;
-        }
-
     }
 
     return result;
-}
-
-static void** Mul(void** input, int inputPortNumber, int* outputPortNumber)
-{
-	static void* result = NULL;
-
-	double* sum = (double*)malloc(sizeof(double));
-	*sum = 1.0;
-
-	*outputPortNumber = 0;
-	for(; inputPortNumber > 0; --inputPortNumber, ++input)
-	{
-		if (*input != NULL)
-			(*sum) *= *((int*)(*input));
-		*outputPortNumber = 1;
-	}
-	result = sum;
-	return &result;
 }
 
 static FILE* input_for_read = NULL;
@@ -149,8 +123,6 @@ SLAG_MODULE_EXPORT(void*) SlagInstantiate(const char* moduleName, const char* In
 
 	if (0 == strcmp("Add", moduleName))
 		function = Add;
-	else if (0 == strcmp("Mul", moduleName))
-		function = Mul;
     else if (0 == strcmp("Read", moduleName))
         function = Read;
     else if (0 == strcmp("Double", moduleName))
