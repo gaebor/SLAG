@@ -7,9 +7,8 @@
 #include <map>
 
 #include "slag/slag_interface.h"
-#include "aq/AsyncQueue.h"
 #include "ModuleIdentifier.h"
-#include "InternalTypes.h"
+#include "QueueTypes.h"
 
 class Factory;
 
@@ -50,10 +49,7 @@ public:
 
     bool RemoveInputPort(PortNumber);
 
-	State GetState()const
-	{
-		return state;
-	}
+    State GetState()const;
 private:
     
     void ThreadProcedure();

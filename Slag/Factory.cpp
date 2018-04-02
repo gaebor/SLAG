@@ -7,10 +7,10 @@ Factory::Factory()
 {
 }
 
-Factory::ErrorCode Factory::TryToLoadLibrary(const std::string& filename)
+ErrorCode Factory::TryToLoadLibrary(const std::string& filename)
 {
-    auto lib = std::shared_ptr<ManagedLibrary>(new ManagedLibrary(filename));
-    const auto instertion = libraries.emplace(get_file_name(filename), lib);
+    auto lib = new LibraryWrapper(filename);
+    const auto instertion = libraries.emplace(get_file_name(filename), ManagedLibrary(lib));
     const ErrorCode error(*(instertion.first->second));
     if (instertion.second == false)
         return Duplicate;
@@ -55,7 +55,7 @@ std::vector<std::string> Factory::GetLibraries() const
     return result;
 }
 
-std::pair<ModuleWrapper*, Factory::ErrorCode> Factory::InstantiateModule(const ModuleIdentifier& moduleId)
+std::pair<ModuleWrapper*, ErrorCode> Factory::InstantiateModule(const ModuleIdentifier& moduleId)
 {
     std::pair<ModuleWrapper*, ErrorCode> result(nullptr, CannotInstantiate);
 
@@ -67,7 +67,7 @@ std::pair<ModuleWrapper*, Factory::ErrorCode> Factory::InstantiateModule(const M
             const auto thisId = ModuleIdentifier(moduleId.name, moduleId.instance, f.first);
 			if (result.first = TryToInstantiate(thisId, functions))
 			{
-                result.second = Success;
+                result.second = ErrorCode::Success;
                 break;
 			}
 		}
@@ -78,18 +78,18 @@ std::pair<ModuleWrapper*, Factory::ErrorCode> Factory::InstantiateModule(const M
 		{
             const auto functions = library->second->GetFunctions();
             if (result.first = TryToInstantiate(moduleId, functions))
-				result.second = Success;
+				result.second = ErrorCode::Success;
 			else
-				result.second = CannotInstantiateByLibrary;
+				result.second = ErrorCode::CannotInstantiateByLibrary;
         }
         else if ((result.second = TryToLoadLibrary(moduleId.library)) <= Duplicate)
         { // try to load from never-seen library
             const auto libraryName = get_file_name(moduleId.library);
             const ModuleIdentifier thisId(moduleId.name, moduleId.instance, libraryName);
             if (result.first = TryToInstantiate(thisId, libraries[libraryName]->GetFunctions()))
-                result.second = Success;
+                result.second = ErrorCode::Success;
             else
-                result.second = CannotInstantiateByLibrary;
+                result.second = ErrorCode::CannotInstantiateByLibrary;
         }
 	}
 	return result;
@@ -105,7 +105,7 @@ Factory::Functions::Functions()
 {
 }
 
-Factory::ManagedLibrary::ManagedLibrary(const std::string & filename)
+Factory::LibraryWrapper::LibraryWrapper(const std::string & filename)
     : handle(load_library(filename.c_str())),
     error(NotALibrary)
 {
@@ -120,33 +120,33 @@ Factory::ManagedLibrary::ManagedLibrary(const std::string & filename)
         if (functions.instantiate != NULL && functions.compute != NULL &&
             functions.deleteMsg != NULL && functions.deleteModule != NULL)
         {
-            error = Factory::Success;
+            error = ErrorCode::Success;
         }
         else
         {
-            error = Factory::NotALibrary;
+            error = ErrorCode::NotALibrary;
         }
     }
     else
     {
-        error = Factory::CannotOpen;
+        error = ErrorCode::CannotOpen;
     }
 }
 
-Factory::ManagedLibrary::~ManagedLibrary()
+Factory::LibraryWrapper::~LibraryWrapper()
 {
     if (handle)
         close_library(handle);
 }
 
-Factory::ManagedLibrary::operator Factory::ErrorCode() const
+Factory::LibraryWrapper::operator ErrorCode() const
 {
     return error;
 }
 
-Factory::ManagedLibrary::operator bool()const
+Factory::LibraryWrapper::operator bool()const
 {
-    return error == Factory::Success;
+    return error == ErrorCode::Success;
 }
 
 Factory::Functions& Factory::Functions::operator=(const Factory::Functions& other)

@@ -1,12 +1,13 @@
 #pragma once
 
 #include <string>
-#include <map>
+#include <unordered_map>
 #include <memory>
 #include <vector>
 
 #include "slag/slag_interface.h"
 #include "ModuleIdentifier.h"
+#include "InternalTypes.h"
 
 class ModuleWrapper;
 
@@ -15,16 +16,6 @@ class Factory
 public:
     Factory();
     ~Factory();
-
-    enum ErrorCode
-    {
-        Success, //!< module is ready to go
-        Duplicate, //!< more than one library was able to instantiate the requested module, the first one was used
-        CannotInstantiate, //!< no library could instantiate your module
-        CannotOpen, //!<< the requested library does not exists
-        NotALibrary, //!<< the requested file exists but not a Slag Library
-        CannotInstantiateByLibrary //!<< the requested library couldn't instantiate your module
-    };
 
     struct Functions
     {
@@ -42,10 +33,10 @@ public:
     std::pair<ModuleWrapper*, ErrorCode> InstantiateModule(const ModuleIdentifier& id);
 
 private:
-    struct ManagedLibrary
+    struct LibraryWrapper
     {
-        ManagedLibrary(const std::string& filename);
-        ~ManagedLibrary();
+        LibraryWrapper(const std::string& filename);
+        ~LibraryWrapper();
 
         operator ErrorCode()const;
         operator bool()const;
@@ -55,11 +46,12 @@ private:
         }
 
     private:
-        void* const handle;
+        void* handle;
         Functions functions;
         ErrorCode error;
     };
-    std::map<std::string, std::shared_ptr<ManagedLibrary>> libraries;
+    typedef std::unique_ptr<LibraryWrapper> ManagedLibrary;
+    std::unordered_map<std::string, ManagedLibrary> libraries;
 	
 	ErrorCode TryToLoadLibrary(const std::string& filename);
     ModuleWrapper* TryToInstantiate(const ModuleIdentifier& moduleId, const Functions& f);

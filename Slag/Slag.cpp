@@ -9,10 +9,7 @@
 #include <set>
 
 #include "ConfigReader.h"
-#include "Factory.h"
-#include "ModuleIdentifier.h"
-#include "aq/AsyncQueue.h"
-#include "ModuleWrapper.h"
+#include "Graph.h"
 #include "OS_dependent.h"
 
 bool run = true; //signaling the termination event
@@ -129,9 +126,9 @@ int main(int argc, char* argv[])
 
 			switch (result.second)
 			{
-			case Factory::Duplicate:
+			case ErrorCode::Duplicate:
 				std::cout << "found more than once ... ";
-			case Factory::Success:
+			case ErrorCode::Success:
 			{
                 modules[moduleId].reset(result.first);
 				//moduleWrapper.global_settings_c = (int)global_settings.size();
@@ -147,22 +144,22 @@ int main(int argc, char* argv[])
 				}else
 					std::cout << "initialized" << std::endl;
 			}break;
-			case Factory::CannotOpen:
+			case ErrorCode::CannotOpen:
 			{
 				std::cout << "cannot be instantiated because couldn't open \"" << moduleId.library << "\"!" << std::endl;
 				goto halt;
 			}break;
-			case Factory::CannotInstantiateByLibrary:
+			case ErrorCode::CannotInstantiateByLibrary:
 			{
 				std::cout << "cannot be instantiated by the library \"" << moduleId.library << "\"!" << std::endl;
 				goto halt;
 			}break;
-			case Factory::CannotInstantiate:
+			case ErrorCode::CannotInstantiate:
 			{
 				std::cout << "cannot be instantiated!" << std::endl;
 				goto halt;
 			}break;
-            case Factory::NotALibrary:
+            case ErrorCode::NotALibrary:
             {
                 std::cout << "cannot be instantiated because \"" << moduleId.library << "\" is not a Library!" << std::endl;
                 goto halt;

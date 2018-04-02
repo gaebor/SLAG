@@ -7,6 +7,7 @@
 #include "Factory.h"
 #include "aq/Clock.h"
 #include "OS_dependent.h"
+#include "QueueTypes.h"
 
 ModuleWrapper::~ModuleWrapper(void)
 {
@@ -85,7 +86,7 @@ bool ModuleWrapper::ConnectToInputPort(PortNumber n, MessageQueue* p)
         inputQueues[n] = p;
         return true;
     }
-    else // already receives inpu
+    else // already receives input
         return false;
 }
 
@@ -124,6 +125,11 @@ bool ModuleWrapper::RemoveInputPort(PortNumber n)
         inputQueues.erase(n);
         return true;
     }
+}
+
+ModuleWrapper::State ModuleWrapper::GetState() const
+{
+    return state;
 }
 
 void ModuleWrapper::ThreadProcedure()
