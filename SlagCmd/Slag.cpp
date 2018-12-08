@@ -195,7 +195,6 @@ no_halt:
         std::this_thread::yield();
     }
 
-    graph.Wait();
     graph.Stop();
 
     terminate_output_text();
