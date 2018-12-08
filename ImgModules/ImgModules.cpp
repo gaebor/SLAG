@@ -1,6 +1,6 @@
 #include <string>
 
-#include "slag/slag_interface.h"
+#include "slag_interface.h"
 
 #include "AbstractInterface.h"
 

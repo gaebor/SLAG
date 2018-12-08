@@ -1,20 +1,20 @@
-cmake_minimum_required (VERSION 2.8)
+cmake_minimum_required (VERSION 3.1)
+set (CMAKE_CXX_STANDARD 11)
+
 project (ImgModules)
 
 set(OPENCV_VERSION 341)
 
 if (WIN32)
-    set(OPENCV_DIR "E:/PROGRAMOK/opencv/build")
+    set(OPENCV_DIR "${CMAKE_SOURCE_DIR}/../../Program/opencv/build")
     set(OPENCV_VER "${OPENCV_DIR}/x64/vc15")
     set(OPENCV_BIN "${OPENCV_VER}/bin")
     set(OPENCV_LIB "${OPENCV_VER}/lib")
     set(OPENCV_INC "${OPENCV_DIR}/include")
     
-    set(OpenCvDep opencv_world${OPENCV_VERSION})
+    set(OpenCvDep opencv_world${OPENCV_VERSION}$<$<CONFIG:Debug>:d>)
     
     link_directories(${OPENCV_LIB})
-elseif(UNIX)
-    add_compile_options("-std=c++11")
 endif(WIN32)
 
 file(GLOB Sources RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.cpp)

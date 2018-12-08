@@ -28,8 +28,8 @@ ModuleWrapper::ModuleWrapper()
     
     strout_size(0),
 	output_image_width(0), output_image_height(0),
-    // state(State::None),
-    do_run(false)
+    state(State::None),
+    do_run(false), is_initialized(false)
 {
 }
 
@@ -43,39 +43,36 @@ bool ModuleWrapper::Initialize(const std::vector<std::string>& settings,
 	{
         if (initialize == NULL)
         {
-            return true;
+            is_initialized = true;
         }
         else
         {
-			// state = State::Initializing;
+			state = State::Initializing;
             std::vector<const char*> settings_array;
 
             for (const auto& setting : settings)
                 settings_array.push_back(setting.c_str());
 
             //Initialize
-            return
+            is_initialized =
                 initialize(
                     _module.get(),
                     (int)settings_array.size(), settings_array.data(),
-                    nullptr, nullptr,
+                    get_txtin((std::string)identifier), get_txtout((std::string)identifier),
                     &strout, &strout_size,
                     &output_image_raw, &output_image_width, &output_image_height, imageType
                 ) == 0;
         }
 		// module settings are lost after the module initialize!
 		//TODO global settings
-	}else
-	    return false;
+	}
+	return is_initialized;
 }
 
 void ModuleWrapper::Start()
 {
-    if (!IsRunning())
-    {
-        do_run = true;
-        _thread = std::thread([](ModuleWrapper* _m) {_m->ThreadProcedure(); }, this);
-    }
+    do_run = true;
+    _thread = std::thread([](ModuleWrapper* _m) {_m->ThreadProcedure(); }, this);
 }
 
 void ModuleWrapper::Wait()
@@ -90,19 +87,9 @@ void ModuleWrapper::Stop()
     do_run = false;
 }
 
-bool ModuleWrapper::IsRunning() const
-{
-    return do_run && _thread.joinable();
-}
-
 const ModuleIdentifier & ModuleWrapper::GetIdentifier() const
 {
     return identifier.module;
-}
-
-const FullModuleIdentifier & ModuleWrapper::GetFullIdentifier() const
-{
-    return identifier;
 }
 
 const std::string & ModuleWrapper::GetLibrary() const
@@ -157,6 +144,11 @@ bool ModuleWrapper::RemoveInputPort(PortNumber n)
         inputQueues.erase(n);
         return true;
     }
+}
+
+ModuleWrapper::State ModuleWrapper::GetState() const
+{
+    return state;
 }
 
 void ModuleWrapper::ThreadProcedure()

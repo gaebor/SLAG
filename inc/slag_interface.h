@@ -26,26 +26,11 @@ enum ImageType
 
 //! SLAG calls this once, your module or whatever necessary data should be allocated
 /*!
-	@param module pointer to the instantiated module to be initialized
 	@param moduleName a C string, the name of your module, usually it identifies the job what your module is ought to do.
 		Example: VideoSource, MyMagicFunction, OCRmodule
 	@param InstanceName a C string, identifies your module, if more than one module of the same type is used.
 		Example: VideoSource:leftCamera, MyMagicFunction:01, OCRmodule:ItalicRecongitionOnly
-	@param out_text pointer to a C string, save this pointer for later, this pointer is used to extract textual data from your module.
-		Allocate a C string, and write useful info into it. Then set this pointer to the beginning of your allocated string.
-		Voila, your text will be readable for the SLAG. Set to NULL if your module doesn't have anything to say!
-		Note that the actual C string should be allocated by YOU and should be freed by YOU.
-		Moreover the pointed piece of memory should be valid outside of the SlagCompute function!
-		Don't free it during the whole lifetime of your module (or set to NULL)
-	@param out_img pointer to an array of pixels (image information)
-		same memory management considerations apply like out_text.
-		The pointer array is a 3*width*height byte array, containing RGB pixels.
-		Set to NULL if you don't have any image to show!
-	@param w output variable, save this pointer for later, write the width of your image here.
-		Set to 0 if you don't have any image to show!
-	@param h output variable, write the height of your image here.
-		Set to 0 if you don't have any image to show!
-	@return pointer to whatever you call a module
+    @return pointer to whatever you call a module
 */
 typedef void* (SLAG_CALL *SlagInstantiate_t)(
 	const char* moduleName,
@@ -87,9 +72,9 @@ typedef void** (*SlagFunction_t)(void** input, int inputPortNumber, int* outputP
 	@param settingsv pointer to array of settings, each entry is a null terminated C string.
 		This array is valid only until the initializer has been completed, after that it is destructed
 		If you want to keep any of these settings later, you have to copy it to your heap.
-	@param out_text pointer where you can set your output text
-	@param l write the length of your output text here
-	@param 	out_img write your output image here
+	@param strout pointer where you can set your output text
+	@param strout_size write the length of your output text here
+	@param out_img write your output image here
 	@param w write the width of your output image here
 	@param h write the height of your output image here
 	@param imageType you have to convert your output image to this format

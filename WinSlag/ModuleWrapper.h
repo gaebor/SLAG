@@ -6,44 +6,42 @@
 #include <thread>
 #include <unordered_map>
 #include <map>
-#include <functional>
 
-#include "slag_interface.h"
+#include "slag/slag_interface.h"
 #include "ModuleIdentifier.h"
 #include "QueueTypes.h"
 
 class Factory;
 
-typedef std::function<void(const std::string&, const char*, int)> output_text_callback;
-typedef std::function<void(const std::string&, double cycle, double load, double wait, const std::map<PortNumber, size_t>&)> statistics_callback;
-typedef std::function<void(const std::string&, int, int, ImageType, const unsigned char*)> output_image_callback;
+typedef void(*output_text_callback)(const std::string& module_name_and_instance, const char* text, int length);
+typedef void (*statistics_callback)(const std::string& module_name_and_instance, double cycle, double load, double wait, const std::map<PortNumber, size_t>& buffer_sizes);
+typedef void (*output_image_callback)(const std::string& module_name_and_instance, int w, int h, ImageType type, const unsigned char* data);
 
 class ModuleWrapper
 {
 public:
-	//enum State
-	//{
-	//	None, //!< no module
-	//	Uninitialized, //!< instantiated but not initialized
-	//	Initializing, //!< initializing
-	//	Initialized, //!< successfully initialized, idle state
-	//	Running, //!< IDK but doing something
-	//	Waiting, //!< some of the input queues are blocking
-	//	Computing, //!< hardly working
-	//	Queueing, //!< some of the output queues are blocking
-	//};
+	enum State
+	{
+		None, //!< no module
+		Uninitialized, //!< instantiated but not initialized
+		Initializing, //!< initializing
+		Initialized, //!< successfully initialized, idle state
+		Running, //!< IDK but doing something
+		Waiting, //!< some of the input queues are blocking
+		Computing, //!< hardly working
+		Queueing, //!< some of the output queues are blocking
+	};
 	ModuleWrapper();
 	~ModuleWrapper();
 
     bool Initialize(const std::vector<std::string>& settings,
-        statistics_callback s = statistics_callback(),
-        output_text_callback t = output_text_callback(),
-        output_image_callback i = output_image_callback());
+        statistics_callback s = nullptr, output_text_callback t = nullptr, 
+        output_image_callback i = nullptr);
 
     //! start processing
     void Start();
     
-    //! gracefully waits for the module to complete
+    //! gracefully wait for the module
     void Wait();
 
     //! tell to stop, but do not join or block
@@ -53,11 +51,10 @@ public:
     */
     void Stop();
 
-    bool IsRunning() const;
-
 public:
     const ModuleIdentifier& GetIdentifier() const;
-    const FullModuleIdentifier& GetFullIdentifier() const;
+    const std::string& GetPrintableName() const { return identifier.module; }
+
     //! returns which library instantiated the module
     const std::string& GetLibrary() const;
 
@@ -69,6 +66,8 @@ public:
     bool ConnectOutputPortTo(PortNumber, MessageQueue*);
 
     bool RemoveInputPort(PortNumber);
+
+    State GetState()const;
 
 protected:
     friend class Factory;
@@ -105,6 +104,7 @@ private:
     int strout_size;
     int output_image_width, output_image_height;
 
-    // std::atomic<State> state;
-    std::atomic<bool> do_run;    
+    std::atomic<State> state;
+    bool do_run, is_initialized;
+    
 };

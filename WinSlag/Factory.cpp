@@ -33,6 +33,7 @@ ModuleWrapper* Factory::TryToInstantiate(const FullModuleIdentifier& moduleId, c
 
         wrapper->identifier = moduleId;
 
+        wrapper->state = ModuleWrapper::State::Initialized;
         return wrapper;
     }
     return nullptr;

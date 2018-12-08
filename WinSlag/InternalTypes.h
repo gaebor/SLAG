@@ -13,7 +13,7 @@ typedef std::lock_guard<std::mutex> AutoLock;
 enum ErrorCode : unsigned char
 {
     Success, //!< everything OK
-    Duplicate, //!< more than one library was able to instantiate the requested module
+    Duplicate, //!< more than one library was able to instantiate the requested module, the first one was used
     AlreadyExists, //!< nothing to do
     WrongArguments, //!< wrong usage
     CannotInitialize, //!< module's SlagInitialize failed

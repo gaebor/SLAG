@@ -5,7 +5,7 @@
 #include <memory>
 #include <vector>
 
-#include "slag_interface.h"
+#include "slag/slag_interface.h"
 #include "ModuleIdentifier.h"
 #include "InternalTypes.h"
 

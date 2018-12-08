@@ -1,7 +1,7 @@
 #include <windows.h>
 #include <io.h>
 
-#include "../OS_dependent.h"
+#include "Additionals.h"
 
 int GetConsoleWidth()
 {
@@ -39,6 +39,7 @@ std::vector<std::string> split_to_argv(const std::string& line)
     {
         for (int i = 0; i < size; ++i)
             argv.emplace_back(result[i], result[i] + wcslen(result[i]));
+        LocalFree(result);
     }
     return argv;
 }

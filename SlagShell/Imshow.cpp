@@ -1,6 +1,6 @@
-#include "../OS_dependent.h"
+#include "Additionals.h"
 
-#include "slag/slag_interface.h"
+#include "slag_interface.h"
 
 ImageType get_image_type(void)
 {

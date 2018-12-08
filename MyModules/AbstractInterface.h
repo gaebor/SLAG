@@ -1,5 +1,5 @@
 #pragma once
-#include "slag/slag_interface.h"
+#include "slag_interface.h"
 
 #include<string>
 

@@ -1,8 +1,7 @@
 #include "Graph.h"
 
-#include "aq/Clock.h"
-
 Graph::Graph()
+:   timeout(0.0)
 {
     factory.Scan();
 }
@@ -14,8 +13,7 @@ Graph::~Graph()
     modules.clear();
 }
 
-ErrorCode Graph::AddModule(std::vector<std::string> arguments,
-    statistics_callback s, output_text_callback t, output_image_callback i)
+ErrorCode Graph::AddModule(std::vector<std::string> arguments)
 {
     if (arguments.empty())
         return WrongArguments;
@@ -26,13 +24,12 @@ ErrorCode Graph::AddModule(std::vector<std::string> arguments,
     
     arguments.erase(arguments.begin());
 
-    const FullModuleIdentifier fullModuleId(moduleName.c_str());
-    const ModuleIdentifier moduleId = fullModuleId.module;
+    const ModuleIdentifier moduleId(moduleName.c_str());
 
     if (modules.find(moduleId) != modules.end())
         return AlreadyExists;
 
-    const auto result = factory.InstantiateModule(moduleName);
+    const auto result = factory.InstantiateModule(moduleId);
     switch (result.second)
     {
     case ErrorCode::Duplicate:
@@ -41,7 +38,7 @@ ErrorCode Graph::AddModule(std::vector<std::string> arguments,
     {
         modules[moduleId].reset(result.first);
 
-        if (!modules[moduleId]->Initialize(arguments, s, t, i))
+        if (!modules[moduleId]->Initialize(arguments))
             return ErrorCode::CannotInitialize;
         else
             return ErrorCode::Success;
@@ -52,7 +49,7 @@ ErrorCode Graph::AddModule(std::vector<std::string> arguments,
 
 ErrorCode Graph::AddConnection(
                 const std::string & from, const std::string & to,
-                MessageQueue::LimitBehavior behavior, size_t limit)
+                MessageQueue::LimitBehavior behavior)
 {
     const PortIdentifier fromModuleId(from);
     const PortIdentifier toModuleId(to);
@@ -69,7 +66,7 @@ ErrorCode Graph::AddConnection(
     messageQueues.emplace_back(new MessageQueue());
     auto newMessageQueue = messageQueues.back().get();
     newMessageQueue->limitBehavior = behavior;
-    newMessageQueue->queueLimit = limit;
+    newMessageQueue->queueLimit = behavior;
 
     const auto ok1 = toModulePtr->second->ConnectToInputPort(toModuleId.port, newMessageQueue);
     if (ok1)
@@ -92,34 +89,46 @@ void Graph::Start()
 {
     if (!IsRunning())
     {
-        for (auto& m : modules)
-            m.second->Start();
+        startTime = timer.Tock();
+        modules_process = std::thread([&]()
+        {
+            for (auto& m : modules)
+                m.second->Start();
+
+            for (auto& m : modules)
+                m.second->Wait();
+        });
     }
+}
+
+void Graph::SignalStop()
+{
+    for (auto& m : modules)
+        m.second->Stop();
 }
 
 void Graph::Stop()
 {
-    for (auto& m : modules)
-        m.second->Stop();
-
+    SignalStop();
     for (auto& q : messageQueues)
         q->WakeUp();
 
-    Wait();
+    if (modules_process.joinable())
+        modules_process.join();
+
 }
 
 void Graph::Wait()
 {
-    for (auto& m : modules)
-        m.second->Wait();
+    while (IsRunning())
+    {
+        if (timeout > 0 && startTime + timeout <= timer.Tock())
+            SignalStop();
+        std::this_thread::yield();
+    }
 }
 
 bool Graph::IsRunning() const
 {
-    if (modules.empty())
-        return false;
-    for (auto& m : modules)
-        if (!(m.second->IsRunning()))
-            return false;
-    return true;
+    return modules_process.joinable();
 }

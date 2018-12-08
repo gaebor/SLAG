@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "slag/slag_interface.h"
+#include "slag_interface.h"
 
 static void** Add(void** input, int inputPortNumber, int* outputPortNumber)
 {

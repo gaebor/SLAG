@@ -1,4 +1,4 @@
-#include "..\OS_dependent.h"
+#include "Additionals.h"
 
 #include <windows.h>
 
@@ -12,11 +12,11 @@
 
 #include <fstream>
 
-#include "slag/slag_interface.h"
+#include "slag_interface.h"
 
 #define SLAG_WINDOW_CLASS_NAME "SlagImshow"
 
-static WNDCLASSEX windowsClass;
+static ATOM windowAtom;
 static std::mutex _mutex;
 static HINSTANCE const _hInstance = GetModuleHandle(NULL);
 static double _scale = 1.0;
@@ -59,7 +59,7 @@ static int bitdepth, planes;
 
 int init()
 {
-	auto& wc = windowsClass;
+    WNDCLASSEX wc;
 	wc.cbSize = sizeof(WNDCLASSEX);
 	wc.style = 0;
 	wc.lpfnWndProc = SlagWndProc;
@@ -74,8 +74,8 @@ int init()
 	wc.hIconSm = LoadIcon(NULL, IDI_APPLICATION);
 
 	//TODO UnregisterClass
-	auto result = RegisterClassEx(&windowsClass);
-	if (!result)
+	windowAtom = RegisterClassEx(&wc);
+	if (!windowAtom)
 	{
 		MessageBox(NULL, "Window Registration Failed!", "Error!",
 			MB_ICONEXCLAMATION | MB_OK);

@@ -97,21 +97,6 @@ FullModuleIdentifier & FullModuleIdentifier::assign(const std::string & n, const
     return *this;
 }
 
-
-//! returns readable format of the module ID: "name[.instance]"
-/*!
-if the ID is incorrect or empty then returns an empty string
-*/
-
-FullModuleIdentifier::operator std::string() const
-{
-    std::string result = library;
-    if (!result.empty())
-        result += "/";
-    result += (std::string)module;
-    return result;
-}
-
 bool FullModuleIdentifier::operator<(const FullModuleIdentifier& other) const
 {
     return (library == other.library) ? module < other.module : library < other.library;
@@ -121,6 +106,7 @@ bool FullModuleIdentifier::operator==(const FullModuleIdentifier& other) const
 {
     return (library == other.library) && module == other.module;
 }
+
 
 PortIdentifier::PortIdentifier( const ModuleIdentifier& m, PortNumber p /*= 0*/ )
 :	module(m), port(p)

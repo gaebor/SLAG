@@ -1,35 +1,34 @@
-
+#include <windows.h>
 #include <iostream>
-#include <fstream>
-#include <vector>
-#include <thread>
-#include <list>
-#include <memory>
-#include <mutex>
-#include <set>
 
 #include "ConfigReader.h"
 #include "Graph.h"
 #include "OS_dependent.h"
 
-bool run = true; //signaling the termination event
+BOOL WINAPI consoleHandler(DWORD signal) {
+    switch (signal)
+    {
+    case CTRL_C_EVENT:
+    case CTRL_BREAK_EVENT:
+    case CTRL_CLOSE_EVENT:
+        *run = false; //TODO end the Compute for each module
+        break;
+    default:
+        break;
+    }
+
+    return TRUE;
+}
 
 int main(int argc, char* argv[])
 {
-    Factory factory;
-
-	std::list<std::unique_ptr<MessageQueue>> messageQueues;
-	std::map<ModuleIdentifier, std::unique_ptr<ModuleWrapper>> modules;
+    if (!SetConsoleCtrlHandler(consoleHandler, TRUE)) {
+        fprintf(stderr, "\nCould not set control handler!\n");
+    }
 	MessageQueue::LimitBehavior queueBehavior = MessageQueue::None;
 	size_t queueLimit = std::numeric_limits<size_t>::max();
 	double hardResetTime = 0.0;
     int loglevel = 1;
-
-	std::list<std::string> global_settings;
-	std::vector<const char*> global_settings_v;
-	size_t max_settings_size = 1024;
-
-	std::vector<std::string> output_text_argv;
 
 	if (argc < 2)
 	{
@@ -72,68 +71,43 @@ int main(int argc, char* argv[])
 			else if (key == "HardResetTime")
 				hardResetTime = atoi(value.c_str());
 		}
-		//global settings
-		for (auto l : cfg.GetSection("global"))
-		{
-			const auto pos = l.find('=');
-			const auto key = l.substr(0U, pos);
-			const auto value = l.substr(pos == std::string::npos ? l.size() : l.find('=') + 1);
-			global_settings.push_back(key); global_settings.push_back(value);
-			max_settings_size = std::max(max_settings_size, value.size());
-		}
-		//TODO
-		//for (auto& setting : global_settings)
+		////global settings
+		//for (auto l : cfg.GetSection("global"))
 		//{
-		//	
-		//	setting.reserve(SETTINGS_MAX_LENGTH);
-
-		//	global_settings_v.push_back(setting.c_str());
+		//	const auto pos = l.find('=');
+		//	const auto key = l.substr(0U, pos);
+		//	const auto value = l.substr(pos == std::string::npos ? l.size() : l.find('=') + 1);
+		//	global_settings.push_back(key); global_settings.push_back(value);
+		//	max_settings_size = std::max(max_settings_size, value.size());
 		//}
+        Graph graph;
+        //{
+        //    factory.Scan();
+        //    std::cout << "Scanned Libraries: " << std::endl;
+        //    auto foundLibs = factory.GetLibraries();
+        //    for (auto& lib : foundLibs)
+        //        std::cout << lib << std::endl;
+        //    std::cout << std::endl;
+        //}
 
-        {
-            factory.Scan();
-            std::cout << "Scanned Libraries: " << std::endl;
-            auto foundLibs = factory.GetLibraries();
-            for (auto& lib : foundLibs)
-                std::cout << lib << std::endl;
-            std::cout << std::endl;
-        }
 		//instantiate modules
 		for (auto moduleStr : cfg.GetSection("modules"))
 		{
-			auto arguments = split_to_argv(moduleStr);
-			
-			std::string moduleName = arguments[0];
-			if (moduleName.empty())
-			{
-				std::cerr << "module should have a non-empty \"Name\"!" << std::endl;
+			const auto arguments = split_to_argv(moduleStr);
+            if (arguments.empty())
                 continue;
-			}
-			arguments.erase(arguments.begin());
+            const ModuleIdentifier moduleId(arguments[0].c_str());
+            const std::string moduleName(moduleId);
+            std::cout << "Module \"" << moduleName << "\" ... "; std::cout.flush();
 
-            const ModuleIdentifier moduleId(moduleName.c_str());
+            const auto result = graph.AddModule(arguments);
 
-			std::cout << "Module \"" << moduleName << "\" ... "; std::cout.flush();
-
-			if (modules.find(moduleId) != modules.end())
-			{
-				std::cout<< "appears more than once in the graph. Please give it a distinctive name or instance ID!" << std::endl;
-                continue;
-			}
-
-			auto result = factory.InstantiateModule(moduleId);
-			moduleName = moduleId;
-
-			switch (result.second)
+			switch (result)
 			{
 			case ErrorCode::Duplicate:
 				std::cout << "found more than once ... ";
 			case ErrorCode::Success:
 			{
-                modules[moduleId].reset(result.first);
-				//moduleWrapper.global_settings_c = (int)global_settings.size();
-				//moduleWrapper.global_settings_v = global_settings_v.data();
-
 				std::cout << "instantiated by \"" << result.first->GetIdentifier().library << "\" ... ";
                 std::cout.flush();
 
