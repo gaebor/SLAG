@@ -17,13 +17,14 @@ struct ModuleTextualData
 {
 	ModuleTextualData()
 		: strout_current(nullptr), strout_end(nullptr),
-        cycle_time(0.0), compute_time(0.0), wait_time(0.0)
+        cycle_time(0.0), compute_time(0.0), wait_time(0.0), n(0)
 	{
 	}
     const char* strout_current;
     const char* strout_end;
 	double cycle_time, compute_time, wait_time;
 	std::vector<std::pair<PortNumber, size_t>> bufferSizes;
+    size_t n;
 };
 
 static bool run = false;
@@ -141,6 +142,10 @@ void configure_output_text(const std::vector<std::string>& params)
                         putchar(*m.second.strout_current);
                     }
                     putchar('\n');
+                    m.second.n = 0;
+                    m.second.compute_time = 0;
+                    m.second.cycle_time = 0;
+                    m.second.wait_time = 0;
                     
 					for (auto& q : m.second.bufferSizes)
 					{
@@ -177,9 +182,13 @@ void handle_statistics( const std::string& module_name_and_instance, double cycl
 {
 	AutoLock lock(_mutex);
 	auto& data = _texts[module_name_and_instance];
-	data.cycle_time = cycle;
-	data.compute_time = load;
-	data.wait_time = wait;
+    const double denum = 1.0 / (data.n + 1);
+    const double ratio = denum * data.n;
+
+    data.cycle_time *= ratio; data.cycle_time += denum * cycle;
+    data.compute_time *= ratio; data.compute_time += denum * load;
+    data.wait_time *= ratio; data.wait_time += denum * wait;
 	nameOffset =  std::max((int)module_name_and_instance.size(), nameOffset);
 	data.bufferSizes.assign(buffer_sizes.begin(), buffer_sizes.end());
+    ++data.n;
 }
