@@ -1,4 +1,3 @@
-#include "Additionals.h"
 
 #include <windows.h>
 
@@ -14,7 +13,7 @@
 
 #include "slag_interface.h"
 
-#define SLAG_WINDOW_CLASS_NAME "SlagImshow"
+#define SLAG_WINDOW_CLASS_NAME TEXT("SlagImshow")
 
 static ATOM windowAtom;
 static std::mutex _mutex;
@@ -27,10 +26,10 @@ LRESULT CALLBACK SlagWndProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam 
 
 struct ImageContainer
 {
-	ImageContainer():w(0), h(0), type(ImageType::GREY), data(){}
+	ImageContainer():w(0), h(0), type(SlagImageType::GREY), data(){}
 	int w;
 	int h;
-	ImageType type;
+    SlagImageType type;
 	std::vector<unsigned char> data;
 };
 
@@ -44,7 +43,11 @@ public:
 
 	bool _run;
 	ImageContainer _image;
-	const std::string _name;
+#ifdef UNICODE
+	const std::wstring _name;
+#else
+    const std::string _name;
+#endif
 	HWND _hwnd;
 	std::mutex _mutex;
 	int actual_width;
@@ -77,7 +80,7 @@ int init()
 	windowAtom = RegisterClassEx(&wc);
 	if (!windowAtom)
 	{
-		MessageBox(NULL, "Window Registration Failed!", "Error!",
+		MessageBox(NULL, TEXT("Window Registration Failed!"), TEXT("Error!"),
 			MB_ICONEXCLAMATION | MB_OK);
 	}
 	return 0;
@@ -87,8 +90,8 @@ static const int init_val = init();
 
 struct NameFinder
 {
-	NameFinder(const std::string& name): _name(name){}
-	const std::string _name;
+	NameFinder(const std::string& name): _name(name.begin(), name.end()){}
+	decltype(WindowWrapper::_name) _name;
 	bool operator()(const WindowWrapper& w)
 	{
 		return w._name == _name;
@@ -105,7 +108,7 @@ struct HwndFinder
 	}
 };
 
-inline size_t GetByteDepth(ImageType t)
+inline size_t GetByteDepth(SlagImageType t)
 {
 	switch (t)
 	{
@@ -115,12 +118,6 @@ inline size_t GetByteDepth(ImageType t)
 	case GREY:
 	default:   return 4;
 	}
-}
-
-//! for Windows, this is always the same
-ImageType get_image_type(void)
-{
-	return ImageType::RGBA;
 }
 
 LRESULT CALLBACK SlagWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
@@ -142,7 +139,7 @@ LRESULT CALLBACK SlagWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		AutoLock lock(_mutex);
 		auto it = std::find_if(_images.begin(), _images.end(), HwndFinder(hwnd));
 		if (it == _images.end())
-			MessageBox(NULL, "wanted to delete a non-existent window!", "Error!", MB_ICONEXCLAMATION | MB_OK);
+			MessageBox(NULL, TEXT("wanted to delete a non-existent window!"), TEXT("Error!"), MB_ICONEXCLAMATION | MB_OK);
 		else
 			it->_run = false;
 		}break;
@@ -205,7 +202,7 @@ LRESULT CALLBACK SlagWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 }
 
 WindowWrapper::WindowWrapper(const std::string& name)
-	: _name(name), _hwnd(NULL), _run(true), actual_height(1), actual_width(1),
+	: _name(name.begin(), name.end()), _hwnd(NULL), _run(true), actual_height(1), actual_width(1),
 	_thread([](WindowWrapper* self)
 {
 	MSG Msg;
@@ -231,7 +228,7 @@ WindowWrapper::WindowWrapper(const std::string& name)
 		RECT rect;
 		if (GetWindowRect(self->_hwnd, &rect))
 		{
-			std::ofstream ofs(self->_name + ".img.pos");
+			std::ofstream ofs(self->_name + TEXT(".img.pos"));
 			if (ofs)
 			{
 				ofs << rect.top << " " << rect.left;
@@ -239,7 +236,7 @@ WindowWrapper::WindowWrapper(const std::string& name)
 		}
 
 		if (!DestroyWindow(self->_hwnd))
-			MessageBox(NULL, "DestroyWindow Failed!", "Error!", MB_ICONEXCLAMATION | MB_OK);
+			MessageBox(NULL, TEXT("DestroyWindow Failed!"), TEXT("Error!"), MB_ICONEXCLAMATION | MB_OK);
 		self->_hwnd = NULL;
 	}
 }, this)
@@ -248,7 +245,7 @@ WindowWrapper::WindowWrapper(const std::string& name)
 
 void WindowWrapper::Init()
 {
-	std::ifstream ifs(_name + ".img.pos");
+	std::ifstream ifs(_name + TEXT(".img.pos"));
 	int top_corner = 0, left_corner = 0;
 	if (ifs)
 	{
@@ -266,9 +263,9 @@ void WindowWrapper::Init()
 	if (!_hwnd)
 	{
 		auto error = GetLastError();
-		char error_str[20];
-		sprintf_s(error_str, "Error %d!", error);
-		MessageBox(NULL, "CreateWindow Failed!", error_str, MB_ICONEXCLAMATION | MB_OK);
+		TCHAR error_str[20];
+		wsprintf(error_str, TEXT("Error %d!"), error);
+		MessageBox(NULL, TEXT("CreateWindow Failed!"), error_str, MB_ICONEXCLAMATION | MB_OK);
 		return;
 	}
 	ShowWindow(_hwnd, SW_SHOWNORMAL);
@@ -286,7 +283,7 @@ WindowWrapper::~WindowWrapper()
 	_thread.join();
 }
 
-void handle_output_image( const std::string& module_name_and_instance, int w, int h, ImageType type, const unsigned char* data )
+void handle_output_image( const std::string& module_name_and_instance, int w, int h, SlagImageType type, const unsigned char* data )
 {
 	std::ptrdiff_t picture_size = w * h * GetByteDepth(type);
 
