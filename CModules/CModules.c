@@ -100,7 +100,7 @@ SLAG_MODULE_EXPORT(int) SlagInitialize(
     int settingsc, const char** settingsv,
     void* txtin, void* txtout,
     const char** strout, int* strout_size,
-    unsigned char** out_img, int* w, int* h, enum ImageType imageType)
+    unsigned char** out_img, int* w, int* h, enum SlagImageType imageType)
 {
 
     if (module == Read)

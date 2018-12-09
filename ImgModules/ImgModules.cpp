@@ -48,7 +48,7 @@ SLAG_MODULE_EXPORT(int) SlagInitialize(
     void* txtin, void* txtout,
     const char** strout, int* strout_size,
 	unsigned char** out_img,
-	int* w, int* h, enum ImageType imageType)
+	int* w, int* h, enum SlagImageType imageType)
 {
 	return (((MyModule*)module)->Initialize(
             settingsc, settingsv,

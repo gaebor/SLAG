@@ -13,7 +13,7 @@ MyModule::~MyModule()
 bool MyModule::Initialize(int settingsc, const char** settingsv,
     void* txtin, void* txtout,
     const char** _strout, int* strout_size,
-	unsigned char** out_img, int* w, int*h , enum ImageType type)
+	unsigned char** out_img, int* w, int*h , enum SlagImageType type)
 {
 	strout = _strout;
     strout_length = strout_size;

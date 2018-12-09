@@ -11,9 +11,9 @@
 #include <sys/stat.h>
 #include <limits.h>
 
-ImageType get_image_type(void)
+SlagImageType get_image_type(void)
 {
-    return ImageType::RGB;
+    return SlagImageType::RGB;
 }
 
 void* load_library(const char* file_name)

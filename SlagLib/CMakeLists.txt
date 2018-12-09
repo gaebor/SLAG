@@ -14,17 +14,14 @@ if (UNIX)
     add_compile_options(-pthread)
 endif(UNIX)
 
-# find_package(Threads REQUIRED)
-# target_link_libraries(my_app Threads::Threads)
-
 add_library(slaglib ${Sources} ${SpecificSources} ${Includes} ${InternalIncludes})
-target_link_libraries(slaglib asyncqueue)
+target_link_libraries(slaglib asyncqueue$<$<CONFIG:Debug>:d>)
 
 include_directories( "${CMAKE_CURRENT_SOURCE_DIR}/inc" "${AsyncQueueDir}/inc" )
 target_include_directories(slaglib PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src")
 
 add_executable(slag ${ExeSources})
-target_link_libraries(slag asyncqueue slaglib)
+target_link_libraries(slag asyncqueue$<$<CONFIG:Debug>:d> slaglib)
 
 add_dependencies(slag slaglib)
 

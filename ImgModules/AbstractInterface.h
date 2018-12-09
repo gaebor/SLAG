@@ -34,7 +34,7 @@ public:
 	bool Initialize(int settingsc, const char** settingsv,
         void* txtin, void* txtout,
         const char** strout, int* strout_size,
-		unsigned char** out_img, int* w, int* h, enum ImageType imageType);
+		unsigned char** out_img, int* w, int* h, enum SlagImageType imageType);
 
 protected:
 	virtual bool InitializeCallback(int settingsc, const char** settingsv);
@@ -49,6 +49,6 @@ public:
 	unsigned char** outputPicture;
 	int* outputPictureWidth;
 	int* outputPictureHeight;
-	ImageType imageType;
+	SlagImageType imageType;
 };
 
