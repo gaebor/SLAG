@@ -3,6 +3,8 @@
 #include "ModuleWrapper.h"
 #include "OS_dependent.h"
 
+namespace slag {
+
 Factory::Factory()
     : libraries()
 {
@@ -164,4 +166,6 @@ Factory::Functions& Factory::Functions::operator=(const Factory::Functions& othe
     initialize = other.initialize;
 
     return *this;
+}
+
 }

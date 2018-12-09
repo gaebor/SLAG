@@ -6,7 +6,7 @@
 
 #include "slag_interface.h"
 
-ImageType get_image_type(void);
+SlagImageType get_image_type(void);
 
 //!loads a library, .so or .dll
 void* load_library(const char* file_name);

@@ -15,7 +15,7 @@
 extern "C" {
 #endif
 
-enum ImageType
+enum SlagImageType
 {
 	GREY,
 	RGB,
@@ -85,7 +85,7 @@ typedef  int (SLAG_CALL *SlagInitialize_t)(
     int settingsc, const char** settingsv,
     void* txtin, void* txtout,
     const char** strout, int* strout_size,
-	unsigned char** out_img, int* w, int* h, enum ImageType imageType);
+	unsigned char** out_img, int* w, int* h, enum SlagImageType imageType);
 
 // #define SETTINGS_MAX_LENGTH 1024
 

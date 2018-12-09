@@ -8,11 +8,13 @@
 #include "aq/Clock.h"
 #include "OS_dependent.h"
 
+namespace slag {
+
 ModuleWrapper::~ModuleWrapper(void)
 {
 }
 
-const ImageType ModuleWrapper::imageType(get_image_type());
+const SlagImageType ModuleWrapper::imageType(get_image_type());
 const SlagDestroyMessage_t ModuleWrapper::deleteNothing([](void*){ return; });
 
 ModuleWrapper::ModuleWrapper()
@@ -33,9 +35,10 @@ ModuleWrapper::ModuleWrapper()
 }
 
 bool ModuleWrapper::Initialize(const std::vector<std::string>& settings,
-    statistics_callback s, output_text_callback t, output_image_callback i)
+    statistics_callback s, statistics2_callback s2, output_text_callback t, output_image_callback i)
 {
     handle_statistics = s;
+    handle_statistics2 = s2;
     handle_output_text = t;
     handle_output_image = i;
 	if (_module != nullptr)
@@ -161,8 +164,6 @@ bool ModuleWrapper::RemoveInputPort(PortNumber n)
 void ModuleWrapper::ThreadProcedure()
 {
 	std::vector<void*> inputMessages_c(1);
-    
-    const std::string printableName(identifier);
 
     void** outputMessages_c;
 
@@ -182,7 +183,8 @@ void ModuleWrapper::ThreadProcedure()
             //manage input data
             for (auto& q : inputQueues)
             {
-                bufferSize[q.first] = q.second->GetSize();
+                if (handle_statistics2)
+                    bufferSize[q.first] = q.second->GetSize();
 				ManagedMessage managedMessage;
 				if (!q.second->DeQueue(managedMessage))
                 {
@@ -243,15 +245,25 @@ void ModuleWrapper::ThreadProcedure()
 		cycle_time = timer_cycle.Tock();
 		timer_cycle.Tick();
         if (handle_statistics)
-    		handle_statistics(printableName, cycle_time, compute_time, wait_time, bufferSize);
-		if (strout && handle_output_text)
-			handle_output_text(printableName, strout, strout_size);
+    		handle_statistics(identifier.module, cycle_time, compute_time, wait_time);
+        if (handle_statistics2)
+        {
+            for (const auto& s : bufferSize)
+                handle_statistics2(identifier.module, s.second);
+            bufferSize.clear();
+        }
+        if (strout && handle_output_text)
+			handle_output_text(identifier.module, strout, strout_size);
 		
         if (output_image_raw && handle_output_image)
-            handle_output_image(printableName, output_image_width, output_image_height, imageType, output_image_raw);
+            handle_output_image(identifier.module, output_image_width, output_image_height, imageType, output_image_raw);
 	}
 halt:
-    handle_statistics(printableName, cycle_time, compute_time, wait_time, bufferSize);
+    if (handle_statistics)
+        handle_statistics(identifier.module, cycle_time, compute_time, wait_time);
+    if (handle_statistics2)
+        for (const auto& s : bufferSize)
+            handle_statistics2(identifier.module, s.second);
 
 	if (do_run) //in this case soft terminate
 		for (auto& qs : outputQueues)
@@ -264,4 +276,6 @@ halt:
 			q->WakeUp();
     
     do_run = false;
+}
+
 }

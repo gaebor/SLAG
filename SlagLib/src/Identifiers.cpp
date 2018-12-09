@@ -1,10 +1,15 @@
-#include "ModuleIdentifier.h"
+#include "Identifiers.h"
 
 #include <sstream>
 
-std::hash<ModuleIdentifier> std::hash<FullModuleIdentifier>::hasher;
+namespace std
+{
+    hash<slag::ModuleIdentifier> hash<slag::FullModuleIdentifier>::hasher;
 
-std::hash<std::string> std::hash<ModuleIdentifier>::strhasher;
+    hash<string> hash<slag::ModuleIdentifier>::strhasher;
+}
+
+namespace slag {
 
 ModuleIdentifier::ModuleIdentifier( const std::string& n, const std::string& i /*= ""*/)
 {
@@ -204,4 +209,6 @@ bool ConnectionIdentifier::operator <(const ConnectionIdentifier& other) const
 bool ConnectionIdentifier::operator== (const ConnectionIdentifier& other) const
 {
     return (from == other.from) && to == other.to;
+}
+
 }

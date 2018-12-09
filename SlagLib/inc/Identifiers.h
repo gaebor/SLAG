@@ -1,7 +1,8 @@
-#ifndef INCLUDE_MODULE_IDENTIFIER_H
-#define INCLUDE_MODULE_IDENTIFIER_H
+#pragma once
 
 #include <string>
+
+namespace slag {
 
 struct ModuleIdentifier
 {
@@ -24,17 +25,7 @@ struct ModuleIdentifier
 	bool operator< (const ModuleIdentifier& other)const;
 	bool operator== (const ModuleIdentifier& other)const;
 };
-namespace std {
-    template<>
-    struct hash<ModuleIdentifier>
-    {
-        static hash<string> strhasher;
-        size_t operator()(const ModuleIdentifier &m) const
-        {
-            return strhasher(m.name) ^ strhasher(m.instance);
-        }
-    };
-}
+
 
 struct FullModuleIdentifier
 {
@@ -56,25 +47,8 @@ struct FullModuleIdentifier
     bool operator< (const FullModuleIdentifier& other)const;
     bool operator== (const FullModuleIdentifier& other)const;
 };
-namespace std {
-    template<>
-    struct hash<FullModuleIdentifier>
-    {
-        static hash<ModuleIdentifier> hasher;
-        size_t operator()(const FullModuleIdentifier &m) const
-        {
-            return hasher(m.module) ^ hash<ModuleIdentifier>::strhasher(m.library);
-        }
-    };
-}
 
 typedef int PortNumber;
-
-//struct ModuleIdentifierFull
-//{
-//    ModuleIdentifier nameinstance;
-//    std::string library;
-//};
 
 struct PortIdentifier
 {
@@ -107,4 +81,27 @@ struct ConnectionIdentifier
     bool operator== (const ConnectionIdentifier& other)const;
     PortIdentifier from, to;
 };
-#endif //INCLUDE_MODULE_IDENTIFIER_H
+
+}
+
+namespace std{
+    template<>
+    struct hash<slag::ModuleIdentifier>
+    {
+        static hash<string> strhasher;
+        size_t operator()(const slag::ModuleIdentifier &m) const
+        {
+            return strhasher(m.name) ^ strhasher(m.instance);
+        }
+    };
+
+    template<>
+    struct hash<slag::FullModuleIdentifier>
+    {
+        static hash<slag::ModuleIdentifier> hasher;
+        size_t operator()(const slag::FullModuleIdentifier &m) const
+        {
+            return hasher(m.module) ^ hash<slag::ModuleIdentifier>::strhasher(m.library);
+        }
+    };
+}

@@ -7,6 +7,8 @@
 #include "ModuleWrapper.h"
 #include "InternalTypes.h"
 
+namespace slag {
+
 struct Graph::ModulesType : public std::unordered_map<ModuleIdentifier, std::unique_ptr<ModuleWrapper>>
 {
 };
@@ -29,7 +31,7 @@ Graph::~Graph()
 }
 
 ErrorCode Graph::AddModule(std::vector<std::string> arguments,
-    statistics_callback s, output_text_callback t, output_image_callback i)
+    statistics_callback s, statistics2_callback s2, output_text_callback t, output_image_callback i)
 {
     if (arguments.empty())
         return WrongArguments;
@@ -55,7 +57,7 @@ ErrorCode Graph::AddModule(std::vector<std::string> arguments,
     {
         (*modules)[moduleId].reset(result.first);
 
-        if (!(*modules)[moduleId]->Initialize(arguments, s, t, i))
+        if (!(*modules)[moduleId]->Initialize(arguments, s, s2, t, i))
             return ErrorCode::CannotInitialize;
         else
             return ErrorCode::Success;
@@ -65,12 +67,9 @@ ErrorCode Graph::AddModule(std::vector<std::string> arguments,
 }
 
 ErrorCode Graph::AddConnection(
-                const std::string & from, const std::string & to,
+                const PortIdentifier& fromModuleId, const PortIdentifier& toModuleId,
                 aq::LimitBehavior behavior, size_t limit)
 {
-    const PortIdentifier fromModuleId(from);
-    const PortIdentifier toModuleId(to);
-
     const auto fromModulePtr = modules->find(fromModuleId.module);
     const auto toModulePtr = modules->find(toModuleId.module);
 
@@ -138,13 +137,15 @@ bool Graph::IsRunning() const
     return true;
 }
 
-const FullModuleIdentifier * Graph::GetModuleId(const std::string & name) const
+const FullModuleIdentifier * Graph::GetModuleId(const ModuleIdentifier& name) const
 {
-    auto it = modules->find(ModuleIdentifier(name.c_str()));
+    auto it = modules->find(name);
     if (it != modules->end())
     {
         return &(it->second->GetFullIdentifier());
     }
     else
         return nullptr;
+}
+
 }

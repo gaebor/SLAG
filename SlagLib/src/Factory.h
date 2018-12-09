@@ -7,8 +7,10 @@
 
 #include "slag_interface.h"
 #include "SlagTypes.h"
-#include "ModuleIdentifier.h"
+#include "Identifiers.h"
 #include "InternalTypes.h"
+
+namespace slag {
 
 class ModuleWrapper;
 
@@ -54,3 +56,5 @@ private:
 	ErrorCode TryToLoadLibrary(const std::string& filename);
     ModuleWrapper* TryToInstantiate(const FullModuleIdentifier& moduleId, const Functions& f);
 };
+
+}

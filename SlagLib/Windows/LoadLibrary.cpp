@@ -12,9 +12,9 @@
 #	define snprintf sprintf_s
 #endif 
 
-ImageType get_image_type(void)
+SlagImageType get_image_type(void)
 {
-    return ImageType::RGBA;
+    return SlagImageType::RGBA;
 }
 
 

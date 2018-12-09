@@ -7,6 +7,8 @@
 #include "aq/AsyncQueue.h"
 #include "SlagTypes.h"
 
+namespace slag {
+
 class Factory;
 
 class Graph
@@ -18,6 +20,7 @@ public:
     //! creates a module and initializes it
     ErrorCode AddModule(std::vector<std::string> arguments,
         statistics_callback s = statistics_callback(),
+        statistics2_callback s2 = statistics2_callback(),
         output_text_callback t = output_text_callback(),
         output_image_callback i = output_image_callback());
 
@@ -26,7 +29,7 @@ public:
     //! initializes a module, optionally starts a thread for it and does not block
     ErrorCode InitializeModule(std::vector<std::string> arguments, int);
 
-    ErrorCode AddConnection(const std::string& from, const std::string& to, aq::LimitBehavior behavior = aq::LimitBehavior::None, size_t limit = 0);
+    ErrorCode AddConnection(const PortIdentifier& from, const PortIdentifier& to, aq::LimitBehavior behavior = aq::LimitBehavior::None, size_t limit = 0);
 
     ErrorCode RemoveModule(std::string name);
     ErrorCode RemoveConnection(const std::string& from, const std::string& to);
@@ -49,7 +52,7 @@ public:
     //! Returns whether the graph is busy
     bool IsRunning()const;
 
-    const FullModuleIdentifier* GetModuleId(const std::string& name)const;
+    const FullModuleIdentifier* GetModuleId(const ModuleIdentifier& name)const;
 private:
     struct ModulesType;
     std::unique_ptr<ModulesType> modules;
@@ -59,3 +62,5 @@ private:
     // std::unordered_map<ModuleIdentifier, std::unique_ptr<ModuleWrapper>> modules;
     // std::list<std::unique_ptr<MessageQueue>> messageQueues;
 };
+
+}

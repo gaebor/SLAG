@@ -1,15 +1,16 @@
 #pragma once
 
-#include <string>
 #include <functional>
-#include <map>
 
 #include "slag_interface.h"
-#include "ModuleIdentifier.h"
+#include "Identifiers.h"
 
-typedef std::function<void(const std::string&, const char*, int)> output_text_callback;
-typedef std::function<void(const std::string&, double cycle, double load, double wait, const std::map<PortNumber, size_t>&)> statistics_callback;
-typedef std::function<void(const std::string&, int, int, ImageType, const unsigned char*)> output_image_callback;
+namespace slag {
+
+typedef std::function<void(const ModuleIdentifier&, const char*, int)> output_text_callback;
+typedef std::function<void(const ModuleIdentifier&, double cycle, double load, double wait)> statistics_callback;
+typedef std::function<void(const PortIdentifier&, size_t buffer_size)> statistics2_callback;
+typedef std::function<void(const ModuleIdentifier&, int, int, SlagImageType, const unsigned char*)> output_image_callback;
 
 enum ErrorCode : unsigned char
 {
@@ -23,3 +24,5 @@ enum ErrorCode : unsigned char
     NotALibrary, //!<< the requested file exists but not a Slag Library
     CannotInstantiateByLibrary //!<< the requested library couldn't instantiate your module
 };
+
+}

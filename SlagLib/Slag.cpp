@@ -9,6 +9,7 @@
 
 #include "ConfigReader.h"
 #include "Graph.h"
+#include "Identifiers.h"
 
 #include "aq/Clock.h"
 
@@ -18,6 +19,8 @@ static volatile bool run;
 
 std::vector<std::string> split_to_argv(const std::string& line);
 
+using namespace slag;
+
 struct ModuleTextualData
 {
     ModuleTextualData()
@@ -25,16 +28,15 @@ struct ModuleTextualData
     {
     }
     std::string strout;
-    const char* strout_end;
     double cycle_time, compute_time, wait_time;
     std::vector<std::pair<PortNumber, size_t>> bufferSizes;
     size_t n;
 };
 
 static double _speed = 0.5;
-static std::map<std::string, ModuleTextualData> _texts;
+static std::map<ModuleIdentifier, ModuleTextualData> _texts;
 static std::mutex _mutex;
-static int nameOffset;
+static int nameOffset, textWidth = 80;
 static char wait_marker = '~', overhead_marker = '-', load_marker = '#';
 static std::thread _textThread;
 
@@ -61,17 +63,19 @@ void start_text()
                     AutoLock lock(_mutex);
 
                     printf("%-*s", nameOffset, nameTag.c_str());
-                    printf("| speed | overhead | text output\n");
+                    printf("| speed  | overhead | text output\n");
                     for (int i = 0; i < nameOffset; ++i)
                         putchar('-');
-                    printf("+-------+----------+-\n");
+                    printf("+--------+----------+-\n");
 
                     for (auto& m : _texts)
                     {
                         auto& t = m.second;
+                        const std::string module_name(m.first);
+                        nameOffset = std::max((int)module_name.size(), nameOffset);
                         const int load = round_int(10 * t.compute_time / t.cycle_time);
                         const int wait = round_int(10 * t.wait_time / t.cycle_time);
-                        printf("%-*s|%7e|", nameOffset, m.first.c_str(), t.cycle_time);
+                        printf("%-*s|%8.2e|", nameOffset, module_name.c_str(), t.cycle_time);
                         for (int i = 0; i < wait; ++i)
                             putchar(wait_marker);
                         for (int i = 0; i < load; ++i)
@@ -81,7 +85,7 @@ void start_text()
 
                         putchar('|');
 
-                        printf("%.40s\n", m.second.strout.c_str());
+                        printf("%.*s\n", std::max(0,textWidth-nameOffset-21), m.second.strout.c_str());
 
                         m.second.n = 0;
                         m.second.compute_time = 0;
@@ -96,7 +100,7 @@ void start_text()
 
                         for (int i = 0; i < nameOffset; ++i)
                             putchar('-');
-                        printf("+-------+----------+-\n");
+                        printf("+--------+----------+-\n");
                     }
                     printf("\n");
                 }
@@ -106,15 +110,14 @@ void start_text()
     }
 }
 
-void handle_output_text(const std::string& module_name_and_instance, const char* text, int length)
+void handle_output_text(const ModuleIdentifier& module_id, const char* text, int length)
 {
     if (text)
     {
         AutoLock lock(_mutex);
-        auto& data = _texts[module_name_and_instance];
-        data.strout.assign(text);
-        data.strout_end = text + length;
-        nameOffset = std::max((int)module_name_and_instance.size(), nameOffset);
+        auto& data = _texts[module_id];
+        data.strout.assign(text, (size_t)length);
+        // nameOffset = std::max((int)((std::string)module_id).size(), nameOffset);
     }
 }
 
@@ -129,18 +132,18 @@ static aq::LimitBehavior GetBehavior(const std::string& value)
     return aq::None;
 }
 
-void handle_statistics(const std::string& module_name_and_instance, double cycle, double load, double wait, const std::map<PortNumber, size_t>& buffer_sizes)
+void handle_statistics(const ModuleIdentifier& module_id, double cycle, double load, double wait)
 {
     AutoLock lock(_mutex);
-    auto& data = _texts[module_name_and_instance];
+    auto& data = _texts[module_id];
     const double denum = 1.0 / (data.n + 1);
     const double ratio = denum * data.n;
 
     data.cycle_time *= ratio; data.cycle_time += denum * cycle;
     data.compute_time *= ratio; data.compute_time += denum * load;
     data.wait_time *= ratio; data.wait_time += denum * wait;
-    nameOffset = std::max((int)module_name_and_instance.size(), nameOffset);
-    data.bufferSizes.assign(buffer_sizes.begin(), buffer_sizes.end());
+    // nameOffset = std::max((int)((std::string)module_id).size(), nameOffset);
+    // data.bufferSizes.assign(buffer_sizes.begin(), buffer_sizes.end());
     ++data.n;
 }
 
@@ -187,11 +190,16 @@ int main(int argc, char* argv[])
             if (arguments.empty())
                 continue;
             const std::string moduleName = arguments[0];
-            std::cout << "Module \"" << moduleName << "\" ... "; std::cout.flush();
-            const FullModuleIdentifier moduleId(moduleName.c_str());
+            const FullModuleIdentifier fullModuleId(moduleName.c_str());
 
-            switch (graph.AddModule(arguments, handle_statistics, handle_output_text))
+            const ModuleIdentifier moduleId(fullModuleId.module);
+            std::cout << "Module \"" << moduleName << "\" ... "; std::cout.flush();
+
+            switch (graph.AddModule(arguments, handle_statistics, statistics2_callback(), handle_output_text))
             {
+            case ErrorCode::Success:
+                std::cout << "initialized";
+                break;
 			case ErrorCode::Duplicate:
 				std::cout << "found more than once!";
                 break;
@@ -202,16 +210,16 @@ int main(int argc, char* argv[])
                 std::cout << "wrong arguments!";
                 break;
             case ErrorCode::CannotInitialize:
-                std::cout << "instantiated by \"" << graph.GetModuleId(moduleName)->library << "\" but cannot initialize!";
+                std::cout << "instantiated by \"" << graph.GetModuleId(moduleId)->library << "\" but cannot initialize!";
                 break;
 			case ErrorCode::CannotOpen:
 			{
-				std::cout << "cannot be instantiated because couldn't open \"" << moduleId.library << "\"!" << std::endl;
+				std::cout << "cannot be instantiated because couldn't open \"" << fullModuleId.library << "\"!" << std::endl;
 				// goto halt;
 			}break;
 			case ErrorCode::CannotInstantiateByLibrary:
 			{
-				std::cout << "cannot be instantiated by the library \"" << moduleId.library << "\"!" << std::endl;
+				std::cout << "cannot be instantiated by the library \"" << fullModuleId.library << "\"!" << std::endl;
 				// goto halt;
 			}break;
 			case ErrorCode::CannotInstantiate:
@@ -221,18 +229,15 @@ int main(int argc, char* argv[])
 			}break;
             case ErrorCode::NotALibrary:
             {
-                std::cout << "cannot be instantiated because \"" << moduleId.library << "\" is not a Library!" << std::endl;
+                std::cout << "cannot be instantiated because \"" << fullModuleId.library << "\" is not a Library!" << std::endl;
                 // goto halt;
             }break;
 			}
+            std::cout << std::endl;
 		}
         std::cout << std::endl;
 		
-        //read port connections topology
-
-		//the key is the input port (destination), because a destination can receive only from one source!
-		//the mapped value is the output port (source), one source can send to many destinations
-		std::map<PortIdentifier, PortIdentifier> connections;
+        //read port connections
 		for (const auto& c : cfg.GetSection("connections"))
 		{
             const auto parts = split_to_argv(c);
@@ -260,9 +265,10 @@ int main(int argc, char* argv[])
             iss >> limit;
             if (ErrorCode::Success != graph.AddConnection(fromModuleId, toModuleId, behavior, limit))
             {
-                std::cout << "Couldn't connect \"" << c << "\" !";
+                std::cout << "Couldn't connect \"" << c << "\" !" << std::endl;
             }
 		}
+        std::cout << std::endl;
 	}
 	catch (std::exception& e)
 	{
