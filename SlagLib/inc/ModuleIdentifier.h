@@ -24,6 +24,17 @@ struct ModuleIdentifier
 	bool operator< (const ModuleIdentifier& other)const;
 	bool operator== (const ModuleIdentifier& other)const;
 };
+namespace std {
+    template<>
+    struct hash<ModuleIdentifier>
+    {
+        static hash<string> strhasher;
+        size_t operator()(const ModuleIdentifier &m) const
+        {
+            return strhasher(m.name) ^ strhasher(m.instance);
+        }
+    };
+}
 
 struct FullModuleIdentifier
 {
@@ -45,6 +56,17 @@ struct FullModuleIdentifier
     bool operator< (const FullModuleIdentifier& other)const;
     bool operator== (const FullModuleIdentifier& other)const;
 };
+namespace std {
+    template<>
+    struct hash<FullModuleIdentifier>
+    {
+        static hash<ModuleIdentifier> hasher;
+        size_t operator()(const FullModuleIdentifier &m) const
+        {
+            return hasher(m.module) ^ hash<ModuleIdentifier>::strhasher(m.library);
+        }
+    };
+}
 
 typedef int PortNumber;
 
@@ -74,7 +96,7 @@ struct ConnectionIdentifier
 {
     ConnectionIdentifier(const PortIdentifier& from, const PortIdentifier& to);
     //! parses a string for connection ID.
-    ConnectionIdentifier(const std::string& id = "");
+    // ConnectionIdentifier(const std::string& id = "");
     //! returns readable format of the connection: "port -> port"
     /*!
         if the any of the ports are incorrect or empty then returns an empty string

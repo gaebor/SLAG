@@ -1,14 +1,15 @@
 #pragma once
 
-#include <memory>
-#include <mutex>
+#include <string>
+#include <functional>
+#include <map>
 
+#include "slag_interface.h"
+#include "ModuleIdentifier.h"
 
-
-typedef std::shared_ptr<void> ManagedMessage;
-typedef std::shared_ptr<void> ManagedModule;
-
-typedef std::lock_guard<std::mutex> AutoLock;
+typedef std::function<void(const std::string&, const char*, int)> output_text_callback;
+typedef std::function<void(const std::string&, double cycle, double load, double wait, const std::map<PortNumber, size_t>&)> statistics_callback;
+typedef std::function<void(const std::string&, int, int, ImageType, const unsigned char*)> output_image_callback;
 
 enum ErrorCode : unsigned char
 {

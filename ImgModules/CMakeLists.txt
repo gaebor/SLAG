@@ -39,9 +39,9 @@ add_custom_command(TARGET ImgModules POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:ImgModules> ${CMAKE_BINARY_DIR}
 )
 
-add_test(NAME WebCam COMMAND Slag.exe ../Testing/WebCam.cfg
+add_test(NAME WebCam COMMAND slag ../Testing/WebCam.cfg
          WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
-add_test(NAME ImgProcessor1 COMMAND Slag.exe ../Testing/ImgProcessor1.cfg
+add_test(NAME ImgProcessor1 COMMAND slag ../Testing/ImgProcessor1.cfg
          WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
 
 # that's an infinite test

@@ -1,4 +1,4 @@
-#include "../OS_dependent.h"
+#include "OS_dependent.h"
 
 #include <vector>
 #include <string>
@@ -10,6 +10,11 @@
 #include <unistd.h>
 #include <sys/stat.h>
 #include <limits.h>
+
+ImageType get_image_type(void)
+{
+    return ImageType::RGB;
+}
 
 void* load_library(const char* file_name)
 {

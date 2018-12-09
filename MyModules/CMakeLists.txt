@@ -15,7 +15,7 @@ add_custom_command(TARGET MyModules POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:MyModules> ${CMAKE_BINARY_DIR}
 )
 
-add_test(NAME AddCpp COMMAND Slag.exe ../Testing/graphAdd.cfg
+add_test(NAME AddCpp COMMAND slag ../Testing/graphAdd.cfg
          WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
-add_test(NAME Quit COMMAND Slag.exe ../Testing/graphQuit.cfg
+add_test(NAME Quit COMMAND slag ../Testing/graphQuit.cfg
          WORKING_DIRECTORY ${CMAKE_BINARY_DIR})

@@ -10,5 +10,5 @@ add_custom_command(TARGET CModules POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:CModules> ${CMAKE_BINARY_DIR}
 )
 
-add_test(NAME AddC COMMAND Slag.exe ../Testing/graphCAdd.cfg
+add_test(NAME AddC COMMAND slag ../Testing/graphCAdd.cfg
          WORKING_DIRECTORY ${CMAKE_BINARY_DIR})

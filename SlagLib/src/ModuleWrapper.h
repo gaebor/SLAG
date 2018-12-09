@@ -9,14 +9,11 @@
 #include <functional>
 
 #include "slag_interface.h"
+#include "SlagTypes.h"
 #include "ModuleIdentifier.h"
-#include "QueueTypes.h"
+#include "InternalTypes.h"
 
 class Factory;
-
-typedef std::function<void(const std::string&, const char*, int)> output_text_callback;
-typedef std::function<void(const std::string&, double cycle, double load, double wait, const std::map<PortNumber, size_t>&)> statistics_callback;
-typedef std::function<void(const std::string&, int, int, ImageType, const unsigned char*)> output_image_callback;
 
 class ModuleWrapper
 {

@@ -1,12 +1,13 @@
 #pragma once
 
-#include <map>
+#include <unordered_map>
 #include <list>
+#include <memory>
 
-#include "aq/Clock.h"
+#include "aq/AsyncQueue.h"
+#include "SlagTypes.h"
 
-#include "Factory.h"
-#include "ModuleWrapper.h"
+class Factory;
 
 class Graph
 {
@@ -25,7 +26,7 @@ public:
     //! initializes a module, optionally starts a thread for it and does not block
     ErrorCode InitializeModule(std::vector<std::string> arguments, int);
 
-    ErrorCode AddConnection(const std::string& from, const std::string& to, MessageQueue::LimitBehavior behavior = MessageQueue::None, size_t limit = 0);
+    ErrorCode AddConnection(const std::string& from, const std::string& to, aq::LimitBehavior behavior = aq::LimitBehavior::None, size_t limit = 0);
 
     ErrorCode RemoveModule(std::string name);
     ErrorCode RemoveConnection(const std::string& from, const std::string& to);
@@ -48,19 +49,13 @@ public:
     //! Returns whether the graph is busy
     bool IsRunning()const;
 
-    const FullModuleIdentifier* GetModuleId(const std::string& name)const
-    {
-        auto it = modules.find(ModuleIdentifier(name.c_str()));
-        if (it != modules.end())
-        {
-            return &(it->second->GetFullIdentifier());
-        }
-        else
-            return nullptr;
-    }
+    const FullModuleIdentifier* GetModuleId(const std::string& name)const;
 private:
-    std::map<ModuleIdentifier, std::unique_ptr<ModuleWrapper>> modules;
-    std::list<std::unique_ptr<MessageQueue>> messageQueues;
-
-    Factory factory;
+    struct ModulesType;
+    std::unique_ptr<ModulesType> modules;
+    struct MessageQueuesType;
+    std::unique_ptr<MessageQueuesType> messageQueues;
+    std::unique_ptr<Factory> factory;
+    // std::unordered_map<ModuleIdentifier, std::unique_ptr<ModuleWrapper>> modules;
+    // std::list<std::unique_ptr<MessageQueue>> messageQueues;
 };

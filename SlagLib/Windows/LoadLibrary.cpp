@@ -1,4 +1,4 @@
-#include "..\OS_dependent.h"
+#include "OS_dependent.h"
 
 #include <vector>
 #include <string>
@@ -12,6 +12,12 @@
 #	define snprintf sprintf_s
 #endif 
 
+ImageType get_image_type(void)
+{
+    return ImageType::RGBA;
+}
+
+
 void* load_library(const char* file_name)
 {
 	return ::LoadLibraryA(file_name);
@@ -19,12 +25,12 @@ void* load_library(const char* file_name)
 
 bool close_library( void* library )
 {
-	return FreeLibrary((HMODULE)library) == TRUE;
+	return ::FreeLibrary((HMODULE)library) == TRUE;
 }
 
 void* get_symbol_from_library(void* library, const char* symbol_name)
 {
-	return GetProcAddress((HMODULE)library, symbol_name);
+	return ::GetProcAddress((HMODULE)library, symbol_name);
 }
 
 std::vector<std::string> enlist_libraries()

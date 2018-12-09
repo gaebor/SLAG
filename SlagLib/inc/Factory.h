@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "slag_interface.h"
+#include "SlagTypes.h"
 #include "ModuleIdentifier.h"
 #include "InternalTypes.h"
 
@@ -40,10 +41,7 @@ private:
 
         operator ErrorCode()const;
         operator bool()const;
-        const Functions& GetFunctions()const
-        {
-            return functions;
-        }
+        const Functions& GetFunctions()const;
 
     private:
         void* handle;

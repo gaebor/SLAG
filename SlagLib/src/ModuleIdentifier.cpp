@@ -2,7 +2,9 @@
 
 #include <sstream>
 
-#include "ConfigReader.h"
+std::hash<ModuleIdentifier> std::hash<FullModuleIdentifier>::hasher;
+
+std::hash<std::string> std::hash<ModuleIdentifier>::strhasher;
 
 ModuleIdentifier::ModuleIdentifier( const std::string& n, const std::string& i /*= ""*/)
 {
@@ -171,16 +173,16 @@ ConnectionIdentifier::ConnectionIdentifier(const PortIdentifier & from, const Po
 {
 }
 
-ConnectionIdentifier::ConnectionIdentifier(const std::string& c)
-: from(), to()
-{
-    if (c.find("->") == std::string::npos || c.find("->") != c.rfind("->"))
-        return;
-
-    from = PortIdentifier(ConfigReader::trim1(c.substr(0, c.find("->"))));
-    to = PortIdentifier(ConfigReader::trim1(c.substr(c.find("->") + 2)));
-
-}
+//ConnectionIdentifier::ConnectionIdentifier(const std::string& c)
+//: from(), to()
+//{
+//    if (c.find("->") == std::string::npos || c.find("->") != c.rfind("->"))
+//        return;
+//
+//    from = PortIdentifier(ConfigReader::trim1(c.substr(0, c.find("->"))));
+//    to = PortIdentifier(ConfigReader::trim1(c.substr(c.find("->") + 2)));
+//
+//}
 
 ConnectionIdentifier::operator std::string() const
 {

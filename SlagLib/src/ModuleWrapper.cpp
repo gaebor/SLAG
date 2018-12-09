@@ -7,7 +7,6 @@
 #include "Factory.h"
 #include "aq/Clock.h"
 #include "OS_dependent.h"
-#include "QueueTypes.h"
 
 ModuleWrapper::~ModuleWrapper(void)
 {

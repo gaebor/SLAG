@@ -4,6 +4,7 @@
 #include "OS_dependent.h"
 
 Factory::Factory()
+    : libraries()
 {
 }
 
@@ -147,6 +148,11 @@ Factory::LibraryWrapper::operator ErrorCode() const
 Factory::LibraryWrapper::operator bool()const
 {
     return error == ErrorCode::Success;
+}
+
+const Factory::Functions & Factory::LibraryWrapper::GetFunctions() const
+{
+    return functions;
 }
 
 Factory::Functions& Factory::Functions::operator=(const Factory::Functions& other)
