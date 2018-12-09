@@ -52,6 +52,8 @@ public:
     //! Returns whether the graph is busy
     bool IsRunning()const;
 
+    StatusCode GetStatus(const ModuleIdentifier& name)const;
+
     const FullModuleIdentifier* GetModuleId(const ModuleIdentifier& name)const;
 private:
     struct ModulesType;
@@ -59,8 +61,6 @@ private:
     struct MessageQueuesType;
     std::unique_ptr<MessageQueuesType> messageQueues;
     std::unique_ptr<Factory> factory;
-    // std::unordered_map<ModuleIdentifier, std::unique_ptr<ModuleWrapper>> modules;
-    // std::list<std::unique_ptr<MessageQueue>> messageQueues;
 };
 
 }

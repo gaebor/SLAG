@@ -19,19 +19,19 @@ class Factory;
 class ModuleWrapper
 {
 public:
-	//enum State
-	//{
-	//	None, //!< no module
-	//	Uninitialized, //!< instantiated but not initialized
-	//	Initializing, //!< initializing
-	//	Initialized, //!< successfully initialized, idle state
-	//	Running, //!< IDK but doing something
-	//	Waiting, //!< some of the input queues are blocking
-	//	Computing, //!< hardly working
-	//	Queueing, //!< some of the output queues are blocking
-	//};
-	ModuleWrapper();
-	~ModuleWrapper();
+    //enum State
+    //{
+    //	None, //!< no module
+    //	Uninitialized, //!< instantiated but not initialized
+    //	Initializing, //!< initializing
+    //	Initialized, //!< successfully initialized, idle state
+    //	Running, //!< IDK but doing something
+    //	Waiting, //!< some of the input queues are blocking
+    //	Computing, //!< hardly working
+    //	Queueing, //!< some of the output queues are blocking
+    //};
+    ModuleWrapper();
+    ~ModuleWrapper();
 
     bool Initialize(const std::vector<std::string>& settings,
         statistics_callback s = statistics_callback(),
@@ -41,7 +41,7 @@ public:
 
     //! start processing
     void Start();
-    
+
     //! gracefully waits for the module to complete
     void Wait();
 
@@ -60,14 +60,16 @@ public:
     //! returns which library instantiated the module
     const std::string& GetLibrary() const;
 
-	//! gets a global ptr
-	//int global_settings_c;
-	//const char** global_settings_v;
+    //! gets a global ptr
+    //int global_settings_c;
+    //const char** global_settings_v;
 
     bool ConnectToInputPort(PortNumber, MessageQueue*);
     bool ConnectOutputPortTo(PortNumber, MessageQueue*);
 
     bool RemoveInputPort(PortNumber);
+
+    StatusCode GetStatus()const;
 
 protected:
     friend class Factory;
@@ -106,7 +108,8 @@ private:
     int output_image_width, output_image_height;
 
     // std::atomic<State> state;
-    std::atomic<bool> do_run;    
+    std::atomic<bool> do_run;
+    std::atomic<StatusCode> state;
 };
 
 }

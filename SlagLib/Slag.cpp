@@ -112,13 +112,15 @@ void start_text()
 
 void handle_output_text(const ModuleIdentifier& module_id, const char* text, int length)
 {
+    AutoLock lock(_mutex);
     if (text)
     {
-        AutoLock lock(_mutex);
         auto& data = _texts[module_id];
         data.strout.assign(text, (size_t)length);
         // nameOffset = std::max((int)((std::string)module_id).size(), nameOffset);
     }
+    else
+        _texts.erase(module_id);
 }
 
 static aq::LimitBehavior GetBehavior(const std::string& value)
@@ -276,17 +278,8 @@ int main(int argc, char* argv[])
 		goto halt;
 	}
 
-	goto no_halt;
-
-halt:
-    run = false;
-    if (_textThread.joinable())
-        _textThread.join();
-
-	return 1;
-
-no_halt:
     run = true;
+    {
     aq::Clock timer;
     double startTime = timer.Tock();
 
@@ -294,7 +287,7 @@ no_halt:
 
     graph.Start();
 
-    while (run && graph.IsRunning()) // Ctrl break can halt it too
+    while (run && graph.IsRunning())
     {
         if (hardResetTime > 0 && startTime + hardResetTime <= timer.Tock())
         {
@@ -305,12 +298,19 @@ no_halt:
         std::this_thread::yield();
     }
     run = false;
+    }
     graph.Stop();
 
     if (_textThread.joinable())
         _textThread.join();
     
     return 0;
+halt:
+    run = false;
+    if (_textThread.joinable())
+        _textThread.join();
+
+    return 1;
 }
 
 #ifdef _MSC_VER

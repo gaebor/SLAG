@@ -25,4 +25,15 @@ enum ErrorCode : unsigned char
     CannotInstantiateByLibrary //!<< the requested library couldn't instantiate your module
 };
 
+enum StatusCode : unsigned char
+{
+    None, //!< invalid
+    Idle, //!< doing nothing
+    Initializing, //!< initializing
+    Running, //!< running, but the control is at Slag
+    Waiting, //!< waiting for input
+    Computing, //!< (hardly) working
+    Queueing, //!< waiting to output
+};
+
 }

@@ -17,10 +17,21 @@ SlagImageType get_image_type(void)
     return SlagImageType::RGBA;
 }
 
-
 void* load_library(const char* file_name)
 {
-	return ::LoadLibraryA(file_name);
+    void* result = nullptr;
+    const int wchars_num = MultiByteToWideChar(CP_UTF8, 0, file_name, -1, NULL, 0);
+    if (wchars_num > 0)
+    {
+        wchar_t* wstr = new (std::nothrow) wchar_t[wchars_num];
+        if (wstr && MultiByteToWideChar(CP_UTF8, 0, file_name, -1, wstr, wchars_num) > 0)
+        {
+            result = ::LoadLibraryW(wstr);
+        }
+        if (wstr)
+            delete[] wstr;
+    }
+    return result;
 }
 
 bool close_library( void* library )
@@ -37,23 +48,36 @@ std::vector<std::string> enlist_libraries()
 {
 	std::vector<std::string> result;
 
-	WIN32_FIND_DATA FindFileData;
+	WIN32_FIND_DATAW FindFileData;
 	HANDLE hFind;
 
-	char exec_name[256];
-	GetModuleFileNameA(NULL, exec_name, 249);
-	if (GetLastError() == ERROR_SUCCESS)
-		snprintf(strrchr(exec_name, '\\'), 7, "\\*.dll");
-	else
-		snprintf(exec_name, 255, "*.dll");
+	wchar_t exec_name[1024];
+    wchar_t* filename_pos = nullptr;
+	GetModuleFileNameW(NULL, exec_name, 1024-7);
+    if (GetLastError() == ERROR_SUCCESS)
+        filename_pos = PathFindFileNameW(exec_name);
+	if (filename_pos)
+        swprintf(filename_pos, 7, L"\\*.dll");
+    else
+        swprintf(exec_name, 7, L"*.dll");
 
-	hFind = FindFirstFileA(exec_name, &FindFileData);
+	hFind = FindFirstFileW(exec_name, &FindFileData);
 
 	if (hFind != INVALID_HANDLE_VALUE)
 	{
 		do{
-			result.emplace_back(FindFileData.cFileName);
-		}while (FindNextFileA(hFind, &FindFileData));
+            result.emplace_back();
+            std::string& current = result.back();
+            const int size = (int)wcslen(FindFileData.cFileName);
+            const int size_needed = WideCharToMultiByte(CP_UTF8, 0, FindFileData.cFileName, size, NULL, 0, NULL, NULL);
+            if (size_needed > 0)
+            {
+                current.resize(size_needed);
+                if (WideCharToMultiByte(CP_UTF8, 0, FindFileData.cFileName, size, &current[0], size_needed, NULL, NULL) > 0)
+                    continue;
+            }
+            result.pop_back();
+        }while (FindNextFileW(hFind, &FindFileData));
 		FindClose(hFind);
 	}
 

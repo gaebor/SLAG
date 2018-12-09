@@ -29,8 +29,7 @@ ModuleWrapper::ModuleWrapper()
     
     strout_size(0),
 	output_image_width(0), output_image_height(0),
-    // state(State::None),
-    do_run(false)
+    do_run(false), state(StatusCode::Idle)
 {
 }
 
@@ -49,14 +48,14 @@ bool ModuleWrapper::Initialize(const std::vector<std::string>& settings,
         }
         else
         {
-			// state = State::Initializing;
+			state = StatusCode::Initializing;
             std::vector<const char*> settings_array;
 
             for (const auto& setting : settings)
                 settings_array.push_back(setting.c_str());
 
             //Initialize
-            return
+            const bool initialized = 
                 initialize(
                     _module.get(),
                     (int)settings_array.size(), settings_array.data(),
@@ -64,6 +63,8 @@ bool ModuleWrapper::Initialize(const std::vector<std::string>& settings,
                     &strout, &strout_size,
                     &output_image_raw, &output_image_width, &output_image_height, imageType
                 ) == 0;
+            state = StatusCode::Idle;
+            return initialized;
         }
 		// module settings are lost after the module initialize!
 		//TODO global settings
@@ -161,8 +162,14 @@ bool ModuleWrapper::RemoveInputPort(PortNumber n)
     }
 }
 
+StatusCode ModuleWrapper::GetStatus() const
+{
+    return state;
+}
+
 void ModuleWrapper::ThreadProcedure()
 {
+    state = StatusCode::Running;
 	std::vector<void*> inputMessages_c(1);
 
     void** outputMessages_c;
@@ -179,6 +186,7 @@ void ModuleWrapper::ThreadProcedure()
 		timer.Tick();
         {
             AutoLock lock(input_mutex);
+            state = StatusCode::Waiting;
 			inputMessages_c.assign(inputMessages_c.size(), nullptr);
             //manage input data
             for (auto& q : inputQueues)
@@ -203,8 +211,10 @@ void ModuleWrapper::ThreadProcedure()
 		wait_time = timer.Tock();
 		
 		timer.Tick();
+        state = StatusCode::Computing;
 		outputMessages_c = compute(_module.get(), inputMessages_c.data(), (int)inputMessages_c.size() - 1, &outputNumber);
 		compute_time = timer.Tock();
+        state = StatusCode::Queueing;
 
 		//manage output data
 		if (outputMessages_c == nullptr)
@@ -244,6 +254,9 @@ void ModuleWrapper::ThreadProcedure()
 
 		cycle_time = timer_cycle.Tock();
 		timer_cycle.Tick();
+        
+        state = StatusCode::Running;
+
         if (handle_statistics)
     		handle_statistics(identifier.module, cycle_time, compute_time, wait_time);
         if (handle_statistics2)
@@ -259,11 +272,16 @@ void ModuleWrapper::ThreadProcedure()
             handle_output_image(identifier.module, output_image_width, output_image_height, imageType, output_image_raw);
 	}
 halt:
+    state = StatusCode::Running;
     if (handle_statistics)
         handle_statistics(identifier.module, cycle_time, compute_time, wait_time);
     if (handle_statistics2)
         for (const auto& s : bufferSize)
             handle_statistics2(identifier.module, s.second);
+    if (handle_output_text)
+        handle_output_text(identifier.module, nullptr, 0);
+    if (handle_output_image)
+        handle_output_image(identifier.module, 0, 0, imageType, nullptr);
 
 	if (do_run) //in this case soft terminate
 		for (auto& qs : outputQueues)
@@ -276,6 +294,7 @@ halt:
 			q->WakeUp();
     
     do_run = false;
+    state = StatusCode::Idle;
 }
 
 }

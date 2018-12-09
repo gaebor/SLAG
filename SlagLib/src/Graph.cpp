@@ -129,12 +129,21 @@ void Graph::Wait()
 
 bool Graph::IsRunning() const
 {
-    if (modules->empty())
-        return false;
     for (auto& m : *modules)
-        if (!(m.second->IsRunning()))
-            return false;
-    return true;
+        if (m.second->IsRunning())
+            return true;
+    return false;
+}
+
+StatusCode Graph::GetStatus(const ModuleIdentifier & name) const
+{
+    auto it = modules->find(name);
+    if (it != modules->end())
+    {
+        return it->second->GetStatus();
+    }
+    else
+        return StatusCode::None;
 }
 
 const FullModuleIdentifier * Graph::GetModuleId(const ModuleIdentifier& name) const
