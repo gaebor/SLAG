@@ -12,14 +12,22 @@ Factory::Factory()
 
 ErrorCode Factory::TryToLoadLibrary(const std::string& filename)
 {
-    auto lib = new LibraryWrapper(filename);
-    const auto instertion = libraries.emplace(get_file_name(filename), ManagedLibrary(lib));
-    const ErrorCode error(*(instertion.first->second));
-    if (instertion.second == false)
-        return Duplicate;
-    else if (!*(instertion.first->second))
-        libraries.erase(instertion.first);
-    return error;
+    if (libraries.find(get_file_name(filename)) == libraries.end())
+    {
+        const auto lib = new LibraryWrapper(filename);
+        const ErrorCode error(*lib);
+        if (error == ErrorCode::Success)
+        {
+            libraries.emplace(get_file_name(filename), ManagedLibrary(lib));
+            return ErrorCode::Success;
+        } else
+        {
+            delete lib;
+            return error;
+        }
+    }
+    else
+        return ErrorCode::Duplicate;
 }
 
 ModuleWrapper* Factory::TryToInstantiate(const FullModuleIdentifier& moduleId, const Factory::Functions& f)
@@ -35,6 +43,7 @@ ModuleWrapper* Factory::TryToInstantiate(const FullModuleIdentifier& moduleId, c
         wrapper->initialize = f.initialize;
 
         wrapper->identifier = moduleId;
+        wrapper->state = StatusCode::UnInitialized;
 
         return wrapper;
     }

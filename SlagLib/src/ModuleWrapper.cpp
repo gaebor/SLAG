@@ -29,13 +29,15 @@ ModuleWrapper::ModuleWrapper()
     
     strout_size(0),
 	output_image_width(0), output_image_height(0),
-    do_run(false), state(StatusCode::Idle)
+    do_run(false), state(StatusCode::UnInitialized)
 {
 }
 
 bool ModuleWrapper::Initialize(const std::vector<std::string>& settings,
     statistics_callback s, statistics2_callback s2, output_text_callback t, output_image_callback i)
 {
+    state = StatusCode::UnInitialized;
+
     handle_statistics = s;
     handle_statistics2 = s2;
     handle_output_text = t;
@@ -44,6 +46,7 @@ bool ModuleWrapper::Initialize(const std::vector<std::string>& settings,
 	{
         if (initialize == NULL)
         {
+            state = StatusCode::Idle;
             return true;
         }
         else
@@ -63,7 +66,7 @@ bool ModuleWrapper::Initialize(const std::vector<std::string>& settings,
                     &strout, &strout_size,
                     &output_image_raw, &output_image_width, &output_image_height, imageType
                 ) == 0;
-            state = StatusCode::Idle;
+            state = initialized ? StatusCode::Idle : StatusCode::UnInitialized;
             return initialized;
         }
 		// module settings are lost after the module initialize!

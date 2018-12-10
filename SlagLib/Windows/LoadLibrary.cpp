@@ -57,7 +57,7 @@ std::vector<std::string> enlist_libraries()
     if (GetLastError() == ERROR_SUCCESS)
         filename_pos = PathFindFileNameW(exec_name);
 	if (filename_pos)
-        swprintf(filename_pos, 7, L"\\*.dll");
+        swprintf(filename_pos, 7, L"*.dll");
     else
         swprintf(exec_name, 7, L"*.dll");
 

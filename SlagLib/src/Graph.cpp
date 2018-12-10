@@ -20,7 +20,17 @@ struct Graph::MessageQueuesType : public std::list<std::unique_ptr<MessageQueue>
 Graph::Graph()
     : messageQueues(new MessageQueuesType()), modules(new ModulesType()), factory(new Factory())
 {
+    Scan();
+}
+
+void Graph::Scan()
+{
     factory->Scan();
+}
+
+std::vector<std::string> Graph::GetLibraries()const
+{
+    return factory->GetLibraries();
 }
 
 Graph::~Graph()
@@ -41,6 +51,21 @@ ErrorCode Graph::AddModule(std::vector<std::string> arguments,
         return WrongArguments;
     
     arguments.erase(arguments.begin());
+    
+    ErrorCode result = CreateModule(moduleName);
+    if (result == ErrorCode::Success)
+    {
+        const ModuleIdentifier moduleId(FullModuleIdentifier(moduleName.c_str()).module);
+        result = InitializeModule(moduleId, arguments, s, s2, t, i);
+    }
+
+    return result;
+}
+
+ErrorCode Graph::CreateModule(const std::string& moduleName)
+{
+    if (moduleName.empty())
+        return WrongArguments;
 
     const FullModuleIdentifier fullModuleId(moduleName.c_str());
     const ModuleIdentifier moduleId = fullModuleId.module;
@@ -49,21 +74,33 @@ ErrorCode Graph::AddModule(std::vector<std::string> arguments,
         return AlreadyExists;
 
     const auto result = factory->InstantiateModule(moduleName);
-    switch (result.second)
-    {
-    case ErrorCode::Duplicate:
-        return ErrorCode::Duplicate;
-    case ErrorCode::Success:
+    if (result.second == ErrorCode::Success)
     {
         (*modules)[moduleId].reset(result.first);
-
-        if (!(*modules)[moduleId]->Initialize(arguments, s, s2, t, i))
-            return ErrorCode::CannotInitialize;
-        else
-            return ErrorCode::Success;
-    }
+    } else if (result.first)
+    {
+        delete result.first;
     }
     return result.second;
+}
+
+ErrorCode Graph::InitializeModule(
+    const std::string& moduleName,
+    const std::vector<std::string>& arguments,
+    statistics_callback s, statistics2_callback s2, output_text_callback t, output_image_callback i)
+{
+    if (moduleName.empty())
+        return WrongArguments;
+
+    const ModuleIdentifier moduleId(moduleName.c_str());
+
+    const auto it = modules->find(moduleId);
+    if (it != modules->end())
+    {
+        return it->second->Initialize(arguments, s, s2, t, i) ? ErrorCode::Success : ErrorCode::CannotInitialize;
+    }
+    else
+        return ErrorCode::NoSuchModule;
 }
 
 ErrorCode Graph::AddConnection(
@@ -143,7 +180,7 @@ StatusCode Graph::GetStatus(const ModuleIdentifier & name) const
         return it->second->GetStatus();
     }
     else
-        return StatusCode::None;
+        return StatusCode::UnInitialized;
 }
 
 const FullModuleIdentifier * Graph::GetModuleId(const ModuleIdentifier& name) const

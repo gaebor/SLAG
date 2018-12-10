@@ -37,4 +37,5 @@ add_custom_command(TARGET slag POST_BUILD
 
 add_test(NAME DryRun COMMAND slag ../Testing/emptygraph.cfg
          WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
- )
+)
+ 

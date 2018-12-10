@@ -13,3 +13,4 @@ if (WIN32)
     # add_subdirectory(SlagCmd)
     add_subdirectory(WinSlag)
 endif(WIN32)
+
