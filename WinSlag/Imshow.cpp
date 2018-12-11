@@ -25,11 +25,9 @@ static HINSTANCE const _hInstance = GetModuleHandle(NULL);
 
 typedef std::lock_guard<std::mutex> AutoLock;
 
-LRESULT CALLBACK SlagWndProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam );
-
 struct ImageContainer
 {
-	ImageContainer():w(320), h(240), data(), type(SlagImageType::GREY) {}
+	ImageContainer():w(0), h(0), data(), type(SlagImageType::GREY) {}
 	int w;
 	int h;
 	std::vector<unsigned char> data;
@@ -41,13 +39,13 @@ class WindowWrapper
 public:
 	WindowWrapper(const std::string& name)
     :   _image(), _moduleId(name.c_str()), _name(name.begin(), name.end()),
-        _hwnd(NULL), _status(NULL), actual_height(0), actual_width(0), _scale(1.0)
+        _hwnd(NULL), _status(NULL), actual_height(240), actual_width(320), _scale(1.0)
     {
         _thread = std::thread(&ThreadProc, this);
     }
     WindowWrapper(const slag::ModuleIdentifier& id)
         : _image(), _status(NULL), _moduleId(id), _name((std::string)id),
-        _hwnd(NULL), actual_height(0), actual_width(0), _scale(1.0)
+        _hwnd(NULL), actual_height(240), actual_width(320), _scale(1.0)
     {
         _thread = std::thread(&ThreadProc, this);
     }
@@ -102,34 +100,6 @@ private:
 typedef std::unordered_map<slag::ModuleIdentifier, WindowWrapper> WindowsType;
 static WindowsType _images;
 
-int init()
-{
-    WNDCLASSEX wc;
-	wc.cbSize = sizeof(WNDCLASSEX);
-	wc.style = 0;
-	wc.lpfnWndProc = SlagWndProc;
-	wc.cbClsExtra = 0;
-	wc.cbWndExtra = 0;
-	wc.hInstance = _hInstance;
-	wc.hIcon = LoadIcon(NULL, IDI_APPLICATION);
-	wc.hCursor = LoadCursor(NULL, IDC_ARROW);
-	wc.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
-	wc.lpszMenuName = NULL;
-	wc.lpszClassName = SLAG_WINDOW_CLASS_NAME;
-	wc.hIconSm = LoadIcon(NULL, IDI_APPLICATION);
-
-	//TODO UnregisterClass
-	windowAtom = RegisterClassEx(&wc);
-	if (!windowAtom)
-	{
-		MessageBox(NULL, TEXT("Window Registration Failed!"), TEXT("Error!"),
-			MB_ICONEXCLAMATION | MB_OK);
-	}
-	return 0;
-}
-
-static const int init_val = init();
-
 inline size_t GetByteDepth(SlagImageType t)
 {
 	switch (t)
@@ -169,41 +139,43 @@ LRESULT CALLBACK SlagWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	case WM_PAINT:
 		{
         AutoLock imageLock(wind._mutex);
-
-        if (wind.actual_width != wind._image.w || wind.actual_height != wind._image.h)
+        if (!wind._image.data.empty())
         {
-            const double scale = wind._scale;
-            SetWindowPos(hwnd, HWND_NOTOPMOST, 0, 0,
-                (int)std::ceil(scale * (wind._image.w)), (int)std::ceil(scale * (wind._image.h)),
-                SWP_NOACTIVATE | SWP_NOMOVE | SWP_NOREPOSITION | SWP_NOZORDER
-            );
+            if (wind.actual_width != wind._image.w || wind.actual_height != wind._image.h)
+            {
+                const double scale = wind._scale;
+                SetWindowPos(hwnd, HWND_NOTOPMOST, 0, 0,
+                    (int)std::ceil(scale * (wind._image.w)), (int)std::ceil(scale * (wind._image.h)),
+                    SWP_NOACTIVATE | SWP_NOMOVE | SWP_NOREPOSITION | SWP_NOZORDER
+                );
 
-            wind.actual_width = wind._image.w;
-            wind.actual_height = wind._image.h;
-        }
-        else
-        {
-            PAINTSTRUCT ps;
-            HDC hdc = BeginPaint(hwnd, &ps);
+                wind.actual_width = wind._image.w;
+                wind.actual_height = wind._image.h;
+            }
+            else
+            {
+                PAINTSTRUCT ps;
+                HDC hdc = BeginPaint(hwnd, &ps);
 
-            HDC hdcBuffer = CreateCompatibleDC(hdc);
+                HDC hdcBuffer = CreateCompatibleDC(hdc);
 
-            HBITMAP hbm = CreateBitmap(wind._image.w, wind._image.h, wind.planes, wind.bitdepth, wind._image.data.data());
+                HBITMAP hbm = CreateBitmap(wind._image.w, wind._image.h, wind.planes, wind.bitdepth, wind._image.data.data());
 
-            HBITMAP hbmOldBuffer = (HBITMAP)SelectObject(hdcBuffer, hbm);
-            const double scale = wind._scale;
-            StretchBlt(
-                hdc, 0, 0,
-                (int)std::ceil(scale * (wind._image.w)), (int)std::ceil(scale * (wind._image.h)),
-                hdcBuffer, 0, 0,
-                wind._image.w, wind._image.h,
-                SRCCOPY);
+                HBITMAP hbmOldBuffer = (HBITMAP)SelectObject(hdcBuffer, hbm);
+                const double scale = wind._scale;
+                StretchBlt(
+                    hdc, 0, 0,
+                    (int)std::ceil(scale * (wind._image.w)), (int)std::ceil(scale * (wind._image.h)),
+                    hdcBuffer, 0, 0,
+                    wind._image.w, wind._image.h,
+                    SRCCOPY);
 
-            SelectObject(hdcBuffer, hbmOldBuffer);
-            DeleteObject(hbm);
-            DeleteDC(hdcBuffer);
+                SelectObject(hdcBuffer, hbmOldBuffer);
+                DeleteObject(hbm);
+                DeleteDC(hdcBuffer);
 
-            EndPaint(hwnd, &ps);
+                EndPaint(hwnd, &ps);
+            }
         }
 		}break;
 	case WM_DESTROY:
@@ -211,7 +183,7 @@ LRESULT CALLBACK SlagWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		break;
     case WM_SIZE:
         if (wind._status)
-           SendDlgItemMessage(hwnd, STATUS_BAR_ID, WM_SIZE, 0, 0);
+            PostMessage(wind._status, WM_SIZE, wParam, lParam);
         break;
 	default:
 		return DefWindowProc(hwnd, msg, wParam, lParam);
@@ -234,8 +206,8 @@ void WindowWrapper::ThreadProc(WindowWrapper* self)
         0,
         SLAG_WINDOW_CLASS_NAME,
         self->_name.c_str(),
-        WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU,
-        CW_USEDEFAULT, CW_USEDEFAULT, self->actual_width, self->actual_height,
+        WS_OVERLAPPED | WS_SYSMENU,
+        left_corner, top_corner, self->actual_width, self->actual_height,
         NULL, NULL, _hInstance, self);
 
     if (!self->_hwnd)
@@ -251,12 +223,14 @@ void WindowWrapper::ThreadProc(WindowWrapper* self)
 
     ShowWindow(self->_hwnd, SW_SHOWNORMAL);
 
-    SetWindowPos(self->_hwnd, HWND_NOTOPMOST, left_corner, top_corner,
-        self->actual_width, self->actual_height,
-        SWP_NOACTIVATE | SWP_NOSIZE | SWP_NOREPOSITION | SWP_NOZORDER
-    );
+    //SetWindowPos(self->_hwnd, HWND_NOTOPMOST, left_corner, top_corner,
+    //    self->actual_width, self->actual_height,
+    //    SWP_NOACTIVATE | SWP_NOSIZE | SWP_NOREPOSITION | SWP_NOZORDER
+    //);
 
     self->_status = CreateStatusWindow(WS_CHILD | WS_VISIBLE, TEXT(""), self->_hwnd, STATUS_BAR_ID);
+
+    UpdateWindow(self->_hwnd);
 
         //CreateWindowEx(0, STATUSCLASSNAME, NULL,
         //WS_CHILD | WS_VISIBLE | SBARS_SIZEGRIP, 0, 0, 0, 0,
@@ -274,7 +248,9 @@ void WindowWrapper::ThreadProc(WindowWrapper* self)
 
 WindowWrapper::~WindowWrapper()
 {
+    // PostMessage(_status, WM_NOTIFY, NULL, NULL);
     PostMessage(_hwnd, WM_CLOSE, NULL, NULL);
+    
     if (_thread.joinable())
     	_thread.join();
 }
@@ -335,10 +311,14 @@ void handle_output_text(const slag::ModuleIdentifier& module_id, const char* tex
 
     //    wind.Start();
 
-    //    //wind._text.assign(text);
+    //    wind._text.assign(text);
 
-    //    if (wind._status)
-    //        SetDlgItemText(wind._hwnd, STATUS_BAR_ID, text);
+    //    //if (wind._status)
+    //    //{
+    //    //    SetDlgItemText(wind._hwnd, STATUS_BAR_ID, wind._text.c_str());
+    //    //    //PostMessage(wind._status, WM_SETTEXT, 0, (LPARAM)wind._text.c_str());
+    //    //    //InvalidateRect(wind._status, 0, 0);
+    //    //}
     //}
 }
 
@@ -359,3 +339,31 @@ void handle_statistics(const slag::ModuleIdentifier& module_id, double cycle, do
 //		}
 //	}
 //}
+
+int init()
+{
+    WNDCLASSEX wc;
+    wc.cbSize = sizeof(WNDCLASSEX);
+    wc.style = 0;
+    wc.lpfnWndProc = SlagWndProc;
+    wc.cbClsExtra = 0;
+    wc.cbWndExtra = 0;
+    wc.hInstance = _hInstance;
+    wc.hIcon = LoadIcon(NULL, IDI_APPLICATION);
+    wc.hCursor = LoadCursor(NULL, IDC_ARROW);
+    wc.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
+    wc.lpszMenuName = NULL;
+    wc.lpszClassName = SLAG_WINDOW_CLASS_NAME;
+    wc.hIconSm = LoadIcon(NULL, IDI_APPLICATION);
+
+    //TODO UnregisterClass
+    windowAtom = RegisterClassEx(&wc);
+    if (!windowAtom)
+    {
+        MessageBox(NULL, TEXT("Window Registration Failed!"), TEXT("Error!"),
+            MB_ICONEXCLAMATION | MB_OK);
+    }
+    return 0;
+}
+
+static const int init_val = init();
