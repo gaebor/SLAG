@@ -94,23 +94,18 @@ using namespace slag;
 //static char wait_marker = '~', overhead_marker = '-', load_marker = '#';
 //static std::thread _textThread;
 
-void handle_output_text(const ModuleIdentifier& module_id, const char* text, int length)
-{
-
-}
-
-void handle_statistics(const ModuleIdentifier& module_id, double cycle, double load, double wait)
-{
-    
-}
-
 void handle_output_image(const ModuleIdentifier& module_id, int w, int h, SlagImageType type, const unsigned char* data);
+void handle_output_text(const ModuleIdentifier& module_id, const char* text, int length);
+void handle_statistics(const ModuleIdentifier& module_id, double cycle, double load, double wait);
+void terminate_output_image();
 
-int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
-    LPSTR lpCmdLine, int nCmdShow)
+int main()
 {
     int argc;
     const auto argv = CommandLineToArgvW(GetCommandLineW(), &argc);
+
+    std::wstring wline;
+    std::string line;
 
 	aq::LimitBehavior queueBehavior = aq::None;
 	size_t queueLimit = std::numeric_limits<size_t>::max();
@@ -241,7 +236,21 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 
     graph.Start();
 
-    graph.Wait();
+    while (std::getline(std::wcin, wline))
+    {
+        line = utf8_encode(wline);
+        std::wcout << wline << std::endl;
+        if (line == "stop" || line == "Stop")
+            break;
+        else if (line == "wait" || line == "Wait")
+        {
+            graph.Wait();
+            break;
+        }
+        std::this_thread::yield();
+    }
+
+    graph.Stop();
 
     return 0;
 halt:

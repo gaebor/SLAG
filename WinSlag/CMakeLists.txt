@@ -12,8 +12,6 @@ link_directories("${AsyncQueueDir}/bin")
 
 add_executable(WinSlag ${Sources} ${Includes})
 
-set_target_properties(WinSlag PROPERTIES LINK_FLAGS "/SUBSYSTEM:WINDOWS")
-
 target_include_directories(WinSlag PRIVATE
         "${CMAKE_SOURCE_DIR}/SlagLib/inc"
         "${AsyncQueueDir}/inc"
@@ -21,7 +19,7 @@ target_include_directories(WinSlag PRIVATE
 
 add_dependencies(WinSlag slaglib)
 
-target_link_libraries(WinSlag slaglib asyncqueue$<$<CONFIG:Debug>:d> shlwapi)
+target_link_libraries(WinSlag slaglib asyncqueue$<$<CONFIG:Debug>:d> shlwapi comctl32)
 
 add_custom_command(TARGET WinSlag POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:WinSlag> "${CMAKE_BINARY_DIR}"

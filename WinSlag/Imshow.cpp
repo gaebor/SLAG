@@ -1,5 +1,6 @@
 
 #include <windows.h>
+#include <commctrl.h>
 
 #include <unordered_map>
 #include <string>
@@ -15,12 +16,12 @@
 #include "slag_interface.h"
 #include "Identifiers.h"
 
+#define STATUS_BAR_ID 103
 #define SLAG_WINDOW_CLASS_NAME TEXT("SlagImshow")
 
 static ATOM windowAtom;
 static std::mutex _mutex;
 static HINSTANCE const _hInstance = GetModuleHandle(NULL);
-static volatile std::atomic<double> _scale = 1.0;
 
 typedef std::lock_guard<std::mutex> AutoLock;
 
@@ -28,7 +29,7 @@ LRESULT CALLBACK SlagWndProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam 
 
 struct ImageContainer
 {
-	ImageContainer():w(0), h(0), data(), type(SlagImageType::GREY) {}
+	ImageContainer():w(320), h(240), data(), type(SlagImageType::GREY) {}
 	int w;
 	int h;
 	std::vector<unsigned char> data;
@@ -40,43 +41,46 @@ class WindowWrapper
 public:
 	WindowWrapper(const std::string& name)
     :   _image(), _moduleId(name.c_str()), _name(name.begin(), name.end()),
-        _hwnd(NULL), actual_height(1), actual_width(1), _running(true)
+        _hwnd(NULL), _status(NULL), actual_height(0), actual_width(0), _scale(1.0)
     {
-        _thread.reset(new std::thread(&ThreadProc, this));
+        _thread = std::thread(&ThreadProc, this);
     }
     WindowWrapper(const slag::ModuleIdentifier& id)
-        : _image(), _moduleId(id), _name((std::string)id),
-        _hwnd(NULL), actual_height(1), actual_width(1), _running(true)
+        : _image(), _status(NULL), _moduleId(id), _name((std::string)id),
+        _hwnd(NULL), actual_height(0), actual_width(0), _scale(1.0)
     {
-        _thread.reset(new std::thread(&ThreadProc, this));
+        _thread = std::thread(&ThreadProc, this);
     }
 	~WindowWrapper();
 
+    //! restarts the WndProc loop only if it doesn't show any sign of running
     void Start()
     {
         if (!_running)
         {
-            _running = true;
-            if (_thread && _thread->joinable())
-                _thread->join();
-            _thread.reset(new std::thread(&ThreadProc, this));
+            if (_thread.joinable())
+                _thread.join();
+            _thread = std::thread(&ThreadProc, this);
         }
     }
 
 	ImageContainer _image;
+    std::string _text;
     const slag::ModuleIdentifier _moduleId;
 #ifdef UNICODE
 	const std::wstring _name;
 #else
     const std::string _name;
 #endif
-	HWND _hwnd;
+	HWND _hwnd, _status;
 	std::mutex _mutex;
 	int actual_width;
 	int actual_height;
     int bitdepth;
     int planes;
-    bool _running;
+    std::atomic<bool> _running;
+    std::atomic<double> _scale;
+
     void SavePos()
     {
         RECT rect;
@@ -90,7 +94,7 @@ public:
         }
     }
 private:
-    std::unique_ptr<std::thread> _thread;
+    std::thread _thread;
     //! Initialize and start WndProc message loop
     static void ThreadProc(WindowWrapper* self);
 };
@@ -140,6 +144,7 @@ inline size_t GetByteDepth(SlagImageType t)
 
 LRESULT CALLBACK SlagWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
+    auto& wind = *reinterpret_cast<WindowWrapper*>(GetWindowLongPtr(hwnd, GWLP_USERDATA));
 	switch(msg)
 	{
 	case WM_CREATE:
@@ -154,23 +159,20 @@ LRESULT CALLBACK SlagWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                 ReleaseDC(hwnd, hdc);
             }
 		}
-        return 0;
+        break;
 	case WM_CLOSE:
 		{
-        const auto self = reinterpret_cast<WindowWrapper*>(GetWindowLongPtr(hwnd, GWLP_USERDATA));
-        AutoLock imageLock(self->_mutex);
-        self->SavePos();
+        AutoLock imageLock(wind._mutex);
+        wind.SavePos();
         DestroyWindow(hwnd);
 		}break;
 	case WM_PAINT:
 		{
-        const auto self = reinterpret_cast<WindowWrapper*>(GetWindowLongPtr(hwnd, GWLP_USERDATA));
-        auto& wind = *self;
         AutoLock imageLock(wind._mutex);
 
         if (wind.actual_width != wind._image.w || wind.actual_height != wind._image.h)
         {
-            const double scale = _scale;
+            const double scale = wind._scale;
             SetWindowPos(hwnd, HWND_NOTOPMOST, 0, 0,
                 (int)std::ceil(scale * (wind._image.w)), (int)std::ceil(scale * (wind._image.h)),
                 SWP_NOACTIVATE | SWP_NOMOVE | SWP_NOREPOSITION | SWP_NOZORDER
@@ -189,7 +191,7 @@ LRESULT CALLBACK SlagWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             HBITMAP hbm = CreateBitmap(wind._image.w, wind._image.h, wind.planes, wind.bitdepth, wind._image.data.data());
 
             HBITMAP hbmOldBuffer = (HBITMAP)SelectObject(hdcBuffer, hbm);
-            const double scale = _scale;
+            const double scale = wind._scale;
             StretchBlt(
                 hdc, 0, 0,
                 (int)std::ceil(scale * (wind._image.w)), (int)std::ceil(scale * (wind._image.h)),
@@ -207,6 +209,10 @@ LRESULT CALLBACK SlagWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	case WM_DESTROY:
 		PostQuitMessage(0);
 		break;
+    case WM_SIZE:
+        if (wind._status)
+           SendDlgItemMessage(hwnd, STATUS_BAR_ID, WM_SIZE, 0, 0);
+        break;
 	default:
 		return DefWindowProc(hwnd, msg, wParam, lParam);
 	}
@@ -215,6 +221,7 @@ LRESULT CALLBACK SlagWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
 void WindowWrapper::ThreadProc(WindowWrapper* self)
 {
+    self->_running = true;
     MSG Msg;
     std::ifstream ifs(self->_name + TEXT(".img.pos"));
     int top_corner = 0, left_corner = 0;
@@ -249,6 +256,12 @@ void WindowWrapper::ThreadProc(WindowWrapper* self)
         SWP_NOACTIVATE | SWP_NOSIZE | SWP_NOREPOSITION | SWP_NOZORDER
     );
 
+    self->_status = CreateStatusWindow(WS_CHILD | WS_VISIBLE, TEXT(""), self->_hwnd, STATUS_BAR_ID);
+
+        //CreateWindowEx(0, STATUSCLASSNAME, NULL,
+        //WS_CHILD | WS_VISIBLE | SBARS_SIZEGRIP, 0, 0, 0, 0,
+        //self->_hwnd, (HMENU)STATUS_BAR_ID, _hInstance, NULL);
+
     while (GetMessage(&Msg, self->_hwnd, 0, 0) > 0)
     {
         TranslateMessage(&Msg);
@@ -261,12 +274,9 @@ void WindowWrapper::ThreadProc(WindowWrapper* self)
 
 WindowWrapper::~WindowWrapper()
 {
-    // prevents the _thread to begin an other loop
-
-    // if GetMessage is still waiting, then wakes it up
-	PostMessage(_hwnd, WM_NOTIFY, 0, 0);
-    if (_thread &&_thread->joinable())
-    	_thread->join();
+    PostMessage(_hwnd, WM_CLOSE, NULL, NULL);
+    if (_thread.joinable())
+    	_thread.join();
 }
 
 void handle_output_image( const slag::ModuleIdentifier& module_id, int w, int h, SlagImageType type, const unsigned char* data )
@@ -276,10 +286,7 @@ void handle_output_image( const slag::ModuleIdentifier& module_id, int w, int h,
 	if (data && w > 0 && h > 0 && picture_size > 0)
 	{
 		_mutex.lock();
-		//for (auto it = _images.begin(); it != _images.end(); it = (it->second._run ? ++it : _images.erase(it)))
-		//{
-		//	// Purge windows that are not running
-		//}
+
         auto it = _images.find(module_id);
 		if (it == _images.end())
 		{
@@ -291,7 +298,8 @@ void handle_output_image( const slag::ModuleIdentifier& module_id, int w, int h,
 		AutoLock imageLock(wind._mutex);
 		_mutex.unlock();
         
-        wind.Start();
+        // starts ThreadProc in case it was closed in the meantime
+        wind.Start(); 
 
         wind._image.w = w;
         wind._image.h = h;
@@ -308,15 +316,46 @@ void terminate_output_image()
 	_images.clear();
 }
 
-void configure_output_image(const std::vector<std::string>& params)
+void handle_output_text(const slag::ModuleIdentifier& module_id, const char* text, int length)
 {
-	for (size_t i = 0; i < params.size(); ++i)
-	{
-		if (params[i] == "-s" || params[i] == "--scale" && i + 1 < params.size())
-		{
-			double scale = atof(params[i + 1].c_str());
-			if (scale > 0)
-				_scale= scale;
-		}
-	}
+    //if (text)
+    //{
+    //    _mutex.lock();
+
+    //    auto it = _images.find(module_id);
+    //    if (it == _images.end())
+    //    {
+    //        // starts WndProc
+    //        it = _images.emplace(module_id, module_id).first;
+    //    }
+
+    //    auto& wind = it->second;
+    //    AutoLock imageLock(wind._mutex);
+    //    _mutex.unlock();
+
+    //    wind.Start();
+
+    //    //wind._text.assign(text);
+
+    //    if (wind._status)
+    //        SetDlgItemText(wind._hwnd, STATUS_BAR_ID, text);
+    //}
 }
+
+void handle_statistics(const slag::ModuleIdentifier& module_id, double cycle, double load, double wait)
+{
+
+}
+//
+//void configure_output_image(const std::vector<std::string>& params)
+//{
+//	for (size_t i = 0; i < params.size(); ++i)
+//	{
+//		if (params[i] == "-s" || params[i] == "--scale" && i + 1 < params.size())
+//		{
+//			double scale = atof(params[i + 1].c_str());
+//			if (scale > 0)
+//				_scale= scale;
+//		}
+//	}
+//}
