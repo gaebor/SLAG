@@ -104,7 +104,7 @@ void handle_statistics(const ModuleIdentifier& module_id, double cycle, double l
     
 }
 
-void handle_output_image(const std::string& module_name_and_instance, int w, int h, SlagImageType type, const unsigned char* data);
+void handle_output_image(const ModuleIdentifier& module_id, int w, int h, SlagImageType type, const unsigned char* data);
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
     LPSTR lpCmdLine, int nCmdShow)
