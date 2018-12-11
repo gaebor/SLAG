@@ -25,7 +25,7 @@ protected:
 	virtual bool InitializeCallback(int settingsc, const char** settingsv);
 
 private:
-	std::string text;
+    size_t frameNum;
 	cv::Mat picture;
 	cv::VideoCapture capture;
 	std::vector<MyMessage*> output_array;

@@ -11,7 +11,7 @@ Frame::~Frame(void)
 {
 }
 
-VideoSource::VideoSource(void)
+VideoSource::VideoSource(void) : frameNum(0)
 {
 }
 
@@ -66,6 +66,10 @@ MyMessage** VideoSource::Compute( MyMessage**, int, int* outputPortNumber )
 	*outputPictureWidth = picture.cols;
 	*outputPictureHeight = picture.rows;
 	*outputPicture = picture.data;
+
+    str = std::to_string(++frameNum);
+    *strout = str.c_str();
+    *strout_length = (int)str.size();
 
 	output_array.assign(1,output);
 	*outputPortNumber = (int)output_array.size();
