@@ -27,7 +27,7 @@ typedef std::lock_guard<std::mutex> AutoLock;
 
 struct ImageContainer
 {
-	ImageContainer():w(0), h(0), data(), type(SlagImageType::GREY) {}
+	ImageContainer():w(200), h(0), data(), type(SlagImageType::GREY) {}
 	int w;
 	int h;
 	std::vector<unsigned char> data;
@@ -318,32 +318,23 @@ void handle_output_image( const slag::ModuleIdentifier& module_id, int w, int h,
 
 void handle_output_text(const slag::ModuleIdentifier& module_id, const char* text, int length)
 {
-    //if (text)
-    //{
-    //    _mutex.lock();
-
-    //    auto it = _images.find(module_id);
-    //    if (it == _images.end())
-    //    {
-    //        // starts WndProc
-    //        it = _images.emplace(module_id, module_id).first;
-    //    }
-
-    //    auto& wind = it->second;
-    //    AutoLock imageLock(wind._mutex);
-    //    _mutex.unlock();
-
-    //    wind.Start();
-
-    //    wind._text.assign(text);
-
-    //    //if (wind._status)
-    //    //{
-    //    //    SetDlgItemText(wind._hwnd, STATUS_BAR_ID, wind._text.c_str());
-    //    //    //PostMessage(wind._status, WM_SETTEXT, 0, (LPARAM)wind._text.c_str());
-    //    //    //InvalidateRect(wind._status, 0, 0);
-    //    //}
-    //}
+    WindowWrapper* self;
+    if (text)
+    {
+        {   // finds the image in the pool
+            AutoLock lock(_mutex);
+            auto it = _images.find(module_id);
+            if (it == _images.end())
+            {
+                // starts ThreadProc
+                it = _images.emplace(module_id, module_id).first;
+            }
+            self = &(it->second);
+        }
+        // starts ThreadProc in case it was closed but once it was alive
+        self->Start();
+        SetDlgItemText(self->_hwnd, STATUS_BAR_ID, text);
+    }
 }
 
 void handle_statistics(const slag::ModuleIdentifier& module_id, double cycle, double load, double wait)
