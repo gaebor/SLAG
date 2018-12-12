@@ -14,3 +14,4 @@ if (WIN32)
     add_subdirectory(WinSlag)
 endif(WIN32)
 
+add_subdirectory(MiniSlag)
