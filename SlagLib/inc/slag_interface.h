@@ -15,14 +15,27 @@
 extern "C" {
 #endif
 
-enum SlagImageType
+typedef enum
 {
 	GREY,
 	RGB,
 	BGR,
 	RGBA,
 	BGRA
-};
+} SlagImageType;
+
+typedef struct
+{
+    const char* str;
+    int size;
+} SlagTextOut;
+
+typedef struct
+{
+    unsigned char* data;
+    int w, h;
+    const SlagImageType type;
+} SlagImageOut;
 
 //! SLAG calls this once, your module or whatever necessary data should be allocated
 /*!
@@ -81,11 +94,9 @@ typedef void** (*SlagFunction_t)(void** input, int inputPortNumber, int* outputP
 	@return 0 on success, otherwise initialization is considered to be failed and the graph doesn't even start
 */
 typedef  int (SLAG_CALL *SlagInitialize_t)(
-	void* module,
+    void* module,
     int settingsc, const char** settingsv,
-    void* txtin, void* txtout,
-    const char** strout, int* strout_size,
-	unsigned char** out_img, int* w, int* h, enum SlagImageType imageType);
+    SlagTextOut* textout, SlagImageOut* imageout);
 
 // #define SETTINGS_MAX_LENGTH 1024
 

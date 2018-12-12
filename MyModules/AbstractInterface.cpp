@@ -11,16 +11,14 @@ MyModule::~MyModule()
 }
 
 bool MyModule::Initialize(int settingsc, const char** settingsv,
-    void* txtin, void* txtout,
-    const char** _strout, int* strout_size,
-	unsigned char** out_img, int* w, int*h , enum SlagImageType type)
+    SlagTextOut* textout, SlagImageOut* imageout)
 {
-	strout = _strout;
-    strout_length = strout_size;
-	outputPicture = out_img;
-	outputPictureWidth = w;
-	outputPictureHeight = h;
-	imageType = type;
+    strout = &(textout->str);
+    strout_length = &(textout->size);
+    outputPicture = &(imageout->data);
+    outputPictureWidth = &(imageout->w);
+    outputPictureHeight = &(imageout->h);
+    imageType = imageout->type;
 
 	return InitializeCallback(settingsc, settingsv);
 }

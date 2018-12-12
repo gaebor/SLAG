@@ -27,45 +27,10 @@ static aq::LimitBehavior GetBehavior(const std::string& value)
     return aq::None;
 }
 
-// https://stackoverflow.com/a/3999597/3583290
-std::string utf8_encode(const wchar_t* wstr, int len = 0)
-{
-    std::string result;
-    if (len == 0)
-        len = (int)wcslen(wstr);
-    if (len > 0)
-    {
-        const int size_needed = WideCharToMultiByte(CP_UTF8, 0, wstr, len, NULL, 0, NULL, NULL);
-        result.resize(size_needed);
-        if (WideCharToMultiByte(CP_UTF8, 0, wstr, len, &result[0], size_needed, NULL, NULL) == 0)
-            result.clear();
-    }
-    return result;
-}
-
-std::string utf8_encode(const std::wstring& wstr)
-{
-    return utf8_encode(wstr.c_str(), (int)wstr.size());
-}
-
-std::wstring utf8_decode(const char* str, int len = 0)
-{
-    std::wstring result;
-    if (len == 0)
-        len = (int)strlen(str);
-    if (len > 0)
-    {
-        int size_needed = MultiByteToWideChar(CP_UTF8, 0, str, len, NULL, 0);
-        result.resize(size_needed);
-        MultiByteToWideChar(CP_UTF8, 0, str, len, &result[0], size_needed);
-    }
-    return result;
-}
-
-std::wstring utf8_decode(const std::string& str)
-{
-    return utf8_decode(str.c_str(), (int)str.size());
-}
+std::string utf8_encode(const wchar_t* wstr, int len = 0);
+std::string utf8_encode(const std::wstring& wstr);
+std::wstring utf8_decode(const char* str, int len = 0);
+std::wstring utf8_decode(const std::string& str);
 
 std::vector<std::string> split_to_argv(const std::string& line)
 {
@@ -94,10 +59,7 @@ using namespace slag;
 //static char wait_marker = '~', overhead_marker = '-', load_marker = '#';
 //static std::thread _textThread;
 
-void handle_output_image(const ModuleIdentifier& module_id, int w, int h, SlagImageType type, const unsigned char* data);
-void handle_output_text(const ModuleIdentifier& module_id, const char* text, int length);
-void handle_statistics(const ModuleIdentifier& module_id, double cycle, double load, double wait);
-void terminate_output_image();
+void handle_output_image(const ModuleIdentifier&, const SlagTextOut&, const SlagImageOut&, const Stats&);
 
 int main()
 {
@@ -153,7 +115,7 @@ int main()
             const ModuleIdentifier moduleId(fullModuleId.module);
             std::cout << "Module \"" << moduleName << "\" ... "; std::cout.flush();
 
-            switch (graph.AddModule(arguments, handle_statistics, statistics2_callback(), handle_output_text, handle_output_image))
+            switch (graph.AddModule(arguments, handle_output_image))
             {
             case ErrorCode::Success:
                 std::cout << "initialized";

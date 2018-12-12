@@ -19,25 +19,11 @@ class Factory;
 class ModuleWrapper
 {
 public:
-    //enum State
-    //{
-    //	None, //!< no module
-    //	Uninitialized, //!< instantiated but not initialized
-    //	Initializing, //!< initializing
-    //	Initialized, //!< successfully initialized, idle state
-    //	Running, //!< IDK but doing something
-    //	Waiting, //!< some of the input queues are blocking
-    //	Computing, //!< hardly working
-    //	Queueing, //!< some of the output queues are blocking
-    //};
+
     ModuleWrapper();
     ~ModuleWrapper();
 
-    bool Initialize(const std::vector<std::string>& settings,
-        statistics_callback s = statistics_callback(),
-        statistics2_callback s2 = statistics2_callback(),
-        output_text_callback t = output_text_callback(),
-        output_image_callback i = output_image_callback());
+    bool Initialize(const std::vector<std::string>& settings, module_callback c = module_callback());
 
     //! start processing
     void Start();
@@ -90,22 +76,18 @@ private:
 	std::unordered_map<PortNumber, MessageQueue*> inputQueues; //!< non-responsible for MessageQueues
 	std::unordered_map<PortNumber, std::vector<MessageQueue*>> outputQueues; //!< output can be duplicated and distributed to many modules
 
-    std::unordered_map<PortNumber, size_t> bufferSize;
-
     static const SlagDestroyMessage_t deleteNothing;
 private:
-    statistics_callback handle_statistics;
-    statistics2_callback handle_statistics2;
-    output_text_callback handle_output_text;
-    output_image_callback handle_output_image;
+    //statistics_callback handle_statistics;
+    //statistics2_callback handle_statistics2;
+    //output_text_callback handle_output_text;
+    //output_image_callback handle_output_image;
+    module_callback handle_data;
 private:
     void* txtin, *txtout;
-	const char* strout;
-	unsigned char* output_image_raw;
-	static const SlagImageType imageType;
-    
-    int strout_size;
-    int output_image_width, output_image_height;
+    SlagTextOut textOut;
+    SlagImageOut imageOut;
+    Stats stats;
 
     // std::atomic<State> state;
     std::atomic<bool> do_run;

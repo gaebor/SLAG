@@ -32,9 +32,7 @@ public:
 		@param settingsc array of c-strings containing the received settings
 	*/
 	bool Initialize(int settingsc, const char** settingsv,
-        void* txtin, void* txtout,
-        const char** strout, int* strout_size,
-		unsigned char** out_img, int* w, int* h, enum SlagImageType imageType);
+        SlagTextOut* textout, SlagImageOut* imageout);
 
 protected:
 	virtual bool InitializeCallback(int settingsc, const char** settingsv);

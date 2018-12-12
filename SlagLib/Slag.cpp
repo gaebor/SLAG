@@ -110,17 +110,30 @@ void start_text()
     }
 }
 
-void handle_output_text(const ModuleIdentifier& module_id, const char* text, int length)
+void handle_output_text(const ModuleIdentifier& module_id, const SlagTextOut& text,
+    const SlagImageOut&, const slag::Stats& stats)
 {
     AutoLock lock(_mutex);
-    if (text)
-    {
-        auto& data = _texts[module_id];
-        data.strout.assign(text, (size_t)length);
+    auto& data = _texts[module_id];
+    if (text.str)
+    {        
+        data.strout.assign(text.str, (size_t)text.size);
         // nameOffset = std::max((int)((std::string)module_id).size(), nameOffset);
     }
     else
-        _texts.erase(module_id);
+    {
+        data.strout.clear();
+    }
+    const double denum = 1.0 / (data.n + 1);
+    const double ratio = denum * data.n;
+
+    data.cycle_time *= ratio; data.cycle_time += denum * stats.cycle;
+    data.wait_time *= ratio; data.wait_time += denum * stats.wait;
+    data.compute_time *= ratio; data.compute_time += denum * stats.load;
+
+    // nameOffset = std::max((int)((std::string)module_id).size(), nameOffset);
+    data.bufferSizes = stats.buffers;
+    ++data.n;
 }
 
 static aq::LimitBehavior GetBehavior(const std::string& value)
@@ -132,21 +145,6 @@ static aq::LimitBehavior GetBehavior(const std::string& value)
     else if (value == "Refuse")
         return aq::Refuse;
     return aq::None;
-}
-
-void handle_statistics(const ModuleIdentifier& module_id, double cycle, double load, double wait)
-{
-    AutoLock lock(_mutex);
-    auto& data = _texts[module_id];
-    const double denum = 1.0 / (data.n + 1);
-    const double ratio = denum * data.n;
-
-    data.cycle_time *= ratio; data.cycle_time += denum * cycle;
-    data.compute_time *= ratio; data.compute_time += denum * load;
-    data.wait_time *= ratio; data.wait_time += denum * wait;
-    // nameOffset = std::max((int)((std::string)module_id).size(), nameOffset);
-    // data.bufferSizes.assign(buffer_sizes.begin(), buffer_sizes.end());
-    ++data.n;
 }
 
 int main(int argc, char* argv[])
@@ -197,7 +195,7 @@ int main(int argc, char* argv[])
             const ModuleIdentifier moduleId(fullModuleId.module);
             std::cout << "Module \"" << moduleName << "\" ... "; std::cout.flush();
 
-            switch (graph.AddModule(arguments, handle_statistics, statistics2_callback(), handle_output_text))
+            switch (graph.AddModule(arguments, handle_output_text))
             {
             case ErrorCode::Success:
                 std::cout << "initialized";

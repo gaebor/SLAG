@@ -98,11 +98,8 @@ static void** Quitter(void** input, int inputPortNumber, int* outputPortNumber)
 SLAG_MODULE_EXPORT(int) SlagInitialize(
     void* module,
     int settingsc, const char** settingsv,
-    void* txtin, void* txtout,
-    const char** strout, int* strout_size,
-    unsigned char** out_img, int* w, int* h, enum SlagImageType imageType)
+    SlagTextOut* textout, SlagImageOut* imageout)
 {
-
     if (module == Read)
     {
         if (settingsc > 0)

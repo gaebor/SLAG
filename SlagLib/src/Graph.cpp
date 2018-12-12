@@ -40,8 +40,7 @@ Graph::~Graph()
     modules->clear();
 }
 
-ErrorCode Graph::AddModule(std::vector<std::string> arguments,
-    statistics_callback s, statistics2_callback s2, output_text_callback t, output_image_callback i)
+ErrorCode Graph::AddModule(std::vector<std::string> arguments, module_callback c)
 {
     if (arguments.empty())
         return WrongArguments;
@@ -56,7 +55,7 @@ ErrorCode Graph::AddModule(std::vector<std::string> arguments,
     if (result == ErrorCode::Success)
     {
         const ModuleIdentifier moduleId(FullModuleIdentifier(moduleName.c_str()).module);
-        result = InitializeModule(moduleId, arguments, s, s2, t, i);
+        result = InitializeModule(moduleId, arguments, c);
     }
 
     return result;
@@ -86,8 +85,7 @@ ErrorCode Graph::CreateModule(const std::string& moduleName)
 
 ErrorCode Graph::InitializeModule(
     const std::string& moduleName,
-    const std::vector<std::string>& arguments,
-    statistics_callback s, statistics2_callback s2, output_text_callback t, output_image_callback i)
+    const std::vector<std::string>& arguments, module_callback c)
 {
     if (moduleName.empty())
         return WrongArguments;
@@ -97,7 +95,7 @@ ErrorCode Graph::InitializeModule(
     const auto it = modules->find(moduleId);
     if (it != modules->end())
     {
-        return it->second->Initialize(arguments, s, s2, t, i) ? ErrorCode::Success : ErrorCode::CannotInitialize;
+        return it->second->Initialize(arguments, c) ? ErrorCode::Success : ErrorCode::CannotInitialize;
     }
     else
         return ErrorCode::NoSuchModule;

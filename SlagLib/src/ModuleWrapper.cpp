@@ -14,34 +14,25 @@ ModuleWrapper::~ModuleWrapper(void)
 {
 }
 
-const SlagImageType ModuleWrapper::imageType(get_image_type());
 const SlagDestroyMessage_t ModuleWrapper::deleteNothing([](void*){ return; });
 
 ModuleWrapper::ModuleWrapper()
 :   compute(nullptr),
     initialize(nullptr),
     deleteMsg(nullptr),
-    handle_statistics(nullptr),
-    handle_output_text(nullptr),
-    handle_output_image(nullptr),
-    strout(nullptr),
-    output_image_raw(nullptr),
-    
-    strout_size(0),
-	output_image_width(0), output_image_height(0),
+    imageOut({ nullptr, 0, 0, get_image_type() }),
+    textOut({ nullptr, 0}),
     do_run(false), state(StatusCode::UnInitialized)
 {
+    
 }
 
-bool ModuleWrapper::Initialize(const std::vector<std::string>& settings,
-    statistics_callback s, statistics2_callback s2, output_text_callback t, output_image_callback i)
+bool ModuleWrapper::Initialize(const std::vector<std::string>& settings, module_callback callback)
 {
     state = StatusCode::UnInitialized;
 
-    handle_statistics = s;
-    handle_statistics2 = s2;
-    handle_output_text = t;
-    handle_output_image = i;
+    handle_data = callback;
+
 	if (_module != nullptr)
 	{
         if (initialize == NULL)
@@ -62,10 +53,7 @@ bool ModuleWrapper::Initialize(const std::vector<std::string>& settings,
                 initialize(
                     _module.get(),
                     (int)settings_array.size(), settings_array.data(),
-                    nullptr, nullptr,
-                    &strout, &strout_size,
-                    &output_image_raw, &output_image_width, &output_image_height, imageType
-                ) == 0;
+                    &textOut, &imageOut ) == 0;
             state = initialized ? StatusCode::Idle : StatusCode::UnInitialized;
             return initialized;
         }
@@ -181,7 +169,6 @@ void ModuleWrapper::ThreadProcedure()
 	std::unordered_set<ManagedMessage> receivedMessages;
 
 	aq::Clock timer_cycle, timer;
-	double cycle_time = 1.0, compute_time = 0.0, wait_time = 0.0;
 	PortNumber outputNumber;
 
 	while (do_run) //a terminating signal leaves every message in the queue and quits the loop
@@ -192,16 +179,16 @@ void ModuleWrapper::ThreadProcedure()
             state = StatusCode::Waiting;
 			inputMessages_c.assign(inputMessages_c.size(), nullptr);
             //manage input data
+            stats.buffers.clear();
             for (auto& q : inputQueues)
             {
-                if (handle_statistics2)
-                    bufferSize[q.first] = q.second->GetSize();
+                stats.buffers.emplace_back(q.first, q.second->GetSize());
 				ManagedMessage managedMessage;
 				if (!q.second->DeQueue(managedMessage))
                 {
-                    wait_time = timer.Tock();
-                    compute_time = 0.0;
-                    cycle_time = timer_cycle.Tock();
+                    stats.wait = timer.Tock();
+                    stats.load = 0.0;
+                    stats.cycle= timer_cycle.Tock();
                     goto halt; // input causes halt
                 }
 				if (q.first + 2 > inputMessages_c.size())
@@ -211,19 +198,18 @@ void ModuleWrapper::ThreadProcedure()
 				receivedMessages.insert(managedMessage);
             }
         }
-		wait_time = timer.Tock();
+		stats.wait = timer.Tock();
 		
 		timer.Tick();
         state = StatusCode::Computing;
 		outputMessages_c = compute(_module.get(), inputMessages_c.data(), (int)inputMessages_c.size() - 1, &outputNumber);
-		compute_time = timer.Tock();
+        stats.load = timer.Tock();
         state = StatusCode::Queueing;
 
 		//manage output data
 		if (outputMessages_c == nullptr)
 		{
-			compute_time = timer.Tock();
-			cycle_time = timer_cycle.Tock();
+            stats.cycle= timer_cycle.Tock();
 			goto halt; // module itself causes halt
 		}
 
@@ -255,36 +241,18 @@ void ModuleWrapper::ThreadProcedure()
         }
 		receivedMessages.clear();
 
-		cycle_time = timer_cycle.Tock();
+        stats.cycle= timer_cycle.Tock();
 		timer_cycle.Tick();
         
         state = StatusCode::Running;
 
-        if (handle_statistics)
-    		handle_statistics(identifier.module, cycle_time, compute_time, wait_time);
-        if (handle_statistics2)
-        {
-            for (const auto& s : bufferSize)
-                handle_statistics2(identifier.module, s.second);
-            bufferSize.clear();
-        }
-        if (strout && handle_output_text)
-			handle_output_text(identifier.module, strout, strout_size);
-		
-        if (output_image_raw && handle_output_image)
-            handle_output_image(identifier.module, output_image_width, output_image_height, imageType, output_image_raw);
+        if (handle_data)
+            handle_data(identifier.module, textOut, imageOut, stats);
 	}
 halt:
     state = StatusCode::Running;
-    if (handle_statistics)
-        handle_statistics(identifier.module, cycle_time, compute_time, wait_time);
-    if (handle_statistics2)
-        for (const auto& s : bufferSize)
-            handle_statistics2(identifier.module, s.second);
-    if (handle_output_text)
-        handle_output_text(identifier.module, nullptr, 0);
-    if (handle_output_image)
-        handle_output_image(identifier.module, 0, 0, imageType, nullptr);
+    if (handle_data)
+        handle_data(identifier.module, textOut, imageOut, stats);
 
 	if (do_run) //in this case soft terminate
 		for (auto& qs : outputQueues)
