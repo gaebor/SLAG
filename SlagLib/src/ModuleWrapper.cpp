@@ -55,6 +55,9 @@ bool ModuleWrapper::Initialize(const std::vector<std::string>& settings, module_
                     (int)settings_array.size(), settings_array.data(),
                     &textOut, &imageOut ) == 0;
             state = initialized ? StatusCode::Idle : StatusCode::UnInitialized;
+            if (handle_data)
+                handle_data(identifier.module, textOut, imageOut, stats);
+
             return initialized;
         }
 		// module settings are lost after the module initialize!

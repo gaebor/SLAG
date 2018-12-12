@@ -1,4 +1,6 @@
 
+#define NOMINMAX
+
 #include <windows.h>
 #include <commctrl.h>
 
@@ -19,10 +21,6 @@
 
 #define STATUS_BAR_ID 103
 #define SLAG_WINDOW_CLASS_NAME TEXT("SlagImshow")
-
-#ifdef max
-#undef max
-#endif
 
 static ATOM windowAtom;
 static std::mutex _mutex;
@@ -81,7 +79,7 @@ struct ImageContainer
 
 struct Statistics
 {
-    Statistics(): cycle(0), wait(0), load(0), n(0){}
+    Statistics(): cycle(0), wait(0), load(0), n(0), length(0){}
     double cycle, wait, load;
     size_t n;
     void add(double c, double w, double l)
@@ -96,7 +94,7 @@ struct Statistics
     }
     const char* get_speed()
     {
-        sprintf_s(text, "%8.2esec|", cycle);
+        length = sprintf_s(text, "%8.2esec|", cycle);
         return text;
     }
     void reset()
@@ -104,6 +102,7 @@ struct Statistics
         cycle = load = wait = 0;
         n = 0;
     }
+    int length;
     char text[50];
 };
 
@@ -185,22 +184,22 @@ public:
         }
     }
 
-    static LARGE_INTEGER GetRequiredSize(int w, int h)
+    static SIZE GetRequiredSize(int w, int h)
     {
         RECT rect;
-        LARGE_INTEGER l;
+        SIZE s;
 
         rect.top = 0;
         rect.left = 0;
-        rect.bottom = l.LowPart = h;
-        rect.right = l.HighPart = w;
+        rect.bottom = s.cy = h;
+        rect.right = s.cx = w;
         
         if (AdjustWindowRect(&rect, WS_OVERLAPPEDWINDOW, FALSE))
         {
-            l.LowPart = rect.bottom - rect.top;
-            l.HighPart= rect.right - rect.left;
+            s.cy = rect.bottom - rect.top;
+            s.cx = rect.right - rect.left;
         }
-        return l;
+        return s;
     }
 private:
     std::thread _thread;
@@ -246,27 +245,27 @@ private:
 
         SetWindowLongPtr(_hwnd, GWLP_USERDATA, (LONG_PTR)this);
 
-        ShowWindow(_hwnd, SW_SHOWNORMAL);
-
-        UpdateWindow(_hwnd);
-
         _font = CreateFontW(_barHeight-2, 0, 0, 0, FW_DONTCARE, FALSE, FALSE, FALSE,
             DEFAULT_CHARSET, OUT_OUTLINE_PRECIS, 
             CLIP_DEFAULT_PRECIS, CLEARTYPE_QUALITY, VARIABLE_PITCH, L"Consolas");
         if (_font)
         {
             RECT r = { 0, 0, 0, 0 };
-            char str[] = "9.99e+00sec|";
+            Statistics tmp_stat;
+            auto str = tmp_stat.get_speed();
             HDC hDC = GetDC(_hwnd);
             auto oldFont = SelectObject(hDC, _font);
                         
             DrawTextA(hDC, str, (int)strlen(str), &r, DT_CALCRECT | DT_NOPREFIX | DT_SINGLELINE);
-            SelectObject(hDC, oldFont);
-            ReleaseDC(_hwnd, hDC);
-
             _barWidth = r.right - r.left;
 
+            SelectObject(hDC, oldFont);
+            ReleaseDC(_hwnd, hDC);
         }
+         
+        ShowWindow(_hwnd, SW_SHOWNORMAL);
+
+        UpdateWindow(_hwnd);
 
         return true;
     }
@@ -291,7 +290,6 @@ LRESULT CALLBACK SlagWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
     static HBRUSH hBsh_yellow = ::CreateSolidBrush(RGB(255, 255, 0));
     static HBRUSH hBsh_green = ::CreateSolidBrush(RGB(0, 255, 0));
-    static HBRUSH hBsh_white = ::CreateSolidBrush(RGB(255, 255, 255));
 
     auto& wind = *reinterpret_cast<WindowWrapper*>(GetWindowLongPtr(hwnd, GWLP_USERDATA));
     switch (msg)
@@ -320,18 +318,17 @@ LRESULT CALLBACK SlagWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         const double scale = wind._scale;
         const auto img_w = (int)std::ceil(scale * (wind._image.w));
         const auto img_h = (int)std::ceil(scale * (wind._image.h));
-        auto required = WindowWrapper::GetRequiredSize(img_w, img_h);
-        required.LowPart += wind._barHeight;
+        auto required = WindowWrapper::GetRequiredSize(std::max(img_w, wind._barWidth), img_h + wind._barHeight);
 
-        if (wind.actual_rect.bottom - wind.actual_rect.top != required.LowPart 
-            || wind.actual_rect.right - wind.actual_rect.left != required.HighPart)
+        if (wind.actual_rect.bottom - wind.actual_rect.top != required.cy 
+            || wind.actual_rect.right - wind.actual_rect.left != required.cx)
         {
-            if (SetWindowPos(hwnd, HWND_NOTOPMOST, 0, 0, required.HighPart, required.LowPart,
+            if (SetWindowPos(hwnd, HWND_NOTOPMOST, 0, 0, required.cx, required.cy,
                 SWP_NOACTIVATE | SWP_NOMOVE | SWP_NOREPOSITION | SWP_NOZORDER
                 ))
             {
-                wind.actual_rect.bottom = wind.actual_rect.top + required.LowPart;
-                wind.actual_rect.right = wind.actual_rect.left + required.HighPart;
+                wind.actual_rect.bottom = wind.actual_rect.top + required.cy;
+                wind.actual_rect.right = wind.actual_rect.left + required.cx;
             }
         }
 
@@ -341,6 +338,8 @@ LRESULT CALLBACK SlagWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             std::wstring wtext;
 
             HDC hdc = BeginPaint(hwnd, &ps);
+            HBRUSH hBrush_bg = ::CreateSolidBrush(::GetBkColor(hdc));
+
             if (!wind._image.data.empty())
             {
                 HDC hdcBuffer = CreateCompatibleDC(hdc);
@@ -349,8 +348,7 @@ LRESULT CALLBACK SlagWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
                 const double scale = wind._scale;
                 StretchBlt(
-                    hdc, 0, wind._barHeight,
-                    (int)std::ceil(scale * (wind._image.w)), (int)std::ceil(scale * (wind._image.h)),
+                    hdc, 0, wind._barHeight, img_w, img_h,
                     hdcBuffer, 0, 0,
                     wind._image.w, wind._image.h,
                     SRCCOPY);
@@ -370,14 +368,15 @@ LRESULT CALLBACK SlagWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             
             box.left = box.right;
             box.right = ps.rcPaint.right;
-            FillRect(hdc, &box, hBsh_white);
+            FillRect(hdc, &box, hBrush_bg);
+            DeleteObject(hBrush_bg);
 
             auto oldFont = SelectObject(hdc, wind._font);
             SetBkMode(hdc, TRANSPARENT);
-            TextOutA(hdc, 0, 1, wind._stats.get_speed(), 19);
+            TextOutA(hdc, 0, 1, wind._stats.get_speed(), wind._stats.length);
             wind._stats.reset();
 
-            //SetBkMode(hdc, OPAQUE);
+            SetBkMode(hdc, OPAQUE);
             wtext = utf8_decode(wind._text);
             TextOutW(hdc, wind._barWidth + 1, 1, wtext.c_str(), (int)wtext.size());
             SelectObject(hdc, oldFont);
@@ -420,17 +419,18 @@ void handle_output_image(
     {   // copies the image to internal memory, locks WM_PAINT until that
         AutoLock lock(wind._mutex);
         const auto picture_size = (std::intmax_t)image.w * image.h * GetByteDepth(image.type);
+        wind._image.w = image.w;
+        wind._image.h = image.h;
+        wind._image.type = image.type;
         if (image.data && picture_size > 0)
         {
-            wind._image.w = image.w;
-            wind._image.h = image.h;
-            wind._image.type = image.type;
             wind._image.data.assign(image.data, image.data + picture_size);
-            // Queues a PAINT to message loop
         }
         if (text.str)
             wind._text.assign(text.str, text.str + text.size);
         wind._stats.add(stats.cycle, stats.wait, stats.load);
+        
+        // Queues a PAINT to message loop
         InvalidateRect(wind._hwnd, 0, 0);
     }
 }

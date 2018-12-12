@@ -110,6 +110,9 @@ SLAG_MODULE_EXPORT(int) SlagInitialize(
         if (settingsc > 0)
             quit_limit = atoi(settingsv[0]);
     }
+    textout->str = NULL; textout->size = 0;
+    imageout->data = NULL; imageout->w = 0; imageout->h = 0;
+
     return 0;
 }
 

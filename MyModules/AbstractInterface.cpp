@@ -16,7 +16,7 @@ bool MyModule::Initialize(int settingsc, const char** settingsv,
     strout = &(textout->str);
     strout_length = &(textout->size);
     outputPicture = &(imageout->data);
-    outputPictureWidth = &(imageout->w);
+    outputPictureWidth = &(imageout->w = 300);
     outputPictureHeight = &(imageout->h);
     imageType = imageout->type;
 
