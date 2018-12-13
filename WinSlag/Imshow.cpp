@@ -16,8 +16,8 @@
 #include <atomic>
 
 #include "slag_interface.h"
-#include "Identifiers.h"
-#include "SlagTypes.h"
+#include "slag/Identifiers.h"
+#include "slag/Types.h"
 
 #define STATUS_BAR_ID 103
 #define SLAG_WINDOW_CLASS_NAME TEXT("SlagImshow")

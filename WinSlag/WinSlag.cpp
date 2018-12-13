@@ -9,8 +9,8 @@
 #include "aq/AsyncQueue.h"
 #include "ConfigReader.h"
 
-#include "Graph.h"
-#include "Identifiers.h"
+#include "slag/Graph.h"
+#include "slag/Identifiers.h"
 
 typedef std::lock_guard<std::mutex> AutoLock;
 

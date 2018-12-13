@@ -7,7 +7,7 @@ link_directories("${AsyncQueueDir}/bin")
 file(GLOB Sources "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp")
 file(GLOB ExeSources "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp")
 file(GLOB InternalIncludes "${CMAKE_CURRENT_SOURCE_DIR}/src/*.h")
-file(GLOB Includes "${CMAKE_CURRENT_SOURCE_DIR}/inc/*.h")
+file(GLOB Includes "${CMAKE_CURRENT_SOURCE_DIR}/inc/*.h" "${CMAKE_CURRENT_SOURCE_DIR}/inc/slag/*.h")
 file(GLOB SpecificSources "${CMAKE_CURRENT_SOURCE_DIR}/${CMAKE_SYSTEM_NAME}/*.cpp")
 
 if (UNIX)

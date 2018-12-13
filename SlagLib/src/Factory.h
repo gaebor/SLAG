@@ -6,8 +6,8 @@
 #include <vector>
 
 #include "slag_interface.h"
-#include "SlagTypes.h"
-#include "Identifiers.h"
+#include "slag/Types.h"
+#include "slag/Identifiers.h"
 #include "InternalTypes.h"
 
 namespace slag {

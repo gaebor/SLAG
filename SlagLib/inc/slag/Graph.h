@@ -5,7 +5,7 @@
 #include <memory>
 
 #include "aq/AsyncQueue.h"
-#include "SlagTypes.h"
+#include "slag/Types.h"
 
 namespace slag {
 

@@ -8,8 +8,8 @@
 #include <thread>
 
 #include "ConfigReader.h"
-#include "Graph.h"
-#include "Identifiers.h"
+#include "slag/Graph.h"
+#include "slag/Identifiers.h"
 
 #include "aq/Clock.h"
 
