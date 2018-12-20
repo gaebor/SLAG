@@ -111,7 +111,7 @@ void start_text()
 }
 
 void handle_output_text(const ModuleIdentifier& module_id, const SlagTextOut& text,
-    const SlagImageOut&, const slag::Stats& stats)
+    const SlagImageOut&, slag::Stats& stats)
 {
     AutoLock lock(_mutex);
     auto& data = _texts[module_id];
@@ -132,7 +132,7 @@ void handle_output_text(const ModuleIdentifier& module_id, const SlagTextOut& te
     data.compute_time *= ratio; data.compute_time += denum * stats.load;
 
     // nameOffset = std::max((int)((std::string)module_id).size(), nameOffset);
-    data.bufferSizes = stats.buffers;
+    std::swap(data.bufferSizes, stats.buffers);
     ++data.n;
 }
 
@@ -150,6 +150,7 @@ static aq::LimitBehavior GetBehavior(const std::string& value)
 int main(int argc, char* argv[])
 {
 	aq::LimitBehavior queueBehavior = aq::None;
+    slag::module_callback text_output(handle_output_text);
 	size_t queueLimit = std::numeric_limits<size_t>::max();
 	double hardResetTime = 0.0;
     int loglevel = 1;
@@ -175,12 +176,14 @@ int main(int argc, char* argv[])
 			const auto key = l.substr(0, l.find('='));
 			const auto value = l.find('=') != std::string::npos ? l.substr(l.find('=') + 1) : "";
 
-			if (key == "QueueBehavior")
-				queueBehavior = GetBehavior(value);
-			else if (key == "QueueLimit")
+            if (key == "QueueBehavior")
+                queueBehavior = GetBehavior(value);
+            else if (key == "QueueLimit")
                 std::istringstream(value) >> queueLimit;
-			else if (key == "HardResetTime")
-				std::istringstream(value) >> hardResetTime;
+            else if (key == "HardResetTime")
+                std::istringstream(value) >> hardResetTime;
+            else if (key == "DisableOutput")
+                text_output = slag::module_callback();
 		}
 
 		//instantiate modules
@@ -195,7 +198,7 @@ int main(int argc, char* argv[])
             const ModuleIdentifier moduleId(fullModuleId.module);
             std::cout << "Module \"" << moduleName << "\" ... "; std::cout.flush();
 
-            switch (graph.AddModule(arguments, handle_output_text))
+            switch (graph.AddModule(arguments, text_output))
             {
             case ErrorCode::Success:
                 std::cout << "initialized";
@@ -281,7 +284,8 @@ int main(int argc, char* argv[])
     aq::Clock timer;
     double startTime = timer.Tock();
 
-    start_text();
+    if (text_output)
+        start_text();
 
     graph.Start();
 

@@ -59,7 +59,7 @@ using namespace slag;
 //static char wait_marker = '~', overhead_marker = '-', load_marker = '#';
 //static std::thread _textThread;
 
-void handle_output_image(const ModuleIdentifier&, const SlagTextOut&, const SlagImageOut&, const Stats&);
+void handle_output_image(const ModuleIdentifier&, const SlagTextOut&, const SlagImageOut&, Stats&);
 
 int main()
 {

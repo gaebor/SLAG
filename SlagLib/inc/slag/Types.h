@@ -21,7 +21,7 @@ struct Stats
 //typedef std::function<void(const PortIdentifier&, size_t buffer_size)> statistics2_callback;
 //typedef std::function<void(const ModuleIdentifier&, int, int, SlagImageType, const unsigned char*)> output_image_callback;
 
-typedef std::function<void(const ModuleIdentifier&, const SlagTextOut&, const SlagImageOut&, const Stats&)> module_callback;
+typedef std::function<void(const ModuleIdentifier&, const SlagTextOut&, const SlagImageOut&, Stats&)> module_callback;
 
 enum ErrorCode : unsigned char
 {

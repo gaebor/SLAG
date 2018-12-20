@@ -411,7 +411,7 @@ void handle_output_image(
     const slag::ModuleIdentifier& module_id,
     const SlagTextOut& text,
     const SlagImageOut& image,
-    const slag::Stats& stats)
+    slag::Stats& stats)
 {
     WindowWrapper& wind = insert_wrapper(module_id);
     // starts ThreadProc in case it was closed but once it was alive
