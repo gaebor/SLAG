@@ -247,7 +247,7 @@ private:
 
         _font = CreateFontW(_barHeight-2, 0, 0, 0, FW_DONTCARE, FALSE, FALSE, FALSE,
             DEFAULT_CHARSET, OUT_OUTLINE_PRECIS, 
-            CLIP_DEFAULT_PRECIS, CLEARTYPE_QUALITY, VARIABLE_PITCH, L"Consolas");
+            CLIP_DEFAULT_PRECIS, CLEARTYPE_QUALITY, FIXED_PITCH | FF_MODERN , L"Consolas");
         if (_font)
         {
             RECT r = { 0, 0, 0, 0 };
