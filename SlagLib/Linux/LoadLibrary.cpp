@@ -11,6 +11,8 @@
 #include <sys/stat.h>
 #include <limits.h>
 
+#include <dlfcn.h>
+
 SlagImageType get_image_type(void)
 {
     return SlagImageType::RGB;

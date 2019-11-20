@@ -73,11 +73,11 @@ static void** Read(void** input, int inputPortNumber, int* outputPortNumber)
         return NULL;
 }
 
-int quit_limit = 0;
+static size_t quit_limit = 0;
 static void** Quitter(void** input, int inputPortNumber, int* outputPortNumber)
 {
     static void* result = NULL;
-    static int i = 0;
+    static size_t i = 0;
 
     *outputPortNumber = 1;
     if (inputPortNumber > 0)
@@ -95,6 +95,26 @@ static void** Quitter(void** input, int inputPortNumber, int* outputPortNumber)
     return &result;
 }
 
+static size_t seq_limit = 0;
+static void** Seq(void** input, int inputPortNumber, int* outputPortNumber)
+{
+    static size_t i = 1;
+    static int* result;
+
+    if (seq_limit > 0 && i > seq_limit)
+    {
+        *outputPortNumber = 0;
+        return NULL; // quit
+    }
+
+    result = (size_t*)malloc(sizeof(i));
+
+    *outputPortNumber = 1;
+    *result = i++;
+
+    return &result;
+}
+
 SLAG_MODULE_EXPORT(int) SlagInitialize(
     void* module,
     int settingsc, const char** settingsv,
@@ -108,10 +128,12 @@ SLAG_MODULE_EXPORT(int) SlagInitialize(
     if (module == Quitter)
     {
         if (settingsc > 0)
-            quit_limit = atoi(settingsv[0]);
+            quit_limit = (size_t)atoll(settingsv[0]);
     }
+    
     textout->str = NULL; textout->size = 0;
-    imageout->data = NULL; imageout->w = 0; imageout->h = 0;
+    // resizes image window, even if empty
+    imageout->data = NULL; imageout->w = 200; imageout->h = 0;
 
     return 0;
 }
@@ -129,6 +151,8 @@ SLAG_MODULE_EXPORT(void*) SlagInstantiate(const char* moduleName, const char* In
         function = Double;
     else if (0 == strcmp("Quitter", moduleName))
         function = Quitter;
+    else if (0 == strcmp("Seq", moduleName))
+        function = Seq;
 	return (void*)function;
 }
 

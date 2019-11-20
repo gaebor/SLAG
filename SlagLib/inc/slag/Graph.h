@@ -1,7 +1,6 @@
 #pragma once
 
-#include <unordered_map>
-#include <list>
+#include <vector>
 #include <memory>
 
 #include "aq/AsyncQueue.h"
@@ -25,7 +24,7 @@ public:
 
     //! instantiates a new module, does not initialize
     ErrorCode CreateModule(const std::string& name_and_instance);
-    //! initializes a module, optionally starts a thread for it and does not block
+    //! initializes a module
     ErrorCode InitializeModule(const std::string& name,
         const std::vector<std::string>& arguments = std::vector<std::string>(),
         module_callback c = module_callback());

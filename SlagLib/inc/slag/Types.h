@@ -5,7 +5,7 @@
 #include <utility>
 
 #include "slag_interface.h"
-#include "Identifiers.h"
+#include "slag/Identifiers.h"
 
 namespace slag {
 

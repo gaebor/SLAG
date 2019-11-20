@@ -10,7 +10,6 @@ add_subdirectory(MyModules)
 add_subdirectory(ImgModules)
 
 if (WIN32)
-    # add_subdirectory(SlagCmd)
     add_subdirectory(WinSlag)
 endif(WIN32)
 

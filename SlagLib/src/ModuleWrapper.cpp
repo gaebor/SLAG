@@ -171,7 +171,7 @@ void ModuleWrapper::ThreadProcedure()
 	//Dequeued input messages which haven't been Enqueued to the output yet
 	std::unordered_set<ManagedMessage> receivedMessages;
 
-	aq::Clock timer_cycle, timer;
+	aq::Clock<> timer_cycle, timer;
 	PortNumber outputNumber;
 
 	while (do_run) //a terminating signal leaves every message in the queue and quits the loop

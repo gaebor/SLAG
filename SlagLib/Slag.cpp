@@ -10,7 +10,6 @@
 
 #include "ConfigReader.h"
 #include "slag/Graph.h"
-#include "slag/Identifiers.h"
 
 #include "aq/Clock.h"
 
@@ -282,7 +281,7 @@ int main(int argc, char* argv[])
 
     run = true;
     {
-    aq::Clock timer;
+    aq::Clock<> timer;
     double startTime = timer.Tock();
 
     if (text_output)
