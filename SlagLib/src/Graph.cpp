@@ -34,6 +34,11 @@ std::vector<std::string> Graph::GetLibraries()const
     return factory->GetLibraries();
 }
 
+const char * Graph::Help(const std::string & library_name, int argc, const char ** argv) const
+{
+    return factory->Help(library_name, argc, argv);
+}
+
 Graph::~Graph()
 {
     Stop();
@@ -104,8 +109,16 @@ ErrorCode Graph::InitializeModule(
 
 ErrorCode Graph::AddConnection(
                 const PortIdentifier& fromModuleId, const PortIdentifier& toModuleId,
-                aq::LimitBehavior behavior, size_t limit)
+                LimitBehavior old_behavior, size_t limit)
 {
+    aq::LimitBehavior behavior;
+    switch (old_behavior)
+    {
+        case LimitBehavior::None: behavior = aq::None; break;
+        case LimitBehavior::Drop: behavior = aq::None; break;
+        case LimitBehavior::Wait: behavior = aq::None; break;
+        case LimitBehavior::Refuse: behavior = aq::None; break;
+    };
     const auto fromModulePtr = modules->find(fromModuleId.module);
     const auto toModulePtr = modules->find(toModuleId.module);
 

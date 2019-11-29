@@ -7,7 +7,6 @@
 #include <fstream>
 #include <mutex>
 
-#include "aq/AsyncQueue.h"
 #include "ConfigReader.h"
 
 #include "slag/Graph.h"
@@ -17,15 +16,15 @@ typedef std::lock_guard<std::mutex> AutoLock;
 
 static volatile bool run;
 
-static aq::LimitBehavior GetBehavior(const std::string& value)
+static slag::LimitBehavior GetBehavior(const std::string& value)
 {
     if (value == "Wait")
-        return aq::Wait;
+        return slag::Wait;
     else if (value == "Drop")
-        return aq::Drop;
+        return slag::Drop;
     else if (value == "Refuse")
-        return aq::Refuse;
-    return aq::None;
+        return slag::Refuse;
+    return slag::None;
 }
 
 std::string utf8_encode(const wchar_t* wstr, int len = 0);
@@ -70,7 +69,7 @@ int main()
     std::wstring wline;
     std::string line;
 
-	aq::LimitBehavior queueBehavior = aq::None;
+	LimitBehavior queueBehavior = LimitBehavior::None;
 	size_t queueLimit = std::numeric_limits<size_t>::max();
 	double hardResetTime = 0.0;
     int loglevel = 1;
@@ -172,7 +171,7 @@ int main()
 			const auto toModuleId = PortIdentifier(parts[1]);
             std::string limitstr;
             size_t limit;
-            aq::LimitBehavior behavior = queueBehavior;
+            slag::LimitBehavior behavior = queueBehavior;
 
             if (parts.size() >= 3)
             {

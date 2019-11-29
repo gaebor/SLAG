@@ -29,7 +29,9 @@ public:
         SlagDestroyMessage_t deleteMsg;
         SlagDestroyModule_t deleteModule;
         SlagInitialize_t initialize;
+        SlagHelp_t help;
     };
+    const char* Help(const std::string& library_name, int argc, const char** argv)const;
 
     void Scan();
     std::vector<std::string> GetLibraries()const;

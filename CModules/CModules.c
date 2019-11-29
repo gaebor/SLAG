@@ -98,7 +98,7 @@ static void** Quitter(void** input, int inputPortNumber, int* outputPortNumber)
 static size_t seq_limit = 0;
 static void** Seq(void** input, int inputPortNumber, int* outputPortNumber)
 {
-    static size_t i = 1;
+    static int i = 1;
     static int* result;
 
     if (seq_limit > 0 && i > seq_limit)
@@ -107,7 +107,7 @@ static void** Seq(void** input, int inputPortNumber, int* outputPortNumber)
         return NULL; // quit
     }
 
-    result = (size_t*)malloc(sizeof(i));
+    result = (int*)malloc(sizeof(i));
 
     *outputPortNumber = 1;
     *result = i++;

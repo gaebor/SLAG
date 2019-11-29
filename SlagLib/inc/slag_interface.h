@@ -37,6 +37,11 @@ typedef struct
     const SlagImageType type;
 } SlagImageOut;
 
+/**
+* \defgroup Mandatory you have to provide these function in your Library
+* @{
+*/
+
 //! SLAG calls this once, your module or whatever necessary data should be allocated
 /*!
 	@param moduleName a C string, the name of your module, usually it identifies the job what your module is ought to do.
@@ -52,7 +57,7 @@ typedef void* (SLAG_CALL *SlagInstantiate_t)(
 //! SLAG calls this if a message is useless anymore
 /*!
 	Note that you should allocate your messages on the heap, and let the SLAG to free them.
-	Actually YOU will free them, but only when the SLAG tells you to.
+	Actually YOU will free them, but only when SLAG tells you to.
 	Every message what you return by the SlagCompute function is taken care of.
 	Your destructor will be called if SLAG doesn't need your message anymore
 	@param message pointer to a message, which was allocated by some of your modules.
@@ -73,10 +78,15 @@ typedef void(SLAG_CALL *SlagDestroyModule_t)(void* module);
 */
 typedef void** (SLAG_CALL *SlagCompute_t)(void* module, void** input, int inputPortNumber, int* outputPortNumber);
 
+/**@}*/
+
 //! auxiliary
 typedef void** (*SlagFunction_t)(void** input, int inputPortNumber, int* outputPortNumber);
 
-//optional
+/**
+* \defgroup Optionals
+* @{
+*/
 
 //! SLAG calls this once, after instantiation and before any Compute calls
 /*!
@@ -85,18 +95,32 @@ typedef void** (*SlagFunction_t)(void** input, int inputPortNumber, int* outputP
 	@param settingsv pointer to array of settings, each entry is a null terminated C string.
 		This array is valid only until the initializer has been completed, after that it is destructed
 		If you want to keep any of these settings later, you have to copy it to your heap.
-	@param strout pointer where you can set your output text
-	@param strout_size write the length of your output text here
-	@param out_img write your output image here
-	@param w write the width of your output image here
-	@param h write the height of your output image here
-	@param imageType you have to convert your output image to this format
-	@return 0 on success, otherwise initialization is considered to be failed and the graph doesn't even start
+	@param textout pointer of a SlagTextOut object where you can store your output texts
+	@param imageout pointer to a SlagImageOut object where you can store your output images
+	@return 0 on success, otherwise initialization is considered to be failed
 */
 typedef  int (SLAG_CALL *SlagInitialize_t)(
     void* module,
     int settingsc, const char** settingsv,
     SlagTextOut* textout, SlagImageOut* imageout);
+
+//! you can send optional help messages about anything you want
+/*!
+    It is advised to return a how-to if the number of arguments is 0.
+    A more detailed usage can be laid out then.
+    Also, it is advised to return the possible modules to instantiate and their 
+    SlagInitialize settings.
+
+    @param argc number of argument strings
+    @param argv array of null-terminated C-strings
+    @return a string with some useful info in it.
+        The returned string should be allocated and destroyed in your side.
+        The returned string should be valid until the next SlagHelp call,
+        which are guaranteed not to be concurrent to one and other.
+*/
+typedef const char* (SLAG_CALL *SlagHelp_t)(int argc, const char** argv);
+
+/**@}*/
 
 // #define SETTINGS_MAX_LENGTH 1024
 

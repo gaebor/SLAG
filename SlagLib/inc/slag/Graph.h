@@ -3,12 +3,20 @@
 #include <vector>
 #include <memory>
 
-#include "aq/AsyncQueue.h"
 #include "slag/Types.h"
 
 namespace slag {
 
 class Factory;
+
+//! you can control the behavior of the overloaded queue
+enum LimitBehavior : int
+{
+    None = 0, //!< the queue can grow as much as it can, queueLimit is irrelevant
+    Drop = 1, //!< drop elements if queue size is above the given limit
+    Wait = 2, //!< wait until the queue size drops below the given limit
+    Refuse = 3, //!< refuse to enqueue elements if queue size is above the given limit
+};
 
 class Graph
 {
@@ -18,6 +26,7 @@ public:
 
     void Scan();
     std::vector<std::string> GetLibraries()const;
+    const char* Help(const std::string& library_name, int argc, const char** argv)const;
     //! creates a module and initializes it
     ErrorCode AddModule(std::vector<std::string> arguments,
         module_callback c = module_callback());
@@ -29,16 +38,19 @@ public:
         const std::vector<std::string>& arguments = std::vector<std::string>(),
         module_callback c = module_callback());
 
-    ErrorCode AddConnection(const PortIdentifier& from, const PortIdentifier& to, aq::LimitBehavior behavior = aq::LimitBehavior::None, size_t limit = 0);
+    ErrorCode AddConnection(const PortIdentifier& from, const PortIdentifier& to, LimitBehavior behavior = LimitBehavior::None, size_t limit = 0);
 
     ErrorCode RemoveModule(std::string name);
     ErrorCode RemoveConnection(const std::string& from, const std::string& to);
 
     void Start();
 
-    //! shuts down the modules as they are
+    //! stops the graph immediately
     /*!
-        mindenki dobja el, ami a kezében vam!
+         Modules won't start any new computations, but current computations are carried out.
+         Then stops the graph.
+
+         If a module is stuck in an infinite loop then it will prevent you from stopping!
     */
     void Stop();
 

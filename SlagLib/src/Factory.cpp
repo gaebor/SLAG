@@ -66,6 +66,15 @@ std::vector<std::string> Factory::GetLibraries() const
     return result;
 }
 
+const char* Factory::Help(const std::string & library_name, int argc, const char ** argv) const
+{
+    auto it = libraries.find(library_name);
+    if (it != libraries.end() && it->second->GetFunctions().help != NULL)
+        return ((it->second->GetFunctions()).help)(argc, argv);
+    else
+        return nullptr;
+}
+
 std::pair<ModuleWrapper*, ErrorCode> Factory::InstantiateModule(const std::string& description)
 {
     std::pair<ModuleWrapper*, ErrorCode> result(nullptr, CannotInstantiate);
@@ -113,7 +122,8 @@ Factory::~Factory()
 }
 
 Factory::Functions::Functions()
-	:instantiate(NULL), compute(NULL), deleteMsg(NULL), deleteModule(NULL), initialize(NULL)
+	:instantiate(NULL), compute(NULL), deleteMsg(NULL), deleteModule(NULL),
+    initialize(NULL), help(NULL)
 {
 }
 
@@ -127,7 +137,9 @@ Factory::LibraryWrapper::LibraryWrapper(const std::string & filename)
         functions.deleteMsg = (SlagDestroyMessage_t)get_symbol_from_library(handle, "SlagDestroyMessage");
         functions.deleteModule = (SlagDestroyModule_t)get_symbol_from_library(handle, "SlagDestroyModule");
         functions.compute = (SlagCompute_t)get_symbol_from_library(handle, "SlagCompute");
+
         functions.initialize = (SlagInitialize_t)get_symbol_from_library(handle, "SlagInitialize");
+        functions.help = (SlagHelp_t)get_symbol_from_library(handle, "SlagHelp");
 
         if (functions.instantiate != NULL && functions.compute != NULL &&
             functions.deleteMsg != NULL && functions.deleteModule != NULL)

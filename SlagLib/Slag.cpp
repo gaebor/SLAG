@@ -7,6 +7,8 @@
 #include <sstream>
 #include <fstream>
 #include <thread>
+#include <mutex>
+#include <algorithm>
 
 #include "ConfigReader.h"
 #include "slag/Graph.h"
@@ -136,20 +138,20 @@ void handle_output_text(const ModuleIdentifier& module_id, const SlagTextOut& te
     ++data.n;
 }
 
-static aq::LimitBehavior GetBehavior(const std::string& value)
+static slag::LimitBehavior GetBehavior(const std::string& value)
 {
     if (value == "Wait")
-        return aq::Wait;
+        return slag::Wait;
     else if (value == "Drop")
-        return aq::Drop;
+        return slag::Drop;
     else if (value == "Refuse")
-        return aq::Refuse;
-    return aq::None;
+        return slag::Refuse;
+    return slag::None;
 }
 
 int main(int argc, char* argv[])
 {
-	aq::LimitBehavior queueBehavior = aq::None;
+	slag::LimitBehavior queueBehavior = slag::None;
     slag::module_callback text_output(handle_output_text);
 	size_t queueLimit = std::numeric_limits<size_t>::max();
 	double hardResetTime = 0.0;
@@ -254,7 +256,7 @@ int main(int argc, char* argv[])
 			const auto toModuleId = PortIdentifier(parts[1]);
             std::string limitstr;
             size_t limit;
-            aq::LimitBehavior behavior = queueBehavior;
+            slag::LimitBehavior behavior = queueBehavior;
 
             if (parts.size() >= 3)
             {
