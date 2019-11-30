@@ -1,7 +1,8 @@
-
+#define NOMINMAX
 #include <windows.h>
 
 #include <thread>
+
 #include <iostream>
 #include <sstream>
 #include <fstream>
@@ -15,6 +16,21 @@
 typedef std::lock_guard<std::mutex> AutoLock;
 
 static volatile bool run;
+
+BOOL WINAPI CtrlHandler(DWORD fdwCtrlType)
+{
+    switch (fdwCtrlType)
+    {
+    case CTRL_C_EVENT:
+        run= false;
+        return TRUE;
+    case CTRL_BREAK_EVENT:
+        std::terminate();
+        return TRUE;
+    default:
+        return FALSE;
+    }
+}
 
 static slag::LimitBehavior GetBehavior(const std::string& value)
 {
@@ -63,6 +79,12 @@ void handle_output_image(const ModuleIdentifier&, const SlagTextOut&, const Slag
 
 int main()
 {
+    if (!SetConsoleCtrlHandler(CtrlHandler, TRUE))
+    {
+        std::cerr << "ERROR: Could not set control handler" << std::endl;
+        return 1;
+    }
+
     int argc;
     const auto argv = CommandLineToArgvW(GetCommandLineW(), &argc);
 

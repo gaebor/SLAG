@@ -30,11 +30,12 @@ add_executable(slag ${ExeSources})
 add_dependencies(slag slaglib)
 
 if (WIN32)
-    target_link_libraries(slag shlwapi slaglib)
+    target_link_libraries(slag slaglib)
+    target_link_libraries(slaglib shlwapi)
 elseif(UNIX)
-    target_link_libraries(slag dl pthread slaglib)
+    target_link_libraries(slag slaglib)
+    target_link_libraries(slaglib dl pthread)
     target_link_libraries(slaglibpic dl pthread)
-    target_link_libraries(slag dl pthread slaglib)
     add_custom_command(TARGET slaglibpic POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:slaglibpic> ${CMAKE_BINARY_DIR}
     )
