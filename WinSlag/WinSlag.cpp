@@ -17,23 +17,6 @@
 
 typedef std::lock_guard<std::mutex> AutoLock;
 
-static volatile bool run;
-
-BOOL WINAPI CtrlHandler(DWORD fdwCtrlType)
-{
-    switch (fdwCtrlType)
-    {
-    case CTRL_C_EVENT:
-        run= false;
-        return TRUE;
-    case CTRL_BREAK_EVENT:
-        std::terminate();
-        return TRUE;
-    default:
-        return FALSE;
-    }
-}
-
 static slag::LimitBehavior GetBehavior(const std::string& value)
 {
     if (value == "Wait")
@@ -70,23 +53,10 @@ std::vector<std::string> split_to_argv(const std::string& line)
 
 using namespace slag;
 
-//static double _speed = 0.5;
-//static std::map<ModuleIdentifier, ModuleTextualData> _texts;
-//static std::mutex _mutex;
-//static int nameOffset, textWidth = 80;
-//static char wait_marker = '~', overhead_marker = '-', load_marker = '#';
-//static std::thread _textThread;
-
 void handle_output_image(const ModuleIdentifier&, const SlagTextOut&, const SlagImageOut&, Stats&);
 
 int main()
 {
-    if (!SetConsoleCtrlHandler(CtrlHandler, TRUE))
-    {
-        std::cerr << "ERROR: Could not set control handler" << std::endl;
-        return 1;
-    }
-
     int argc;
     const auto argv = CommandLineToArgvW(GetCommandLineW(), &argc);
 
