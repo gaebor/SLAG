@@ -50,6 +50,13 @@ SLAG_MODULE_EXPORT(int) SlagInitialize(
 	return (((MyModule*)module)->Initialize(settingsc, settingsv, textout, imageout)) ? 0 : -1 ;
 }
 
+//! returns 0 on success
+SLAG_MODULE_EXPORT(const char*) SlagHelp(int argc, const char** argv)
+{
+    return "possible modules:\n VideoSource: sends out images from webcam.\n"
+        " ImageProcessor: converts image to gray.";
+}
+
 #ifdef __cplusplus
 }
 #endif

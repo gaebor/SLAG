@@ -18,6 +18,9 @@ enum LimitBehavior : int
     Refuse = 3, //!< refuse to enqueue elements if queue size is above the given limit
 };
 
+/*!
+    TODO static/dynamic
+*/
 class Graph
 {
 public:

@@ -149,6 +149,23 @@ static slag::LimitBehavior GetBehavior(const std::string& value)
     return slag::None;
 }
 
+std::ostream& print_prefix(std::ostream& os, const char* text, const std::string& prefix = "")
+{
+    if (text)
+    {
+        os << prefix;
+        for (; *text; ++text)
+        {
+            os << *text;
+            if (*text == '\n')
+            {
+                os << prefix;
+            }
+        }
+    }
+    return os;
+}
+
 int main(int argc, char* argv[])
 {
 	slag::LimitBehavior queueBehavior = slag::None;
@@ -161,6 +178,14 @@ int main(int argc, char* argv[])
 	if (argc < 2)
 	{
 		std::cerr << "USAGE: " << argv[0] << " >>config.cfg<<" << std::endl;
+        auto libraries = graph.GetLibraries();
+        for (const auto& library : libraries)
+        {
+            std::cout << library << std::endl;
+            const std::string prefix = "[" + library + "]\t";
+            print_prefix(std::cout, graph.Help(library, 0, nullptr), prefix);
+            std::cout << std::endl;
+        }
 		goto halt;
 	}
 	try{
