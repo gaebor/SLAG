@@ -23,7 +23,7 @@ public:
     struct Functions
     {
         Functions();
-        Functions& operator=(const Functions& other);
+
         SlagInstantiate_t instantiate;
         SlagCompute_t compute;
         SlagDestroyMessage_t deleteMsg;

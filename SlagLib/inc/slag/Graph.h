@@ -46,7 +46,7 @@ public:
     ErrorCode RemoveModule(std::string name);
     ErrorCode RemoveConnection(const std::string& from, const std::string& to);
 
-    void Start();
+    void Start(bool dynamic = true);
 
     //! stops the graph immediately
     /*!

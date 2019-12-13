@@ -5,10 +5,29 @@
 
 #include "aq/AsyncQueue.h"
 
-typedef std::shared_ptr<void> ManagedMessage;
-typedef std::shared_ptr<void> ManagedModule;
+namespace slag {
 
-typedef aq::AsyncQueue<ManagedMessage> MessageQueue;
-typedef std::shared_ptr<MessageQueue> ManagedQueue;
+    typedef std::shared_ptr<void> ManagedMessage;
+    typedef std::shared_ptr<void> ManagedModule;
 
-typedef std::lock_guard<std::mutex> AutoLock;
+    typedef aq::AsyncQueue<ManagedMessage> MessageQueue;
+    typedef std::shared_ptr<MessageQueue> ManagedQueue;
+
+    template<bool enabled = true>
+    struct AutoLock;
+
+    template<>
+    struct AutoLock<true> : std::lock_guard<std::mutex>
+    {
+        typedef std::lock_guard<std::mutex> MyType;
+        using MyType::MyType;
+    };
+
+    template<>
+    struct AutoLock<false>
+    {
+    public:
+        AutoLock(std::mutex&){}
+    };
+
+}

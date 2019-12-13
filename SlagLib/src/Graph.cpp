@@ -150,12 +150,12 @@ ErrorCode Graph::AddConnection(
     return ErrorCode::Duplicate;
 }
 
-void Graph::Start()
+void Graph::Start(bool dynamic)
 {
     if (!IsRunning())
     {
         for (auto& m : *modules)
-            m.second->Start();
+            m.second->Start(dynamic);
     }
 }
 

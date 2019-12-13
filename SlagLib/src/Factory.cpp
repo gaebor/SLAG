@@ -178,15 +178,4 @@ const Factory::Functions & Factory::LibraryWrapper::GetFunctions() const
     return functions;
 }
 
-Factory::Functions& Factory::Functions::operator=(const Factory::Functions& other)
-{
-    instantiate = other.instantiate;
-    compute = other.compute;
-    deleteMsg = other.deleteMsg;
-    deleteModule = other.deleteModule;
-    initialize = other.initialize;
-
-    return *this;
-}
-
 }

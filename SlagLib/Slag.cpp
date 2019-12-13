@@ -19,6 +19,29 @@ typedef std::lock_guard<std::mutex> AutoLock;
 
 static volatile bool run;
 
+#ifdef _MSC_VER
+BOOL WINAPI CtrlHandler(DWORD fdwCtrlType)
+{
+    switch (fdwCtrlType)
+    {
+    case CTRL_C_EVENT:
+        run = false;
+        return TRUE;
+    case CTRL_BREAK_EVENT:
+        std::terminate();
+        return TRUE;
+    default:
+        return FALSE;
+    }
+}
+#else
+#   include <signal.h>
+void sighandler(int i)
+{
+    if (i == SIGINT)
+        run = false;
+}
+#endif
 std::vector<std::string> split_to_argv(const std::string& line);
 
 using namespace slag;
@@ -168,6 +191,16 @@ std::ostream& print_prefix(std::ostream& os, const char* text, const std::string
 
 int main(int argc, char* argv[])
 {
+#ifdef _MSC_VER
+    if (!SetConsoleCtrlHandler(CtrlHandler, TRUE))
+#else
+    if (signal(SIGINT, sighandler) == SIG_ERR)
+#endif
+    {
+        std::cerr << "ERROR: Could not set handler" << std::endl;
+        return 1;
+    }
+
 	slag::LimitBehavior queueBehavior = slag::None;
     slag::module_callback text_output(handle_output_text);
 	size_t queueLimit = std::numeric_limits<size_t>::max();
@@ -314,7 +347,7 @@ int main(int argc, char* argv[])
     if (text_output)
         start_text();
 
-    graph.Start();
+    graph.Start(false);
 
     while (run && graph.IsRunning())
     {
