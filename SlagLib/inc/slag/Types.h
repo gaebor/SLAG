@@ -16,11 +16,6 @@ struct Stats
     std::vector<std::pair<PortNumber, size_t>> buffers;
 };
 
-//typedef std::function<void(const ModuleIdentifier&, const char*, int)> output_text_callback;
-//typedef std::function<void(const ModuleIdentifier&, double cycle, double load, double wait)> statistics_callback;
-//typedef std::function<void(const PortIdentifier&, size_t buffer_size)> statistics2_callback;
-//typedef std::function<void(const ModuleIdentifier&, int, int, SlagImageType, const unsigned char*)> output_image_callback;
-
 typedef std::function<void(const ModuleIdentifier&, const SlagTextOut&, const SlagImageOut&, Stats&)> module_callback;
 
 enum ErrorCode : unsigned char

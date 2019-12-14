@@ -120,20 +120,22 @@ SLAG_MODULE_EXPORT(int) SlagInitialize(
     int settingsc, const char** settingsv,
     SlagTextOut* textout, SlagImageOut* imageout)
 {
+    textout->str = NULL; textout->size = 0;
+    
+    // resizes image window, even if empty
+    imageout->data = NULL; imageout->w = 200; imageout->h = 0;
+
     if (module == Read)
     {
         if (settingsc > 0)
             input_for_read = fopen(settingsv[0], "r");
+        return input_for_read == NULL ? 1 : 0;
     }
     if (module == Quitter)
     {
         if (settingsc > 0)
             quit_limit = (size_t)atoll(settingsv[0]);
     }
-    
-    textout->str = NULL; textout->size = 0;
-    // resizes image window, even if empty
-    imageout->data = NULL; imageout->w = 200; imageout->h = 0;
 
     return 0;
 }
